@@ -1,0 +1,7 @@
+name = "ir-dashboard-api"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Gratuit : 100 000 requêtes/jour
+# Pour restreindre l'accès, remplacer '*' par ton URL GitHub Pages
+# dans CORS_HEADERS du fichier index.js
