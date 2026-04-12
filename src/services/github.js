@@ -113,9 +113,9 @@ export async function githubUploadImage(path, base64Content, message) {
  * @returns {string|null} - SHA du commit ou null
  */
 export async function saveAuthorsToGitHub(authors) {
-  const { loadLocal } = await import('../utils/localStorage');
-  const token = loadLocal('ir_github_token', '');
-  const owner = loadLocal('ir_github_owner', '');
+  const readLS = (key) => { try { const v = localStorage.getItem('ir-dash-' + key); return v ? JSON.parse(v) : ''; } catch { return ''; } };
+  const token = readLS('ir_github_token');
+  const owner = readLS('ir_github_owner');
   if (!token || !owner) throw new Error('Token ou owner GitHub non configuré');
 
   const repo = 'ir-dashboard';

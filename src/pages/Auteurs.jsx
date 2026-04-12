@@ -213,7 +213,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
         <div className="flex-center gap-8">
           <ServiceBadge service="notion" />
           {saveToSite && hasGitHub() && (
-            <button className="btn btn-green" onClick={() => saveToSite('auteurs', auteurs.map(({ id, firstName, lastName, role, bio, photo, publications }) => ({ id, firstName, lastName, role, bio, photo: photo || '', publications: publications || 0 })))}>
+            <button className="btn btn-green" onClick={() => saveToSite('auteurs', auteurs.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({ id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0 })))}>
               Publier tout sur le site
             </button>
           )}

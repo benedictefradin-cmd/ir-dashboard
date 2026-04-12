@@ -4,6 +4,7 @@ import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import AuthorPicker from '../components/shared/AuthorPicker';
+import MultiSelect from '../components/shared/MultiSelect';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
 import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL } from '../utils/constants';
@@ -37,9 +38,9 @@ export default function Articles({
   auteurs = [],
 }) {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [themeFilter, setThemeFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState([]);
+  const [themeFilter, setThemeFilter] = useState([]);
+  const [typeFilter, setTypeFilter] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingArt, setEditingArt] = useState(null);
   const [form, setForm] = useState({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '' });
@@ -86,9 +87,9 @@ export default function Articles({
   // Filtrage
   const filtered = useMemo(() => {
     let list = allArticles;
-    if (statusFilter !== 'all') list = list.filter(a => a.status === statusFilter);
-    if (themeFilter !== 'all') list = list.filter(a => (a.tags || []).includes(themeFilter));
-    if (typeFilter !== 'all') list = list.filter(a => a.type === typeFilter);
+    if (statusFilter.length) list = list.filter(a => statusFilter.includes(a.status));
+    if (themeFilter.length) list = list.filter(a => (a.tags || []).some(t => themeFilter.includes(t)));
+    if (typeFilter.length) list = list.filter(a => typeFilter.includes(a.type));
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
       list = list.filter(a =>
@@ -459,38 +460,34 @@ export default function Articles({
         {/* Barre de filtres compacte */}
         <div className="filter-bar mb-16">
           <SearchBar value={search} onChange={setSearch} placeholder="Rechercher une publication…" />
-          <select
-            className="filter-select"
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-          >
-            <option value="all">Tous les statuts ({counts.total})</option>
-            <option value="draft">Brouillons ({counts.draft})</option>
-            <option value="review">À relire ({counts.review})</option>
-            <option value="ready">Prêts à publier ({counts.ready})</option>
-            <option value="published">Publiés ({counts.published})</option>
-            <option value="archived">Archivés ({counts.archived})</option>
-          </select>
-          <select
-            className="filter-select"
-            value={themeFilter}
-            onChange={e => setThemeFilter(e.target.value)}
-          >
-            <option value="all">Tous les pôles</option>
-            {THEMATIQUES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          <select
-            className="filter-select"
-            value={typeFilter}
-            onChange={e => setTypeFilter(e.target.value)}
-          >
-            <option value="all">Tous les types</option>
-            {PUB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          {(statusFilter !== 'all' || themeFilter !== 'all' || typeFilter !== 'all') && (
+          <MultiSelect
+            label={`Statut (${counts.total})`}
+            selected={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: 'draft', label: `Brouillons (${counts.draft})` },
+              { value: 'review', label: `À relire (${counts.review})` },
+              { value: 'ready', label: `Prêts à publier (${counts.ready})` },
+              { value: 'published', label: `Publiés (${counts.published})` },
+              { value: 'archived', label: `Archivés (${counts.archived})` },
+            ]}
+          />
+          <MultiSelect
+            label="Pôle"
+            selected={themeFilter}
+            onChange={setThemeFilter}
+            options={THEMATIQUES.map(t => ({ value: t, label: t }))}
+          />
+          <MultiSelect
+            label="Type"
+            selected={typeFilter}
+            onChange={setTypeFilter}
+            options={PUB_TYPES.map(t => ({ value: t, label: t }))}
+          />
+          {(statusFilter.length > 0 || themeFilter.length > 0 || typeFilter.length > 0) && (
             <button
               className="btn btn-outline btn-sm"
-              onClick={() => { setStatusFilter('all'); setThemeFilter('all'); setTypeFilter('all'); }}
+              onClick={() => { setStatusFilter([]); setThemeFilter([]); setTypeFilter([]); }}
             >
               Effacer filtres
             </button>
