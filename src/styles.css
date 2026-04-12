@@ -952,3 +952,123 @@ label {
   .tab-group { overflow-x: auto; flex-wrap: nowrap; }
   .tab-item { white-space: nowrap; font-size: 13px; padding: 6px 12px; }
 }
+
+/* ─── Sollicitations ────────────────────────── */
+.sollicitation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sollicitation-card {
+  padding: 16px 20px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.sollicitation-card:hover {
+  border-color: var(--sky);
+  box-shadow: var(--shadow-md);
+}
+
+.sollicitation-new {
+  border-left: 4px solid var(--sky);
+}
+
+.sollicitation-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sollicitation-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sollicitation-card-body {
+  margin-bottom: 8px;
+}
+
+.sollicitation-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sollicitation-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--cream);
+  color: var(--text-light);
+  border: 1px solid var(--border);
+}
+
+.sollicitation-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-left: 2px solid var(--border);
+  margin-left: 10px;
+  padding-left: 16px;
+  position: relative;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.timeline-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.timeline-date {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.timeline-text {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.timeline-author {
+  font-size: 12px;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .sollicitation-card-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .sollicitation-card-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

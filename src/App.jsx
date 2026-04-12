@@ -12,7 +12,7 @@ import Presse from './pages/Presse';
 import Auteurs from './pages/Auteurs';
 import Dons from './pages/Dons';
 import Contenu from './pages/Contenu';
-import Contact from './pages/Contact';
+import Sollicitations from './pages/Sollicitations';
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
 import { fetchAdherents as fetchHelloAssoAdherents, fetchDons as fetchHelloAssoDons } from './services/helloasso';
@@ -92,11 +92,105 @@ const DEMO_DONS = [
   { id: 106, name: 'Marie Dupont', email: 'marie.dupont@gmail.com', date: '2026-02-10', amount: 25, type: 'recurrent', status: 'actif', source: 'HelloAsso' },
 ];
 
-const DEMO_CONTACTS = [
-  { id: 1, date: '2026-04-11', nom: 'Paul Martin', email: 'paul.m@gmail.com', sujet: 'evenement', message: 'Bonjour, je souhaiterais participer \u00e0 la conf\u00e9rence du 27 avril sur la d\u00e9croissance. Y a-t-il encore des places disponibles ?', status: 'nouveau' },
-  { id: 2, date: '2026-04-10', nom: 'Claire Dubois', email: 'claire.d@lemonde.fr', sujet: 'presse', message: 'Bonjour, je suis journaliste au Monde et je souhaiterais organiser un entretien avec Nicolas Dufr\u00eane au sujet du rapport Road to Net Zero.', status: 'nouveau' },
-  { id: 3, date: '2026-04-08', nom: 'Association X', email: 'contact@assox.org', sujet: 'partenariat', message: 'Nous serions int\u00e9ress\u00e9s par un partenariat avec l\u2019Institut Rousseau pour un cycle de conf\u00e9rences.', status: 'lu' },
-  { id: 4, date: '2026-04-05', nom: 'Jean-Pierre Leclerc', email: 'jp.leclerc@outlook.fr', sujet: 'general', message: 'Comment puis-je acc\u00e9der aux rapports en version PDF ?', status: 'traite' },
+const DEMO_SOLLICITATIONS = [
+  {
+    id: 'msg_1712930400_a3f2', name: 'Marie Dupont', email: 'marie.dupont@media.fr',
+    organization: 'Le Monde', phone: '+33 6 12 34 56 78', subject: 'presse',
+    message: 'Bonjour,\nNous pr\u00e9parons un dossier sp\u00e9cial sur la transition \u00e9cologique pour notre \u00e9dition de mai. Serait-il possible d\u2019interviewer un membre de votre conseil scientifique sur le sujet de la dette climatique ?\nCordialement, Marie Dupont',
+    consent: true, submitted_at: '2026-04-12T14:30:00Z', source_page: '/contact',
+    status: 'new', assigned_to: null, priority: 'high',
+    internal_notes: [], replies: [], tags: ['presse', 'road-to-net-zero'],
+    updated_at: '2026-04-12T14:30:00Z', resolved_at: null,
+  },
+  {
+    id: 'msg_1712844000_b7e1', name: 'Jean Martin', email: 'j.martin@wwf.fr',
+    organization: 'WWF France', phone: '', subject: 'partenariat',
+    message: 'Suite \u00e0 notre \u00e9change lors du Salon Affaires Publiques, nous souhaiterions explorer un partenariat pour un cycle de conf\u00e9rences sur la biodiversit\u00e9.',
+    consent: true, submitted_at: '2026-04-11T10:00:00Z', source_page: '/contact',
+    status: 'in_progress', assigned_to: 'Michel', priority: 'normal',
+    internal_notes: [
+      { type: 'status_change', text: 'Statut \u2192 En cours', date: '2026-04-11T11:00:00Z', author: 'Michel' },
+      { type: 'note', text: 'Transmettre \u00e0 Guillaume pour le cycle biodiversit\u00e9', date: '2026-04-11T11:05:00Z', author: 'Michel' },
+    ],
+    replies: [], tags: ['partenariat-ong'],
+    updated_at: '2026-04-11T11:05:00Z', resolved_at: null,
+  },
+  {
+    id: 'msg_1712671200_c5d9', name: 'Sophie Bernard', email: 'sophie.b@gmail.com',
+    organization: '', phone: '', subject: 'general',
+    message: 'J\u2019aimerais savoir comment acc\u00e9der aux rapports en version PDF, notamment celui sur la planification \u00e9cologique.',
+    consent: true, submitted_at: '2026-04-03T09:00:00Z', source_page: '/contact',
+    status: 'resolved', assigned_to: 'B\u00e9n\u00e9dicte', priority: 'normal',
+    internal_notes: [
+      { type: 'status_change', text: 'Statut \u2192 En cours', date: '2026-04-03T10:00:00Z', author: 'B\u00e9n\u00e9dicte' },
+      { type: 'reply_sent', text: 'R\u00e9ponse envoy\u00e9e par email', date: '2026-04-03T10:30:00Z', author: 'B\u00e9n\u00e9dicte' },
+      { type: 'status_change', text: 'Statut \u2192 R\u00e9solu', date: '2026-04-03T10:30:00Z', author: 'B\u00e9n\u00e9dicte' },
+    ],
+    replies: [{ text: 'Bonjour Sophie, les rapports PDF sont disponibles sur notre page Publications. Voici le lien direct\u2026', sent_by: 'B\u00e9n\u00e9dicte', sent_at: '2026-04-03T10:30:00Z' }],
+    tags: [],
+    updated_at: '2026-04-03T10:30:00Z', resolved_at: '2026-04-03T10:30:00Z',
+  },
+  {
+    id: 'msg_1712584800_d2a7', name: 'Paul Martin', email: 'paul.m@gmail.com',
+    organization: '', phone: '+33 7 98 76 54 32', subject: 'evenement',
+    message: 'Bonjour, je souhaiterais participer \u00e0 la conf\u00e9rence du 27 avril sur la d\u00e9croissance. Y a-t-il encore des places disponibles ?',
+    consent: true, submitted_at: '2026-04-11T16:00:00Z', source_page: '/contact',
+    status: 'new', assigned_to: null, priority: 'normal',
+    internal_notes: [], replies: [], tags: ['evenement'],
+    updated_at: '2026-04-11T16:00:00Z', resolved_at: null,
+  },
+  {
+    id: 'msg_1712498400_e9b3', name: 'Claire Dubois', email: 'claire.d@lemonde.fr',
+    organization: 'Le Monde', phone: '', subject: 'presse',
+    message: 'Bonjour, je suis journaliste au Monde et je souhaiterais organiser un entretien avec Nicolas Dufr\u00eane au sujet du rapport Road to Net Zero. Nous pr\u00e9voyons un article pour la semaine prochaine.',
+    consent: true, submitted_at: '2026-04-10T08:30:00Z', source_page: '/contact',
+    status: 'in_progress', assigned_to: 'Michel', priority: 'high',
+    internal_notes: [
+      { type: 'status_change', text: 'Statut \u2192 En cours', date: '2026-04-10T09:00:00Z', author: 'Michel' },
+      { type: 'note', text: 'Contacter ND pour confirmer dispo interview', date: '2026-04-10T09:05:00Z', author: 'Michel' },
+    ],
+    replies: [], tags: ['presse', 'road-to-net-zero', 'urgent'],
+    updated_at: '2026-04-10T09:05:00Z', resolved_at: null,
+  },
+  {
+    id: 'msg_1712325600_f1c4', name: 'Association Greenpeace', email: 'partenariats@greenpeace.fr',
+    organization: 'Greenpeace France', phone: '', subject: 'partenariat',
+    message: 'Nous souhaiterions co-organiser un \u00e9v\u00e9nement sur le th\u00e8me de la d\u00e9carbonation industrielle. Serait-il possible de prendre contact ?',
+    consent: true, submitted_at: '2026-04-08T14:00:00Z', source_page: '/contact',
+    status: 'resolved', assigned_to: 'Guillaume', priority: 'normal',
+    internal_notes: [
+      { type: 'status_change', text: 'Statut \u2192 En cours', date: '2026-04-08T15:00:00Z', author: 'Guillaume' },
+      { type: 'reply_sent', text: 'R\u00e9ponse envoy\u00e9e par email', date: '2026-04-09T10:00:00Z', author: 'Guillaume' },
+      { type: 'status_change', text: 'Statut \u2192 R\u00e9solu', date: '2026-04-09T10:00:00Z', author: 'Guillaume' },
+    ],
+    replies: [{ text: 'Bonjour, merci pour votre int\u00e9r\u00eat. Je vous propose un appel la semaine prochaine pour en discuter.', sent_by: 'Guillaume', sent_at: '2026-04-09T10:00:00Z' }],
+    tags: ['partenariat-ong', 'decarbonation'],
+    updated_at: '2026-04-09T10:00:00Z', resolved_at: '2026-04-09T10:00:00Z',
+  },
+  {
+    id: 'msg_1712239200_g8h5', name: 'Marc Lefebvre', email: 'marc.l@free.fr',
+    organization: '', phone: '', subject: 'adhesion',
+    message: 'Bonjour, je souhaite adh\u00e9rer \u00e0 l\u2019Institut Rousseau mais je rencontre un probl\u00e8me sur HelloAsso. Pouvez-vous m\u2019aider ?',
+    consent: true, submitted_at: '2026-04-07T11:00:00Z', source_page: '/contact',
+    status: 'resolved', assigned_to: 'B\u00e9n\u00e9dicte', priority: 'low',
+    internal_notes: [
+      { type: 'reply_sent', text: 'R\u00e9ponse envoy\u00e9e par email', date: '2026-04-07T14:00:00Z', author: 'B\u00e9n\u00e9dicte' },
+      { type: 'status_change', text: 'Statut \u2192 R\u00e9solu', date: '2026-04-07T14:00:00Z', author: 'B\u00e9n\u00e9dicte' },
+    ],
+    replies: [{ text: 'Bonjour Marc, vous pouvez utiliser ce lien direct pour adh\u00e9rer\u2026', sent_by: 'B\u00e9n\u00e9dicte', sent_at: '2026-04-07T14:00:00Z' }],
+    tags: [],
+    updated_at: '2026-04-07T14:00:00Z', resolved_at: '2026-04-07T14:00:00Z',
+  },
+  {
+    id: 'msg_1711980000_i2j6', name: 'Spam Bot', email: 'noreply@spam.xyz',
+    organization: '', phone: '', subject: 'autre',
+    message: 'Buy cheap viagra online now!!!',
+    consent: true, submitted_at: '2026-04-02T06:00:00Z', source_page: '/contact',
+    status: 'archived', assigned_to: null, priority: 'low',
+    internal_notes: [{ type: 'status_change', text: 'Statut \u2192 Archiv\u00e9', date: '2026-04-02T08:00:00Z', author: 'Admin' }],
+    replies: [], tags: ['spam'],
+    updated_at: '2026-04-02T08:00:00Z', resolved_at: null,
+  },
 ];
 
 const DEMO_ACTIVITY = [
@@ -141,7 +235,7 @@ export default function App() {
   const [adherents, setAdherents] = useState([]);
   const [dons, setDons] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
-  const [contacts, setContacts] = useState([]);
+  const [sollicitations, setSollicitations] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [activity, setActivity] = useState([]);
   const [contenu, setContenu] = useState({});
@@ -216,7 +310,7 @@ export default function App() {
     setAdherents([...DEMO_ADHERENTS]);
     setDons([...DEMO_DONS]);
     setSubscribers([...DEMO_SUBSCRIBERS]);
-    setContacts([...DEMO_CONTACTS]);
+    setSollicitations([...DEMO_SOLLICITATIONS]);
     setActivity([...DEMO_ACTIVITY]);
 
     // Try to connect to worker
@@ -257,7 +351,7 @@ export default function App() {
     newsletter: subscribers.filter(s => s.status === 'pending').length,
     messagerie: 0,
     contenu: 0,
-    contact: contacts.filter(c => c.status === 'nouveau').length,
+    sollicitations: sollicitations.filter(s => s.status === 'new').length,
     settings: 0,
   };
 
@@ -285,7 +379,7 @@ export default function App() {
       case 'dashboard':
         return <Dashboard
           adherents={adherents} subscribers={subscribers} articles={articles}
-          events={events} presse={presse} dons={dons} contacts={contacts}
+          events={events} presse={presse} dons={dons} sollicitations={sollicitations}
           activity={activity} loading={loading} onTabChange={changeTab}
         />;
       case 'articles':
@@ -306,8 +400,8 @@ export default function App() {
         return <Messagerie adherents={adherents} subscribers={subscribers} services={services} toast={toast} />;
       case 'contenu':
         return <Contenu contenu={contenu} setContenu={setContenu} toast={toast} />;
-      case 'contact':
-        return <Contact contacts={contacts} setContacts={setContacts} loading={loading} toast={toast} />;
+      case 'sollicitations':
+        return <Sollicitations sollicitations={sollicitations} setSollicitations={setSollicitations} loading={loading} toast={toast} />;
       case 'settings':
         return <Settings
           adherents={adherents} subscribers={subscribers} services={services}
@@ -318,7 +412,7 @@ export default function App() {
       default:
         return <Dashboard
           adherents={adherents} subscribers={subscribers} articles={articles}
-          events={events} presse={presse} dons={dons} contacts={contacts}
+          events={events} presse={presse} dons={dons} sollicitations={sollicitations}
           activity={activity} loading={loading} onTabChange={changeTab}
         />;
     }

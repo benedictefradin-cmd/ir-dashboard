@@ -3,8 +3,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import StatsCard from '../components/shared/StatsCard';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
-import { formatDateFr, timeAgo, calcVariation } from '../utils/formatters';
-import { COLORS } from '../utils/constants';
+import { formatDateFr, timeAgo, truncate, calcVariation } from '../utils/formatters';
+import { COLORS, SOLLICITATION_STATUSES } from '../utils/constants';
 
 export default function Dashboard({
   adherents = [],
@@ -13,10 +13,12 @@ export default function Dashboard({
   events = [],
   presse = [],
   dons = [],
-  contacts = [],
+  sollicitations = [],
   activity = [],
   loading,
   onTabChange,
+  notionArticles = [],
+  notionCounts = {},
 }) {
   const now = new Date();
   const thisMonth = now.getMonth();
@@ -177,6 +179,34 @@ export default function Dashboard({
           />
         </div>
 
+        {/* ── Alerte publications prêtes ────────── */}
+        {(notionCounts.ready > 0 || articles.filter(a => a.status === 'ready').length > 0) && (() => {
+          const readyNotionArticles = notionArticles.filter(a => {
+            const s = (a.status || '').toLowerCase();
+            return s === 'prêt à publier' || s === 'pret a publier';
+          });
+          const readyLocal = articles.filter(a => a.status === 'ready');
+          const readyAll = [...readyNotionArticles, ...readyLocal];
+          return (
+            <div className="alert-banner alert-banner-amber mb-24 slide-up">
+              <span className="alert-banner-icon">&#128276;</span>
+              <div style={{ flex: 1 }}>
+                <strong>{readyAll.length} article{readyAll.length > 1 ? 's' : ''} en attente de publication</strong>
+                {readyAll.slice(0, 3).map((a, i) => (
+                  <div key={a.id || i} style={{ fontSize: 13, color: COLORS.text, marginTop: 4 }}>
+                    <strong>{a.title}</strong>
+                    {a.authors && <span style={{ color: COLORS.textLight }}> — par {a.authors}</span>}
+                    {a.lastEdited && <span style={{ color: COLORS.textLight }}> — {timeAgo(a.lastEdited)}</span>}
+                  </div>
+                ))}
+              </div>
+              <button className="btn btn-sm btn-primary" onClick={() => onTabChange('articles')}>
+                Voir →
+              </button>
+            </div>
+          );
+        })()}
+
         {/* ── Actions rapides ────────────────────── */}
         <div className="card mb-24 fade-in">
           <h2 style={{ fontSize: 18, marginBottom: 16 }}>Actions rapides</h2>
@@ -209,6 +239,73 @@ export default function Dashboard({
               Envoyer newsletter
             </button>
           </div>
+        </div>
+
+        {/* ── Widget Sollicitations ────────────────── */}
+        <div className="card mb-24 fade-in">
+          <div className="flex-between" style={{ marginBottom: 16 }}>
+            <h2 style={{ fontSize: 18 }}>Sollicitations</h2>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => onTabChange('sollicitations')}
+            >
+              Voir toutes les sollicitations &rarr;
+            </button>
+          </div>
+          <div className="flex-wrap mb-16" style={{ gap: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: COLORS.skyLight, color: COLORS.sky,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700, fontSize: 15,
+              }}>
+                {sollicitations.filter(s => s.status === 'new').length}
+              </span>
+              <span style={{ fontSize: 14, color: COLORS.textLight }}>nouvelles</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: COLORS.ochreLight, color: '#9A7B1A',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700, fontSize: 15,
+              }}>
+                {sollicitations.filter(s => s.status === 'in_progress').length}
+              </span>
+              <span style={{ fontSize: 14, color: COLORS.textLight }}>en cours</span>
+            </div>
+          </div>
+          {sollicitations
+            .filter(s => s.status !== 'archived')
+            .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
+            .slice(0, 3)
+            .map((s, i) => (
+              <div
+                key={s.id}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '8px 0',
+                  borderBottom: i < 2 ? `1px solid ${COLORS.border}` : 'none',
+                  cursor: 'pointer',
+                }}
+                onClick={() => onTabChange('sollicitations')}
+              >
+                <span className={`badge ${SOLLICITATION_STATUSES[s.status]?.badgeClass || 'badge-gray'}`} style={{ fontSize: 11 }}>
+                  {SOLLICITATION_STATUSES[s.status]?.label || s.status}
+                </span>
+                <span style={{ fontWeight: 500, fontSize: 14 }}>{s.name || 'Anonyme'}</span>
+                <span style={{ color: COLORS.textLight, fontSize: 13, flex: 1 }}>
+                  &mdash; {truncate(s.message, 50)}
+                </span>
+                <span style={{ fontSize: 12, color: COLORS.textLight, whiteSpace: 'nowrap' }}>
+                  {timeAgo(s.submitted_at)}
+                </span>
+              </div>
+            ))}
+          {sollicitations.filter(s => s.status !== 'archived').length === 0 && (
+            <p style={{ color: COLORS.textLight, fontSize: 14 }}>Aucune sollicitation en attente</p>
+          )}
         </div>
 
         {/* ── Graphique + Prochain evenement ──────── */}

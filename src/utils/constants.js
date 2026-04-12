@@ -37,7 +37,7 @@ export const NAV_ITEMS = [
   { key: 'messagerie', label: 'Messagerie', icon: '\u2708' },
   { key: 'separator-3', type: 'separator' },
   { key: 'contenu', label: 'Contenu', icon: '\u270E' },
-  { key: 'contact', label: 'Contact', icon: '\u{1F4E5}' },
+  { key: 'sollicitations', label: 'Sollicitations', icon: '\u{1F4EC}' },
   { key: 'separator-4', type: 'separator' },
   { key: 'settings', label: 'Config', icon: '\u2699' },
 ];
@@ -87,12 +87,31 @@ export const EVT_STATUSES = {
 export const PRESSE_TYPES = ['Tribune', 'Entretien', 'Podcast'];
 
 export const CONTACT_SUBJECTS = [
-  { key: 'general', label: 'G\u00e9n\u00e9ral' },
-  { key: 'evenement', label: '\u00c9v\u00e9nement' },
-  { key: 'presse', label: 'Presse' },
+  { key: 'general', label: 'Question g\u00e9n\u00e9rale' },
+  { key: 'presse', label: 'Demande presse / m\u00e9dia' },
   { key: 'partenariat', label: 'Partenariat' },
+  { key: 'evenement', label: '\u00c9v\u00e9nement' },
+  { key: 'adhesion', label: 'Adh\u00e9sion' },
+  { key: 'autre', label: 'Autre' },
 ];
 
+export const SOLLICITATION_STATUSES = {
+  new: { label: 'Nouveau', badgeClass: 'badge-sky', color: '#4a90d9' },
+  in_progress: { label: 'En cours', badgeClass: 'badge-ochre', color: '#d4a843' },
+  resolved: { label: 'R\u00e9solu', badgeClass: 'badge-green', color: '#2d8a4e' },
+  archived: { label: 'Archiv\u00e9', badgeClass: 'badge-gray', color: '#8a8a8a' },
+};
+
+export const SOLLICITATION_PRIORITIES = {
+  low: { label: 'Basse', badgeClass: 'badge-gray' },
+  normal: { label: 'Normale', badgeClass: 'badge-sky' },
+  high: { label: 'Haute', badgeClass: 'badge-ochre' },
+  urgent: { label: 'Urgente', badgeClass: 'badge-danger' },
+};
+
+export const SOLLICITATION_ADMINS = ['Michel', 'B\u00e9n\u00e9dicte', 'Guillaume'];
+
+// Legacy compat
 export const CONTACT_STATUSES = {
   nouveau: { label: 'Nouveau', badgeClass: 'badge-sky' },
   lu: { label: 'Lu', badgeClass: 'badge-ochre' },

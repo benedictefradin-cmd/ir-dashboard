@@ -7,11 +7,21 @@ import { exportMultiSheet } from '../services/export';
 import { checkHealth } from '../services/api';
 import { testConnection as testTelegram } from '../services/telegram';
 import { addContact as addBrevoContact } from '../services/brevo';
+import { fetchArticles as fetchNotionArticles } from '../services/notion';
 
 export default function Settings({ adherents, subscribers, services, onImportAdherents, onImportSubscribers, onRefresh, toast }) {
   // ─── Config API ───────────────────────────────
   const [workerUrl, setWorkerUrl] = useState(() => loadLocal(LS_KEYS.workerUrl, DEFAULT_WORKER_URL));
   const [testing, setTesting] = useState({});
+
+  // ─── Notion config ────────────────────────────
+  const [notionToken, setNotionToken] = useState(() => loadLocal('ir_notion_token', ''));
+  const [notionDbId, setNotionDbId] = useState(() => loadLocal('ir_notion_db_id', ''));
+
+  // ─── GitHub config ────────────────────────────
+  const [githubToken, setGithubToken] = useState(() => loadLocal('ir_github_token', ''));
+  const [githubOwner, setGithubOwner] = useState(() => loadLocal('ir_github_owner', ''));
+  const [githubSiteRepo, setGithubSiteRepo] = useState(() => loadLocal('ir_github_site_repo', ''));
 
   // ─── Op\u00e9rateur ──────────────────────────────
   const [operator, setOperator] = useState(() => loadLocal(LS_KEYS.operator, ''));
@@ -46,7 +56,43 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
   const saveConfig = () => {
     saveLocal(LS_KEYS.workerUrl, workerUrl);
     saveLocal(LS_KEYS.operator, operator);
-    toast('Configuration sauvegard\u00e9e');
+    saveLocal('ir_notion_token', notionToken);
+    saveLocal('ir_notion_db_id', notionDbId);
+    saveLocal('ir_github_token', githubToken);
+    saveLocal('ir_github_owner', githubOwner);
+    saveLocal('ir_github_site_repo', githubSiteRepo);
+    toast('Configuration sauvegardée');
+    if (onRefresh) onRefresh();
+  };
+
+  const testNotion = async () => {
+    setTesting(prev => ({ ...prev, notion: 'loading' }));
+    try {
+      saveLocal('ir_notion_token', notionToken);
+      saveLocal('ir_notion_db_id', notionDbId);
+      const articles = await fetchNotionArticles();
+      setTesting(prev => ({ ...prev, notion: 'ok' }));
+      toast(`Notion connecté — ${articles.length} articles trouvés`);
+    } catch (err) {
+      setTesting(prev => ({ ...prev, notion: 'error' }));
+      toast(`Erreur Notion : ${err.message}`, 'error');
+    }
+  };
+
+  const testGitHub = async () => {
+    setTesting(prev => ({ ...prev, github: 'loading' }));
+    try {
+      const resp = await fetch(`https://api.github.com/repos/${githubOwner}/${githubSiteRepo}`, {
+        headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' },
+      });
+      if (!resp.ok) throw new Error(`GitHub : ${resp.status}`);
+      const repo = await resp.json();
+      setTesting(prev => ({ ...prev, github: 'ok' }));
+      toast(`GitHub connecté — repo ${repo.full_name}`);
+    } catch (err) {
+      setTesting(prev => ({ ...prev, github: 'error' }));
+      toast(`Erreur GitHub : ${err.message}`, 'error');
+    }
   };
 
   // ─── Test connexion ───────────────────────────
@@ -331,6 +377,89 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Notion + GitHub config */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 20 }}>
+          {/* Notion */}
+          <div className="card">
+            <h3 style={{ fontSize: 16, marginBottom: 16 }}>
+              Pipeline Notion
+              {statusIcon(testing.notion || (notionToken && notionDbId ? '' : ''))}
+            </h3>
+            <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 16 }}>
+              Connectez votre base Notion « Publications » pour synchroniser les articles.
+            </p>
+            <div style={{ marginBottom: 12 }}>
+              <label>Notion Integration Token</label>
+              <input
+                type="password"
+                value={notionToken}
+                onChange={e => setNotionToken(e.target.value)}
+                placeholder="ntn_..."
+              />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label>Notion Database ID</label>
+              <input
+                value={notionDbId}
+                onChange={e => setNotionDbId(e.target.value)}
+                placeholder="ID dans l'URL Notion"
+              />
+            </div>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={testNotion}
+              disabled={!notionToken || !notionDbId || testing.notion === 'loading'}
+            >
+              {testing.notion === 'loading' ? 'Test…' : 'Tester la connexion Notion'}
+            </button>
+          </div>
+
+          {/* GitHub */}
+          <div className="card">
+            <h3 style={{ fontSize: 16, marginBottom: 16 }}>
+              Publication GitHub
+              {statusIcon(testing.github || (githubToken && githubOwner && githubSiteRepo ? '' : ''))}
+            </h3>
+            <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 16 }}>
+              Configurez l'accès GitHub pour publier les articles sur le site.
+            </p>
+            <div style={{ marginBottom: 12 }}>
+              <label>GitHub Personal Access Token</label>
+              <input
+                type="password"
+                value={githubToken}
+                onChange={e => setGithubToken(e.target.value)}
+                placeholder="ghp_..."
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+              <div>
+                <label>Repo Owner</label>
+                <input
+                  value={githubOwner}
+                  onChange={e => setGithubOwner(e.target.value)}
+                  placeholder="benedictefradin-cmd"
+                />
+              </div>
+              <div>
+                <label>Repo du site</label>
+                <input
+                  value={githubSiteRepo}
+                  onChange={e => setGithubSiteRepo(e.target.value)}
+                  placeholder="institut-rousseau"
+                />
+              </div>
+            </div>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={testGitHub}
+              disabled={!githubToken || !githubOwner || !githubSiteRepo || testing.github === 'loading'}
+            >
+              {testing.github === 'loading' ? 'Test…' : 'Tester la connexion GitHub'}
+            </button>
           </div>
         </div>
 

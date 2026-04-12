@@ -1,0 +1,101 @@
+[
+  {
+    "id": "nicolas-dufrene",
+    "firstName": "Nicolas",
+    "lastName": "Dufrêne",
+    "role": "Directeur de l'Institut Rousseau",
+    "bio": "Haut fonctionnaire, spécialiste des questions monétaires et budgétaires.",
+    "photo": "",
+    "publications": 12
+  },
+  {
+    "id": "chloe-ridel",
+    "firstName": "Chloé",
+    "lastName": "Ridel",
+    "role": "Présidente de l'Institut Rousseau",
+    "bio": "Haute fonctionnaire, autrice de 'D'une guerre à l'autre'.",
+    "photo": "",
+    "publications": 8
+  },
+  {
+    "id": "marine-yzquierdo",
+    "firstName": "Marine",
+    "lastName": "Yzquierdo",
+    "role": "Spécialiste travail et environnement",
+    "bio": "Chercheuse spécialisée dans les liens entre travail et transition écologique.",
+    "photo": "",
+    "publications": 3
+  },
+  {
+    "id": "magali-lafourcade",
+    "firstName": "Magali",
+    "lastName": "Lafourcade",
+    "role": "Secrétaire générale de la CNCDH",
+    "bio": "Magistrate, secrétaire générale de la Commission nationale consultative des droits de l'homme.",
+    "photo": "",
+    "publications": 5
+  },
+  {
+    "id": "pierre-micheletti",
+    "firstName": "Pierre",
+    "lastName": "Micheletti",
+    "role": "Médecin, ancien président ACF",
+    "bio": "Médecin et ancien président d'Action contre la faim, spécialiste de l'aide humanitaire.",
+    "photo": "",
+    "publications": 2
+  },
+  {
+    "id": "robert-bell",
+    "firstName": "Robert",
+    "lastName": "Bell",
+    "role": "Professeur, spécialiste majors pétrolières",
+    "bio": "Professeur, spécialiste des majors pétrolières et de la transition énergétique.",
+    "photo": "",
+    "publications": 4
+  },
+  {
+    "id": "gael-giraud",
+    "firstName": "Gaël",
+    "lastName": "Giraud",
+    "role": "Économiste",
+    "bio": "Économiste, directeur de recherche au CNRS, ancien chef économiste de l'AFD.",
+    "photo": "",
+    "publications": 6
+  },
+  {
+    "id": "beverley-toudic",
+    "firstName": "Beverley",
+    "lastName": "Toudic",
+    "role": "Directrice adjointe",
+    "bio": "Directrice adjointe de l'Institut Rousseau.",
+    "photo": "",
+    "publications": 3
+  },
+  {
+    "id": "simon-pujau",
+    "firstName": "Simon",
+    "lastName": "Pujau",
+    "role": "Chercheur en économie",
+    "bio": "Chercheur spécialisé en finance verte et obligations vertes européennes.",
+    "photo": "",
+    "publications": 2
+  },
+  {
+    "id": "arthur-boutiab",
+    "firstName": "Arthur",
+    "lastName": "Boutiab",
+    "role": "Chercheur en économie circulaire",
+    "bio": "Chercheur spécialisé en économie circulaire et transition écologique.",
+    "photo": "",
+    "publications": 1
+  },
+  {
+    "id": "lea-falco",
+    "firstName": "Léa",
+    "lastName": "Falco",
+    "role": "Chercheuse en écologie",
+    "bio": "Chercheuse spécialisée en politiques environnementales.",
+    "photo": "",
+    "publications": 1
+  }
+]
