@@ -3,6 +3,7 @@ import ServiceBadge from '../components/shared/ServiceBadge';
 import { THEMATIQUES } from '../utils/constants';
 import { triggerRebuild, hasDeployHook } from '../services/deploy';
 import { hasGitHub } from '../services/github';
+import useUnsavedGuard from '../hooks/useUnsavedGuard';
 
 // ─── Toutes les pages statiques du site, regroupées par catégorie ───
 const PAGE_GROUPS = [
@@ -56,6 +57,7 @@ export default function Contenu({ contenu, setContenu, toast, saveToSite }) {
   const [activePage, setActivePage] = useState('projet');
   const [preview, setPreview] = useState({});
   const [saving, setSaving] = useState(false);
+  const { markSaved } = useUnsavedGuard(contenu);
 
   const getValue = (section, key) => {
     if (!contenu || !contenu[section]) return '';
@@ -83,6 +85,7 @@ export default function Contenu({ contenu, setContenu, toast, saveToSite }) {
     setSaving(true);
     try {
       await saveToSite('contenu', contenu, 'Mise à jour contenu du site depuis le back-office');
+      markSaved();
     } finally {
       setSaving(false);
     }
