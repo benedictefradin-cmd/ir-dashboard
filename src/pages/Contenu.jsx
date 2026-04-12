@@ -164,6 +164,11 @@ export default function Contenu({ contenu, setContenu, toast, saveToSite }) {
         </div>
         <div className="flex-center gap-8">
           <ServiceBadge service="github" />
+          {saveToSite && hasGitHub() && (
+            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
+              {saving ? 'Publication…' : 'Publier sur le site'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -185,6 +190,16 @@ export default function Contenu({ contenu, setContenu, toast, saveToSite }) {
         {activeTab === 'roadmap' && renderRoadmap()}
         {activeTab === 'thematiques' && renderThematiques()}
         {activeTab === 'confidentialite' && renderConfidentialite()}
+
+        <div className="flex-wrap gap-8" style={{ marginTop: 24 }}>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+            {saving ? 'Sauvegarde…' : 'Sauvegarder tout'}
+          </button>
+          <button className="btn btn-outline" onClick={async () => {
+            if (!hasDeployHook()) { toast('Deploy hook non configuré — allez dans Config', 'error'); return; }
+            try { await triggerRebuild(); toast('Rebuild déclenché'); } catch (e) { toast(e.message, 'error'); }
+          }}>Rebuild site</button>
+        </div>
       </div>
     </>
   );

@@ -493,6 +493,28 @@ export default function Articles({
             </button>
           )}
         </div>
+        {(statusFilter.length > 0 || themeFilter.length > 0 || typeFilter.length > 0) && (
+          <div className="filter-tags">
+            {statusFilter.map(v => (
+              <span key={`s-${v}`} className="filter-tag">
+                {ARTICLE_STATUSES[v]?.label || v}
+                <button type="button" onClick={() => setStatusFilter(statusFilter.filter(x => x !== v))}>×</button>
+              </span>
+            ))}
+            {themeFilter.map(v => (
+              <span key={`t-${v}`} className="filter-tag">
+                {v}
+                <button type="button" onClick={() => setThemeFilter(themeFilter.filter(x => x !== v))}>×</button>
+              </span>
+            ))}
+            {typeFilter.map(v => (
+              <span key={`y-${v}`} className="filter-tag">
+                {v}
+                <button type="button" onClick={() => setTypeFilter(typeFilter.filter(x => x !== v))}>×</button>
+              </span>
+            ))}
+          </div>
+        )}
 
         <DataTable
           columns={columns}

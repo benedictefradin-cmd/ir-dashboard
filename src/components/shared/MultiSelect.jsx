@@ -20,7 +20,9 @@ export default function MultiSelect({ options, selected, onChange, label }) {
     }
   };
 
-  const displayLabel = selected.length === 0
+  const hasSelection = selected.length > 0;
+
+  const displayLabel = !hasSelection
     ? label
     : selected.length === 1
       ? options.find(o => o.value === selected[0])?.label || selected[0]
@@ -30,7 +32,7 @@ export default function MultiSelect({ options, selected, onChange, label }) {
     <div className="multi-select" ref={ref}>
       <button
         type="button"
-        className="multi-select-trigger"
+        className={`multi-select-trigger${hasSelection ? ' multi-select-active' : ''}`}
         onClick={() => setOpen(!open)}
       >
         <span className="multi-select-label">{displayLabel}</span>
@@ -50,6 +52,15 @@ export default function MultiSelect({ options, selected, onChange, label }) {
               <span>{opt.label}</span>
             </label>
           ))}
+          <div className="multi-select-footer">
+            <button
+              type="button"
+              className="multi-select-ok"
+              onClick={() => setOpen(false)}
+            >
+              OK
+            </button>
+          </div>
         </div>
       )}
     </div>
