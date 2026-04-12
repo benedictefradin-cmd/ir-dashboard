@@ -5,6 +5,14 @@ import { EMAIL_TEMPLATES, COLORS } from '../utils/constants';
 import { sendBulkEmail } from '../services/brevo';
 import { sendMessage, sendChannelMessage } from '../services/telegram';
 
+const SEGMENTS = [
+  { key: 'all_subscribers', label: 'Abonnés newsletter' },
+  { key: 'all', label: 'Tous les contacts' },
+  { key: 'presse', label: 'Contacts presse' },
+  { key: 'auteurs', label: 'Auteurs' },
+  { key: 'evenement', label: 'Inscrits événements' },
+];
+
 export default function Messagerie({ subscribers = [], services, toast }) {
   const [channel, setChannel] = useState('email');
   const [templateKey, setTemplateKey] = useState('');

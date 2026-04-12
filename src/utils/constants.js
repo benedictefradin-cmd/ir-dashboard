@@ -54,12 +54,6 @@ export const PUB_TYPES = ['Note d\'analyse', 'Point de vue', 'Rapport', 'Rapport
 export const SOURCES = ['Site web', '\u00c9v\u00e9nement', 'LinkedIn', 'Manuel', 'Brevo'];
 
 // ─── Statuts ──────────────────────────────────────────
-export const ADHERENT_STATUSES = {
-  actif: { label: 'Actif', badgeClass: 'badge-green' },
-  expire: { label: 'Expir\u00e9', badgeClass: 'badge-terra' },
-  en_attente: { label: 'En attente', badgeClass: 'badge-ochre' },
-};
-
 export const ARTICLE_STATUSES = {
   draft: { label: 'Brouillon', badgeClass: 'badge-gray' },
   review: { label: 'À relire', badgeClass: 'badge-ochre' },
@@ -90,7 +84,7 @@ export const CONTACT_SUBJECTS = [
   { key: 'presse', label: 'Demande presse / m\u00e9dia' },
   { key: 'partenariat', label: 'Partenariat' },
   { key: 'evenement', label: '\u00c9v\u00e9nement' },
-  { key: 'adhesion', label: 'Adh\u00e9sion' },
+  { key: 'newsletter', label: 'Newsletter' },
   { key: 'autre', label: 'Autre' },
 ];
 
@@ -120,37 +114,6 @@ export const CONTACT_STATUSES = {
 
 // ─── Templates email ──────────────────────────────────
 export const EMAIL_TEMPLATES = {
-  bienvenue: {
-    name: 'Bienvenue adh\u00e9rent',
-    subject: 'Bienvenue \u00e0 l\u2019Institut Rousseau\u00a0!',
-    body: `Bonjour {pr\u00e9nom},
-
-Votre adh\u00e9sion \u00e0 l\u2019Institut Rousseau a bien \u00e9t\u00e9 enregistr\u00e9e. Merci pour votre engagement\u00a0!
-
-En tant que membre, vous recevrez\u00a0:
-\u2014 Notre newsletter mensuelle avec nos derni\u00e8res publications
-\u2014 Des invitations \u00e0 nos \u00e9v\u00e9nements (ateliers, conf\u00e9rences, rencontres)
-\u2014 Un acc\u00e8s privil\u00e9gi\u00e9 \u00e0 nos travaux en avant-premi\u00e8re
-
-\u00c0 tr\u00e8s bient\u00f4t,
-L\u2019\u00e9quipe de l\u2019Institut Rousseau
-
-institut-rousseau.fr`,
-  },
-  renouvellement: {
-    name: 'Rappel de renouvellement',
-    subject: 'Votre adh\u00e9sion arrive \u00e0 \u00e9ch\u00e9ance',
-    body: `Bonjour {pr\u00e9nom},
-
-Votre adh\u00e9sion \u00e0 l\u2019Institut Rousseau expire le {date_expiration}.
-
-Pour continuer \u00e0 soutenir nos travaux et rester membre de notre communaut\u00e9 de {nombre_membres} adh\u00e9rents, renouvelez votre adh\u00e9sion\u00a0:
-
-\u2192 Renouveler mon adh\u00e9sion\u00a0: {lien_helloasso}
-
-Merci pour votre fid\u00e9lit\u00e9,
-L\u2019Institut Rousseau`,
-  },
   publication: {
     name: 'Nouvelle publication',
     subject: '{titre_article} \u2014 Nouvelle publication',

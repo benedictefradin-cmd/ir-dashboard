@@ -150,15 +150,15 @@ const DEMO_SOLLICITATIONS = [
   },
   {
     id: 'msg_1712239200_g8h5', name: 'Marc Lefebvre', email: 'marc.l@free.fr',
-    organization: '', phone: '', subject: 'adhesion',
-    message: 'Bonjour, je souhaite adh\u00e9rer \u00e0 l\u2019Institut Rousseau mais je rencontre un probl\u00e8me sur HelloAsso. Pouvez-vous m\u2019aider ?',
+    organization: '', phone: '', subject: 'general',
+    message: 'Bonjour, je souhaiterais m\u2019inscrire \u00e0 la newsletter de l\u2019Institut Rousseau mais je ne re\u00e7ois pas l\u2019email de confirmation. Pouvez-vous m\u2019aider\u00a0?',
     consent: true, submitted_at: '2026-04-07T11:00:00Z', source_page: '/contact',
     status: 'resolved', assigned_to: 'B\u00e9n\u00e9dicte', priority: 'low',
     internal_notes: [
       { type: 'reply_sent', text: 'R\u00e9ponse envoy\u00e9e par email', date: '2026-04-07T14:00:00Z', author: 'B\u00e9n\u00e9dicte' },
       { type: 'status_change', text: 'Statut \u2192 R\u00e9solu', date: '2026-04-07T14:00:00Z', author: 'B\u00e9n\u00e9dicte' },
     ],
-    replies: [{ text: 'Bonjour Marc, vous pouvez utiliser ce lien direct pour adh\u00e9rer\u2026', sent_by: 'B\u00e9n\u00e9dicte', sent_at: '2026-04-07T14:00:00Z' }],
+    replies: [{ text: 'Bonjour Marc, nous avons renvoy\u00e9 l\u2019email de confirmation. V\u00e9rifiez vos spams.', sent_by: 'B\u00e9n\u00e9dicte', sent_at: '2026-04-07T14:00:00Z' }],
     tags: [],
     updated_at: '2026-04-07T14:00:00Z', resolved_at: '2026-04-07T14:00:00Z',
   },

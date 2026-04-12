@@ -44,6 +44,12 @@ export default function Dashboard({
     return { total: subscribers.length };
   }, [subscribers]);
 
+  const presseStats = useMemo(() => {
+    const total = presse.length;
+    const thisMonthCount = presse.filter(p => isThisMonth(p.date)).length;
+    return { total, thisMonthCount };
+  }, [presse, thisMonth, thisYear]);
+
   const nextEvent = evtStats.next;
   const newSollCount = sollicitations.filter(s => s.status === 'new').length;
 
@@ -51,7 +57,7 @@ export default function Dashboard({
     return (
       <>
         <div className="page-header"><h1>Dashboard</h1></div>
-        <div className="page-body"><SkeletonCard count={4} /></div>
+        <div className="page-body"><SkeletonCard count={5} /></div>
       </>
     );
   }
@@ -71,7 +77,7 @@ export default function Dashboard({
 
       <div className="page-body">
         {/* ── KPI cards ──────────────────────────── */}
-        <div className="grid grid-4 mb-16">
+        <div className="grid grid-5 mb-16">
           <StatsCard
             label="Publications"
             value={pubStats.total}
@@ -94,6 +100,13 @@ export default function Dashboard({
             onClick={() => onTabChange('newsletter')}
           />
           <StatsCard
+            label="Presse"
+            value={presseStats.total}
+            sub={`${presseStats.thisMonthCount} ce mois-ci`}
+            accentColor={COLORS.green}
+            onClick={() => onTabChange('presse')}
+          />
+          <StatsCard
             label="Sollicitations"
             value={newSollCount}
             sub="en attente"
@@ -103,16 +116,20 @@ export default function Dashboard({
         </div>
 
         {/* ── Actions rapides ────────────────────── */}
-        <div className="flex-wrap mb-16 fade-in" style={{ gap: 8 }}>
-          <button className="btn btn-outline btn-sm" onClick={() => onTabChange('articles')}>+ Article</button>
-          <button className="btn btn-outline btn-sm" onClick={() => onTabChange('evenements')}>+ Événement</button>
-          <button className="btn btn-outline btn-sm" onClick={() => onTabChange('presse')}>+ Presse</button>
-          <button className="btn btn-outline btn-sm" onClick={() => onTabChange('newsletter')}>Newsletter</button>
-          {newSollCount > 0 && (
-            <button className="btn btn-sky btn-sm" onClick={() => onTabChange('sollicitations')}>
-              {newSollCount} sollicitation{newSollCount > 1 ? 's' : ''} en attente
-            </button>
-          )}
+        <div className="card mb-16 fade-in" style={{ padding: '14px 20px' }}>
+          <div className="flex-wrap" style={{ gap: 8, alignItems: 'center' }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: COLORS.navy, marginRight: 8 }}>Actions rapides</span>
+            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('articles')}>+ Article</button>
+            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('evenements')}>+ Événement</button>
+            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('presse')}>+ Presse</button>
+            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('newsletter')}>Newsletter</button>
+            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('auteurs')}>+ Auteur</button>
+            {newSollCount > 0 && (
+              <button className="btn btn-sky btn-sm" onClick={() => onTabChange('sollicitations')}>
+                {newSollCount} sollicitation{newSollCount > 1 ? 's' : ''} en attente
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ── Alerte publications prêtes ─────────── */}
@@ -152,6 +169,9 @@ export default function Dashboard({
                   <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>
                     {nextEvent.lieu || nextEvent.location}
                   </p>
+                )}
+                {nextEvent.type && (
+                  <span className="badge badge-navy" style={{ marginTop: 8, display: 'inline-block' }}>{nextEvent.type}</span>
                 )}
               </div>
             ) : (
