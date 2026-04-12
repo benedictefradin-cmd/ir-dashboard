@@ -5,7 +5,7 @@ import { EMAIL_TEMPLATES, COLORS } from '../utils/constants';
 import { sendBulkEmail } from '../services/brevo';
 import { sendMessage, sendChannelMessage } from '../services/telegram';
 
-export default function Messagerie({ adherents, subscribers, services, toast }) {
+export default function Messagerie({ subscribers = [], services, toast }) {
   const [channel, setChannel] = useState('email');
   const [templateKey, setTemplateKey] = useState('');
   const [recipients, setRecipients] = useState('all_subscribers');
@@ -25,19 +25,8 @@ export default function Messagerie({ adherents, subscribers, services, toast }) 
   };
 
   const getRecipientList = () => {
-    if (recipients === 'all_subscribers') return subscribers.filter(s => s.status === 'added' || s.status === 'abonn\u00e9');
-    if (recipients === 'all_adherents') return adherents.filter(a => a.status === 'actif' || a.status === 'Pay\u00e9');
-    if (recipients === 'all') {
-      const seen = new Set();
-      const all = [];
-      for (const s of subscribers.filter(s => s.status === 'added' || s.status === 'abonn\u00e9')) {
-        if (!seen.has(s.email)) { seen.add(s.email); all.push(s); }
-      }
-      for (const a of adherents) {
-        if (!seen.has(a.email)) { seen.add(a.email); all.push(a); }
-      }
-      return all;
-    }
+    const active = subscribers.filter(s => s.status === 'added' || s.status === 'abonn\u00e9');
+    if (recipients === 'all_subscribers' || recipients === 'all') return active;
     return [];
   };
 
@@ -138,7 +127,7 @@ export default function Messagerie({ adherents, subscribers, services, toast }) 
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 20 }}>
+        <div className="messagerie-grid">
           {/* Panneau gauche */}
           <div>
             {channel === 'email' && (
@@ -146,11 +135,7 @@ export default function Messagerie({ adherents, subscribers, services, toast }) 
                 <div className="card mb-16">
                   <h3 style={{ fontSize: 15, marginBottom: 12 }}>Destinataires</h3>
                   {[
-                    ['all_subscribers', `Abonn\u00e9s newsletter (${subscribers.filter(s => s.status === 'added' || s.status === 'abonn\u00e9').length})`],
-                    ['all_adherents', `Adh\u00e9rents actifs (${adherents.filter(a => a.status === 'actif' || a.status === 'Pay\u00e9').length})`],
-                    ['donateurs', 'Donateurs'],
-                    ['presse', 'Contacts presse'],
-                    ['auteurs', 'Auteurs'],
+                    ['all_subscribers', `Abonnés newsletter (${subscribers.filter(s => s.status === 'added' || s.status === 'abonné').length})`],
                     ['all', 'Tous les contacts'],
                   ].map(([key, label]) => (
                     <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer', textTransform: 'none', fontWeight: 400, fontSize: 14 }}>

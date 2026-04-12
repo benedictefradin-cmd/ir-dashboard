@@ -9,7 +9,7 @@ import { testConnection as testTelegram } from '../services/telegram';
 import { addContact as addBrevoContact } from '../services/brevo';
 import { fetchArticles as fetchNotionArticles } from '../services/notion';
 
-export default function Settings({ adherents, subscribers, services, onImportAdherents, onImportSubscribers, onRefresh, toast }) {
+export default function Settings({ subscribers, services, onImportSubscribers, onRefresh, toast }) {
   // ─── Config API ───────────────────────────────
   const [workerUrl, setWorkerUrl] = useState(() => loadLocal(LS_KEYS.workerUrl, DEFAULT_WORKER_URL));
   const [testing, setTesting] = useState({});
@@ -31,7 +31,7 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
   const [importData, setImportData] = useState(null);
   const [importHeaders, setImportHeaders] = useState([]);
   const [importMapping, setImportMapping] = useState({});
-  const [importTarget, setImportTarget] = useState('adherents');
+  const [importTarget, setImportTarget] = useState('newsletter');
   const [importing, setImporting] = useState(false);
   const [duplicateAction, setDuplicateAction] = useState('skip'); // skip | update
   const fileRef = useRef(null);
@@ -104,11 +104,10 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
         setTesting(prev => ({
           ...prev,
           worker: 'ok',
-          helloasso: health.services?.helloasso ? 'ok' : 'error',
           brevo: health.services?.brevo ? 'ok' : 'error',
           telegram: health.services?.telegram ? 'ok' : 'error',
         }));
-        toast(`Worker connect\u00e9 \u2014 HelloAsso\u00a0: ${health.services?.helloasso ? '\u2705' : '\u274c'}, Brevo\u00a0: ${health.services?.brevo ? '\u2705' : '\u274c'}, Telegram\u00a0: ${health.services?.telegram ? '\u2705' : '\u274c'}`);
+        toast(`Worker connect\u00e9 \u2014 Brevo\u00a0: ${health.services?.brevo ? '\u2705' : '\u274c'}, Telegram\u00a0: ${health.services?.telegram ? '\u2705' : '\u274c'}`);
         if (onRefresh) onRefresh();
       } else if (service === 'telegram') {
         await testTelegram();
@@ -158,7 +157,7 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
   const getValidationSummary = () => {
     if (!importData) return { ok: 0, errors: 0, duplicates: 0, total: 0 };
     const emailField = importMapping.email;
-    const existingEmails = (importTarget === 'adherents' ? adherents : subscribers).map(a => (a.email || '').toLowerCase());
+    const existingEmails = subscribers.map(a => (a.email || '').toLowerCase());
     let errors = 0;
     const rowsWithEmail = [];
     const rowsWithoutEmail = [];
@@ -211,17 +210,11 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
       phone: importMapping.telephone ? String(row[importMapping.telephone] || '') : '',
       date: importMapping.date ? String(row[importMapping.date] || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
       amount: importMapping.montant ? parseFloat(row[importMapping.montant]) || 0 : 0,
-      type: importTarget === 'adherents' ? 'Adh\u00e9sion' : undefined,
-      status: importMapping.statut ? String(row[importMapping.statut] || '') : (importTarget === 'adherents' ? 'actif' : 'added'),
+      status: importMapping.statut ? String(row[importMapping.statut] || '') : 'added',
       source: importMapping.source ? String(row[importMapping.source] || 'Import') : 'Import',
     }));
 
-    // Pousser dans le state
-    if (importTarget === 'adherents') {
-      onImportAdherents(newItems);
-    } else {
-      onImportSubscribers(newItems);
-    }
+    onImportSubscribers(newItems);
 
     // Tenter de pousser vers Brevo si connect\u00e9 et import newsletter
     if (importTarget === 'newsletter' && services?.brevo) {
@@ -250,16 +243,11 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
 
   // ─── Export global ────────────────────────────
   const handleExportGlobal = () => {
-    const adherentsData = adherents.map(a => ({
-      Nom: a.name, Email: a.email, Date: a.date,
-      'Montant (\u20ac)': a.amount, Type: a.type, Statut: a.status, Source: a.source,
-    }));
     const subscribersData = subscribers.map(s => ({
       Nom: s.name, Email: s.email, 'Date inscription': s.date,
       Statut: s.status, Source: s.source,
     }));
     exportMultiSheet([
-      { data: adherentsData, name: 'Adh\u00e9rents' },
       { data: subscribersData, name: 'Newsletter' },
     ], `export-global-IR-${new Date().toISOString().slice(0, 10)}.xlsx`);
     toast('Export global t\u00e9l\u00e9charg\u00e9');
@@ -301,13 +289,7 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <div style={{ textAlign: 'center', padding: 12, background: 'var(--cream)', borderRadius: 8 }}>
-                <p style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 4 }}>HelloAsso {statusIcon(testing.helloasso || (services?.helloasso ? 'ok' : ''))}</p>
-                <p style={{ fontWeight: 600, fontSize: 14, color: services?.helloasso ? 'var(--green)' : 'var(--text-light)' }}>
-                  {services?.helloasso ? 'Connect\u00e9' : 'Non configur\u00e9'}
-                </p>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div style={{ textAlign: 'center', padding: 12, background: 'var(--cream)', borderRadius: 8 }}>
                 <p style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 4 }}>Brevo {statusIcon(testing.brevo || (services?.brevo ? 'ok' : ''))}</p>
                 <p style={{ fontWeight: 600, fontSize: 14, color: services?.brevo ? 'var(--green)' : 'var(--text-light)' }}>
@@ -349,7 +331,7 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
               <h3 style={{ fontSize: 16, marginBottom: 16 }}>Export global</h3>
               <p style={{ fontSize: 14, color: 'var(--text-light)', marginBottom: 12 }}>
                 T\u00e9l\u00e9chargez toutes les donn\u00e9es en un fichier Excel avec des onglets s\u00e9par\u00e9s
-                ({adherents.length} adh\u00e9rents, {subscribers.length} abonn\u00e9s).
+                ({subscribers.length} abonn\u00e9s).
               </p>
               <button className="btn btn-primary" onClick={handleExportGlobal}>
                 T\u00e9l\u00e9charger l&rsquo;export global
@@ -479,7 +461,6 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
                 <div>
                   <label>Type d&rsquo;import</label>
                   <select value={importTarget} onChange={e => setImportTarget(e.target.value)} style={{ width: 'auto', minWidth: 200 }}>
-                    <option value="adherents">Adh\u00e9rents</option>
                     <option value="newsletter">Abonn\u00e9s newsletter</option>
                   </select>
                 </div>
@@ -514,10 +495,7 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
               {/* Mapping */}
               <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--navy)' }}>Mapping des colonnes</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
-                {(importTarget === 'adherents'
-                  ? ['nom', 'prenom', 'email', 'telephone', 'date', 'montant', 'statut', 'source']
-                  : ['nom', 'prenom', 'email', 'date', 'statut', 'source']
-                ).map(field => (
+                {['nom', 'prenom', 'email', 'date', 'statut', 'source'].map(field => (
                   <div key={field}>
                     <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
                     <select

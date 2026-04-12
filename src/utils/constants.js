@@ -34,7 +34,7 @@ export const NAV_ITEMS = [
   { key: 'adherents', label: 'Adh\u00e9rents', icon: '\u{1F4CB}' },
   { key: 'dons', label: 'Dons', icon: '\u2764' },
   { key: 'newsletter', label: 'Newsletter', icon: '\u2709' },
-  { key: 'messagerie', label: 'Messagerie', icon: '\u2708' },
+  { key: 'messagerie', label: 'Messagerie', icon: '\u{1F4AC}' },
   { key: 'separator-3', type: 'separator' },
   { key: 'contenu', label: 'Contenu', icon: '\u270E' },
   { key: 'sollicitations', label: 'Sollicitations', icon: '\u{1F4EC}' },

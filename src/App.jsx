@@ -344,8 +344,6 @@ export default function App() {
     evenements: 0,
     presse: 0,
     auteurs: 0,
-    adherents: 0,
-    dons: 0,
     newsletter: subscribers.filter(s => s.status === 'pending').length,
     messagerie: 0,
     contenu: 0,
@@ -397,7 +395,7 @@ export default function App() {
       case 'newsletter':
         return <Newsletter subscribers={subscribers} setSubscribers={setSubscribers} campaigns={campaigns} loading={loading} connected={services.brevo} onRefresh={loadData} toast={toast} />;
       case 'messagerie':
-        return <Messagerie adherents={adherents} subscribers={subscribers} services={services} toast={toast} />;
+        return <Messagerie subscribers={subscribers} services={services} toast={toast} />;
       case 'contenu':
         return <Contenu contenu={contenu} setContenu={setContenu} toast={toast} />;
       case 'sollicitations':
@@ -411,8 +409,8 @@ export default function App() {
         />;
       default:
         return <Dashboard
-          adherents={adherents} subscribers={subscribers} articles={articles}
-          events={events} presse={presse} dons={dons} sollicitations={sollicitations}
+          subscribers={subscribers} articles={articles}
+          events={events} presse={presse} sollicitations={sollicitations}
           activity={activity} loading={loading} onTabChange={changeTab}
           notionArticles={notionArticles} notionCounts={notionCounts}
         />;
