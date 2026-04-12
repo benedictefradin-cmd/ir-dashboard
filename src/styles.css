@@ -87,9 +87,11 @@ h1, h2, h3, h4, h5, h6 {
   padding: 20px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   min-height: 68px;
+  overflow: hidden;
 }
 
 .sidebar-logo {
@@ -105,6 +107,17 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   font-size: 16px;
   color: var(--white);
+}
+
+.sidebar-logo-img {
+  height: 28px;
+  width: auto;
+  filter: brightness(0) invert(1);
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed .sidebar-logo-img {
+  height: 22px;
 }
 
 .sidebar-title {
@@ -904,6 +917,46 @@ label {
   object-fit: cover;
 }
 
+/* ─── Photo upload zone ────────────────────── */
+.photo-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 24px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  color: var(--text-light);
+  font-size: 14px;
+}
+.photo-upload-zone:hover {
+  border-color: var(--navy);
+  background: rgba(26, 35, 75, 0.03);
+}
+.photo-upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-subtle);
+}
+.photo-upload-preview img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+.photo-upload-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* ─── Quick actions ─────────────────────────── */
 .quick-actions {
   display: flex;
@@ -1472,6 +1525,74 @@ label {
   .filter-bar { flex-direction: column; align-items: stretch; }
   .filter-bar .search-input { max-width: 100%; }
   .filter-select { width: 100%; }
+}
+
+/* ═══ Messagerie grid ═════════════════════════ */
+.messagerie-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .messagerie-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══ Login polish ════════════════════════════ */
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--cream) 0%, #EDE8DD 100%);
+}
+
+.login-card {
+  width: 400px;
+  max-width: 92vw;
+  padding: 44px 36px;
+  text-align: center;
+}
+
+.login-card h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.login-card .login-sub {
+  color: var(--text-light);
+  font-size: 15px;
+  margin-bottom: 32px;
+}
+
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-card .login-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: -4px;
+}
+
+/* ═══ Settings grid responsive ════════════════ */
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ═══ Utility ══════════════════════════════════ */

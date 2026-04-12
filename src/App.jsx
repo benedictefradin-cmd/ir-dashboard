@@ -330,14 +330,7 @@ export default function App() {
             if (campaignsData?.length) setCampaigns(campaignsData);
           } catch { /* use demo */ }
         }
-        if (health.services.helloasso) {
-          try {
-            const adhesions = await fetchHelloAssoAdherents();
-            if (adhesions?.items?.length) setAdherents(adhesions.items);
-            const donations = await fetchHelloAssoDons();
-            if (donations?.items?.length) setDons(donations.items);
-          } catch { /* use demo */ }
-        }
+        // HelloAsso data loaded from demo; real sync requires Worker config
       }
     } catch { /* worker not available, use demo data */ }
     setLoading(false);
@@ -363,15 +356,15 @@ export default function App() {
   // Login screen
   if (!loggedIn) {
     return (
-      <div className="fade-in" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cream)' }}>
-        <div className="card slide-up" style={{ width: 380, padding: 40, textAlign: 'center' }}>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>Institut Rousseau</h1>
-          <p style={{ color: 'var(--text-light)', fontSize: 15, marginBottom: 30 }}>Back-office</p>
-          <form onSubmit={handleLogin}>
-            <input placeholder="Identifiant" value={loginId} onChange={e => setLoginId(e.target.value)} style={{ marginBottom: 12 }} />
-            <input placeholder="Mot de passe" type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} style={{ marginBottom: 16 }} />
-            {loginError && <p style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 12 }}>{loginError}</p>}
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '10px 0', fontSize: 15 }}>Se connecter</button>
+      <div className="login-wrapper fade-in">
+        <div className="card login-card slide-up">
+          <img src={logoSvg} alt="Institut Rousseau" style={{ height: 40, marginBottom: 24 }} />
+          <p className="login-sub">Back-office</p>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <input placeholder="Identifiant" value={loginId} onChange={e => setLoginId(e.target.value)} style={{ width: '100%' }} />
+            <input placeholder="Mot de passe" type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} style={{ width: '100%' }} />
+            {loginError && <p className="login-error">{loginError}</p>}
+            <button type="submit" className="btn btn-primary" style={{ padding: '10px 32px', fontSize: 15 }}>Se connecter</button>
           </form>
         </div>
       </div>

@@ -62,7 +62,7 @@ export const api = {
 
 /**
  * V\u00e9rifie si le Worker est joignable et quels services sont configur\u00e9s.
- * @returns {{ status: string, services: { helloasso: boolean, brevo: boolean, telegram: boolean } }}
+ * @returns {{ status: string, services: { brevo: boolean, telegram: boolean } }}
  */
 export async function checkHealth() {
   return api.get('/api/health');

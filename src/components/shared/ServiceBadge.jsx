@@ -1,7 +1,6 @@
 const SERVICES = {
   notion: { label: 'Notion', className: 'service-badge-notion' },
   brevo: { label: 'Brevo', className: 'service-badge-brevo' },
-  helloasso: { label: 'HelloAsso', className: 'service-badge-helloasso' },
   github: { label: 'GitHub', className: 'service-badge-github' },
   cloudflare: { label: 'Cloudflare', className: 'service-badge-cloudflare' },
   vercel: { label: 'Vercel', className: 'service-badge-vercel' },

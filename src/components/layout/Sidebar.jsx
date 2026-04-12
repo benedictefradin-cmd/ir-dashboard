@@ -1,4 +1,5 @@
 import { NAV_ITEMS } from '../../utils/constants';
+import logoSvg from '../../assets/logo.svg';
 
 export default function Sidebar({ activeTab, onTabChange, badges, collapsed, onToggle, mobileOpen, onMobileClose }) {
   return (
@@ -6,11 +7,7 @@ export default function Sidebar({ activeTab, onTabChange, badges, collapsed, onT
       {mobileOpen && <div className="mobile-overlay" onClick={onMobileClose} />}
       <aside className={`sidebar${collapsed ? ' collapsed' : ''}${mobileOpen ? ' mobile-open' : ''}`}>
         <div className="sidebar-header">
-          <div className="sidebar-logo">IR</div>
-          <div className="sidebar-title">
-            <h2>Institut Rousseau</h2>
-            <span>Back-office</span>
-          </div>
+          <img src={logoSvg} alt="Institut Rousseau" className="sidebar-logo-img" />
         </div>
 
         <nav className="sidebar-nav">
