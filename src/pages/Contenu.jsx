@@ -2,6 +2,7 @@ import { useState } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { THEMATIQUES } from '../utils/constants';
 import { triggerRebuild, hasDeployHook } from '../services/deploy';
+import { hasGitHub } from '../services/github';
 
 const TABS = [
   { id: 'projet', label: 'Le Projet' },
@@ -10,7 +11,7 @@ const TABS = [
   { id: 'confidentialite', label: 'Confidentialité' },
 ];
 
-export default function Contenu({ contenu, setContenu, toast }) {
+export default function Contenu({ contenu, setContenu, toast, saveToSite }) {
   const [activeTab, setActiveTab] = useState('projet');
   const [preview, setPreview] = useState({});
 
@@ -32,8 +33,19 @@ export default function Contenu({ contenu, setContenu, toast }) {
     });
   };
 
-  const handleSave = (section) => {
-    toast(`Section "${section}" sauvegardée`);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!saveToSite || !hasGitHub()) {
+      toast('GitHub non configuré — allez dans Config', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      await saveToSite('contenu', contenu, 'Mise à jour contenu du site depuis le back-office');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const togglePreview = (key) => {
@@ -88,13 +100,6 @@ export default function Contenu({ contenu, setContenu, toast }) {
       {renderTextSection('projet', '4 piliers (Écologie, Démocratie, Social, Économie)', 'piliers')}
       {renderTextSection('projet', '3 convictions (Raison républicaine, De l\'idéal à l\'action, Indépendance absolue)', 'convictions')}
       {renderTextSection('projet', 'Timeline historique', 'timeline')}
-      <div className="flex-wrap gap-8">
-        <button className="btn btn-primary" onClick={() => handleSave('projet')}>Sauvegarder</button>
-        <button className="btn btn-outline" onClick={async () => {
-          if (!hasDeployHook()) { toast('Deploy hook non configuré — allez dans Config', 'error'); return; }
-          try { await triggerRebuild(); toast('Rebuild déclenché'); } catch (e) { toast(e.message, 'error'); }
-        }}>Rebuild site</button>
-      </div>
     </>
   );
 
@@ -133,13 +138,6 @@ export default function Contenu({ contenu, setContenu, toast }) {
           <input value={getValue('roadmap', 'pdf_synthese')} onChange={(e) => handleChange('roadmap', 'pdf_synthese', e.target.value)} placeholder="/documents/road-to-net-zero-synthese.pdf" />
         </div>
       </div>
-      <div className="flex-wrap gap-8">
-        <button className="btn btn-primary" onClick={() => handleSave('roadmap')}>Sauvegarder</button>
-        <button className="btn btn-outline" onClick={async () => {
-          if (!hasDeployHook()) { toast('Deploy hook non configuré — allez dans Config', 'error'); return; }
-          try { await triggerRebuild(); toast('Rebuild déclenché'); } catch (e) { toast(e.message, 'error'); }
-        }}>Rebuild site</button>
-      </div>
     </>
   );
 
@@ -148,20 +146,12 @@ export default function Contenu({ contenu, setContenu, toast }) {
       {THEMATIQUES.map((theme) => (
         renderTextSection('thematiques', theme, theme.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))
       ))}
-      <div className="flex-wrap gap-8">
-        <button className="btn btn-primary" onClick={() => handleSave('thématiques')}>Sauvegarder</button>
-        <button className="btn btn-outline" onClick={async () => {
-          if (!hasDeployHook()) { toast('Deploy hook non configuré — allez dans Config', 'error'); return; }
-          try { await triggerRebuild(); toast('Rebuild déclenché'); } catch (e) { toast(e.message, 'error'); }
-        }}>Rebuild site</button>
-      </div>
     </>
   );
 
   const renderConfidentialite = () => (
     <>
       {renderTextSection('confidentialite', 'Politique de confidentialité')}
-      <button className="btn btn-primary" onClick={() => handleSave('confidentialité')}>Sauvegarder</button>
     </>
   );
 

@@ -3,7 +3,9 @@
 // du repo institut-rousseau via l'API GitHub Contents.
 
 const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || '';
-const GITHUB_REPO = 'benedictefradin-cmd/institut-rousseau';
+const GITHUB_OWNER = import.meta.env.VITE_GITHUB_OWNER || 'benedictefradin-cmd';
+const GITHUB_SITE_REPO = import.meta.env.VITE_GITHUB_SITE_REPO || 'institut-rousseau';
+const GITHUB_REPO = `${GITHUB_OWNER}/${GITHUB_SITE_REPO}`;
 const GITHUB_API = `https://api.github.com/repos/${GITHUB_REPO}/contents`;
 
 export function hasGitHub() {
@@ -114,8 +116,8 @@ export async function githubUploadImage(path, base64Content, message) {
  */
 export async function saveAuthorsToGitHub(authors) {
   const readLS = (key) => { try { const v = localStorage.getItem('ir-dash-' + key); return v ? JSON.parse(v) : ''; } catch { return ''; } };
-  const token = readLS('ir_github_token');
-  const owner = readLS('ir_github_owner');
+  const token = readLS('ir_github_token') || GITHUB_TOKEN;
+  const owner = readLS('ir_github_owner') || GITHUB_OWNER;
   if (!token || !owner) throw new Error('Token ou owner GitHub non configuré');
 
   const repo = 'ir-dashboard';

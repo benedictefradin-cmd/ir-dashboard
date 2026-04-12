@@ -58,15 +58,34 @@ export async function saveSiteData(dataType, data, message) {
 }
 
 /**
+ * Lit le fichier contenu.json (textes statiques du site).
+ * @returns {Promise<{ data: Object, sha: string|null }>}
+ */
+export async function fetchContenu() {
+  if (!hasGitHub()) return { data: {}, sha: null };
+  const filePath = `${DATA_PATH}/contenu.json`;
+  try {
+    const { content, sha } = await githubGetFile(filePath);
+    const data = JSON.parse(content);
+    shaCache['contenu'] = sha;
+    return { data, sha };
+  } catch (err) {
+    console.warn('[siteData] Impossible de charger contenu:', err.message);
+    return { data: {}, sha: null };
+  }
+}
+
+/**
  * Charge toutes les données du site en parallèle.
- * @returns {Promise<{ publications: Array, events: Array, presse: Array, auteurs: Array }>}
+ * @returns {Promise<{ publications: Array, events: Array, presse: Array, auteurs: Array, contenu: Object }>}
  */
 export async function fetchAllSiteData() {
-  const [pubResult, evtResult, presseResult, auteursResult] = await Promise.all([
+  const [pubResult, evtResult, presseResult, auteursResult, contenuResult] = await Promise.all([
     fetchSiteData('publications'),
     fetchSiteData('events'),
     fetchSiteData('presse'),
     fetchSiteData('auteurs'),
+    fetchContenu(),
   ]);
 
   return {
@@ -74,6 +93,7 @@ export async function fetchAllSiteData() {
     events: evtResult.data,
     presse: presseResult.data,
     auteurs: auteursResult.data,
+    contenu: contenuResult.data,
   };
 }
 

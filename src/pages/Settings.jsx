@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { loadLocal, saveLocal } from '../utils/localStorage';
-import { LS_KEYS, DEFAULT_WORKER_URL } from '../utils/constants';
+import { LS_KEYS, DEFAULT_WORKER_URL, DEFAULT_GITHUB_OWNER, DEFAULT_GITHUB_SITE_REPO } from '../utils/constants';
 import { parseFile, isValidEmail, findDuplicates } from '../services/export';
 import { exportMultiSheet } from '../services/export';
 import { checkHealth } from '../services/api';
@@ -20,8 +20,8 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
 
   // ─── GitHub config ────────────────────────────
   const [githubToken, setGithubToken] = useState(() => loadLocal('ir_github_token', ''));
-  const [githubOwner, setGithubOwner] = useState(() => loadLocal('ir_github_owner', ''));
-  const [githubSiteRepo, setGithubSiteRepo] = useState(() => loadLocal('ir_github_site_repo', ''));
+  const [githubOwner, setGithubOwner] = useState(() => loadLocal('ir_github_owner', '') || DEFAULT_GITHUB_OWNER);
+  const [githubSiteRepo, setGithubSiteRepo] = useState(() => loadLocal('ir_github_site_repo', '') || DEFAULT_GITHUB_SITE_REPO);
 
   // ─── Vercel deploy hook ───────────────────────
   const [deployHook, setDeployHook] = useState(() => loadLocal(LS_KEYS.vercelDeployHook, ''));

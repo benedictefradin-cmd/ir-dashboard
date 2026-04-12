@@ -148,6 +148,8 @@ export const LS_KEYS = {
 
 // ─── Config par défaut ──────────────────────────────
 export const DEFAULT_WORKER_URL = import.meta.env.VITE_WORKER_URL || '';
+export const DEFAULT_GITHUB_OWNER = import.meta.env.VITE_GITHUB_OWNER || 'benedictefradin-cmd';
+export const DEFAULT_GITHUB_SITE_REPO = import.meta.env.VITE_GITHUB_SITE_REPO || 'institut-rousseau';
 export const DEFAULT_PAGE_SIZE = 50;
 
 // ─── Site URL ────────────────────────────────────────

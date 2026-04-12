@@ -131,6 +131,7 @@ export default function App() {
         if (siteData.events.length) setEvents(normalizeEvents(siteData.events));
         if (siteData.presse.length) setPresse(normalizePresse(siteData.presse));
         if (siteData.auteurs.length) setAuteurs(normalizeAuteurs(siteData.auteurs));
+        if (siteData.contenu && Object.keys(siteData.contenu).length) setContenu(siteData.contenu);
       } catch (err) {
         console.warn('[App] Erreur chargement données site :', err.message);
       }
