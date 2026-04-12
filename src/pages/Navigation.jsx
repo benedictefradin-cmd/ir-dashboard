@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { hasGitHub } from '../services/github';
+import useUnsavedGuard from '../hooks/useUnsavedGuard';
 
 const TABS = [
   { id: 'menu', label: 'Menu principal' },
@@ -15,6 +16,7 @@ const TABS = [
 export default function Navigation({ contenu, setContenu, toast, saveToSite }) {
   const [activeTab, setActiveTab] = useState('menu');
   const [saving, setSaving] = useState(false);
+  const { markSaved } = useUnsavedGuard(contenu);
 
   const nav = contenu?.navigation || {};
 
@@ -39,6 +41,7 @@ export default function Navigation({ contenu, setContenu, toast, saveToSite }) {
     setSaving(true);
     try {
       await saveToSite('contenu', contenu, 'Mise à jour navigation/footer depuis le back-office');
+      markSaved();
     } finally {
       setSaving(false);
     }

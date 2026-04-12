@@ -2,6 +2,7 @@ import { useState } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { triggerRebuild, hasDeployHook } from '../services/deploy';
 import { hasGitHub } from '../services/github';
+import useUnsavedGuard from '../hooks/useUnsavedGuard';
 
 const SECTIONS = [
   { id: 'hero', label: 'Hero (Bannière principale)' },
@@ -16,6 +17,7 @@ export default function Accueil({ contenu, setContenu, toast, saveToSite }) {
   const [activeSection, setActiveSection] = useState('hero');
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState({});
+  const { markSaved } = useUnsavedGuard(contenu);
 
   const home = contenu?.accueil || {};
 
@@ -36,6 +38,7 @@ export default function Accueil({ contenu, setContenu, toast, saveToSite }) {
     setSaving(true);
     try {
       await saveToSite('contenu', contenu, 'Mise à jour page d\'accueil depuis le back-office');
+      markSaved();
     } finally {
       setSaving(false);
     }

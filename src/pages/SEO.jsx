@@ -2,6 +2,7 @@ import { useState } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { hasGitHub } from '../services/github';
 import { SITE_URL } from '../utils/constants';
+import useUnsavedGuard from '../hooks/useUnsavedGuard';
 
 const PAGES_SEO = [
   { id: 'accueil', label: 'Accueil', path: '/' },
@@ -20,6 +21,7 @@ export default function SEO({ contenu, setContenu, toast, saveToSite }) {
   const [activePage, setActivePage] = useState('accueil');
   const [saving, setSaving] = useState(false);
   const [previewCard, setPreviewCard] = useState(false);
+  const { markSaved } = useUnsavedGuard(contenu);
 
   const seo = contenu?.seo || {};
   const pageSeo = seo[activePage] || {};
@@ -62,6 +64,7 @@ export default function SEO({ contenu, setContenu, toast, saveToSite }) {
     setSaving(true);
     try {
       await saveToSite('contenu', contenu, 'Mise à jour SEO depuis le back-office');
+      markSaved();
     } finally {
       setSaving(false);
     }
