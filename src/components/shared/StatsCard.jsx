@@ -10,7 +10,7 @@ export default function StatsCard({ label, value, sub, accentColor, variation, o
       <div className="stat-sub">
         {variation && (
           <span className={`stat-variation ${variation.direction}`}>
-            {variation.direction === 'up' ? '\u2191' : variation.direction === 'down' ? '\u2193' : ''} {variation.pct}\u00a0%
+            {variation.direction === 'up' ? '↑' : variation.direction === 'down' ? '↓' : ''} {variation.pct} %
           </span>
         )}
         {sub && <span>{sub}</span>}

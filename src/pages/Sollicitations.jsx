@@ -171,7 +171,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
     const labels = SOLLICITATION_STATUSES[newStatus]?.label || newStatus;
     const history = {
       type: 'status_change',
-      text: `Statut \u2192 ${labels}`,
+      text: `Statut → ${labels}`,
       date: new Date().toISOString(),
       author: 'Admin',
     };
@@ -180,14 +180,14 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
       status: newStatus,
       internal_notes: [...(item?.internal_notes || []), history],
     });
-    toast(`Statut mis \u00e0 jour : ${labels}`);
+    toast(`Statut mis à jour : ${labels}`);
   };
 
   const handleAssignChange = (id, assignee) => {
     const item = sollicitations.find(s => s.id === id);
     const history = {
       type: 'assign',
-      text: assignee ? `Assign\u00e9 \u00e0 ${assignee}` : 'D\u00e9sassign\u00e9',
+      text: assignee ? `Assigné à ${assignee}` : 'Désassigné',
       date: new Date().toISOString(),
       author: 'Admin',
     };
@@ -195,12 +195,12 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
       assigned_to: assignee || null,
       internal_notes: [...(item?.internal_notes || []), history],
     });
-    toast(assignee ? `Assign\u00e9 \u00e0 ${assignee}` : 'D\u00e9sassign\u00e9');
+    toast(assignee ? `Assigné à ${assignee}` : 'Désassigné');
   };
 
   const handlePriorityChange = (id, priority) => {
     updateSollicitation(id, { priority });
-    toast(`Priorit\u00e9 : ${SOLLICITATION_PRIORITIES[priority]?.label || priority}`);
+    toast(`Priorité : ${SOLLICITATION_PRIORITIES[priority]?.label || priority}`);
   };
 
   const handleReply = async () => {
@@ -215,7 +215,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
 
     const history = {
       type: 'reply_sent',
-      text: 'R\u00e9ponse envoy\u00e9e par email',
+      text: 'Réponse envoyée par email',
       date: new Date().toISOString(),
       author: 'Admin',
     };
@@ -231,7 +231,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
 
     setReplyText('');
     setSendingReply(false);
-    toast('R\u00e9ponse envoy\u00e9e et statut mis \u00e0 jour');
+    toast('Réponse envoyée et statut mis à jour');
   };
 
   const handleAddNote = () => {
@@ -247,7 +247,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
       internal_notes: [...(item?.internal_notes || []), note],
     });
     setNoteText('');
-    toast('Note ajout\u00e9e');
+    toast('Note ajoutée');
   };
 
   const handleAddTag = () => {
@@ -281,7 +281,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
     handleStatusChange(id, 'archived');
     setSelected(null);
     setShowDeleteConfirm(false);
-    toast('Sollicitation archiv\u00e9e');
+    toast('Sollicitation archivée');
   };
 
   const handleExportCSV = () => {
@@ -292,13 +292,13 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
       Organisation: s.organization || '',
       Objet: getSubjectLabel(s.subject),
       Statut: SOLLICITATION_STATUSES[s.status]?.label || s.status,
-      'Assign\u00e9 \u00e0': s.assigned_to || '',
-      Priorit\u00e9: SOLLICITATION_PRIORITIES[s.priority]?.label || s.priority,
+      'Assigné à': s.assigned_to || '',
+      Priorité: SOLLICITATION_PRIORITIES[s.priority]?.label || s.priority,
       Tags: (s.tags || []).join(', '),
-      'Date de r\u00e9solution': s.resolved_at ? formatDateShort(s.resolved_at) : '',
+      'Date de résolution': s.resolved_at ? formatDateShort(s.resolved_at) : '',
     }));
     exportToExcel(rows, 'Sollicitations', `sollicitations_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    toast('Export g\u00e9n\u00e9r\u00e9');
+    toast('Export généré');
   };
 
   const openDetail = (item) => {
@@ -405,7 +405,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
         {paginated.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">{'\u{1F4EC}'}</div>
-            <p>Aucune sollicitation trouv\u00e9e</p>
+            <p>Aucune sollicitation trouvée</p>
           </div>
         ) : (
           <div className="sollicitation-list">
@@ -431,7 +431,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
                   <div className="sollicitation-card-info">
                     <span style={{ fontWeight: 600, fontSize: 15 }}>{item.name || 'Anonyme'}</span>
                     {item.organization && (
-                      <span style={{ color: COLORS.textLight, fontSize: 13 }}> \u2014 {item.organization}</span>
+                      <span style={{ color: COLORS.textLight, fontSize: 13 }}> — {item.organization}</span>
                     )}
                   </div>
                   <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>
@@ -443,7 +443,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
                   <div className="flex-center gap-8">
                     {item.assigned_to && (
                       <span style={{ fontSize: 12, color: COLORS.textLight }}>
-                        \u2192 {item.assigned_to}
+                        → {item.assigned_to}
                       </span>
                     )}
                     {(item.tags || []).slice(0, 3).map(tag => (
@@ -451,7 +451,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
                     ))}
                   </div>
                   <button className="btn btn-outline btn-sm" onClick={e => { e.stopPropagation(); openDetail(item); }}>
-                    Ouvrir \u279C
+                    Ouvrir ➜
                   </button>
                 </div>
               </div>
@@ -462,9 +462,9 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
         {/* ── Pagination ──────────────────────── */}
         {totalPages > 1 && (
           <div className="table-footer">
-            <span>{filtered.length} r\u00e9sultat(s)</span>
+            <span>{filtered.length} résultat(s)</span>
             <div className="pagination">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>\u2190</button>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>←</button>
               {Array.from({ length: Math.min(totalPages, 8) }, (_, i) => {
                 let p;
                 if (totalPages <= 8) {
@@ -486,7 +486,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
                   </button>
                 );
               })}
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>\u2192</button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>→</button>
             </div>
           </div>
         )}
@@ -495,12 +495,12 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
         {stats.total > 0 && (
           <div className="card fade-in" style={{ marginTop: 24 }}>
             <div className="flex-wrap" style={{ gap: 24, fontSize: 13, color: COLORS.textLight }}>
-              <span>Ce mois : <strong style={{ color: COLORS.navy }}>{stats.thisMonthCount}</strong> re\u00e7ues</span>
+              <span>Ce mois : <strong style={{ color: COLORS.navy }}>{stats.thisMonthCount}</strong> reçues</span>
               {stats.avgResponseTime != null && (
-                <span>Temps moyen de r\u00e9ponse : <strong style={{ color: COLORS.navy }}>{stats.avgResponseTime}\u00a0j</strong></span>
+                <span>Temps moyen de réponse : <strong style={{ color: COLORS.navy }}>{stats.avgResponseTime} j</strong></span>
               )}
               {stats.topSubject && (
-                <span>Top sujet : <strong style={{ color: COLORS.navy }}>{stats.topSubject} ({stats.topSubjectPct}\u00a0%)</strong></span>
+                <span>Top sujet : <strong style={{ color: COLORS.navy }}>{stats.topSubject} ({stats.topSubjectPct} %)</strong></span>
               )}
             </div>
           </div>
@@ -509,10 +509,10 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
 
       {/* ═══ DETAIL MODAL ═════════════════════════ */}
       {selected && (
-        <Modal title="D\u00e9tail de la sollicitation" onClose={() => setSelected(null)} size="xl">
+        <Modal title="Détail de la sollicitation" onClose={() => setSelected(null)} size="xl">
           {/* Header actions */}
           <div className="flex-between mb-20">
-            <button className="btn btn-outline btn-sm" onClick={() => setSelected(null)}>\u2190 Retour</button>
+            <button className="btn btn-outline btn-sm" onClick={() => setSelected(null)}>← Retour</button>
             <div className="flex-center gap-8">
               <button className="btn btn-outline btn-sm" onClick={() => handleArchive(selected.id)}>Archiver</button>
               <button className="btn btn-danger btn-sm" onClick={() => setShowDeleteConfirm(true)}>Supprimer</button>
@@ -532,8 +532,8 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
               {selected.phone && <span>{selected.phone}</span>}
             </div>
             <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>
-              Re\u00e7u le {formatDateFr(selected.submitted_at)}
-              {selected.submitted_at && ` \u00e0 ${new Date(selected.submitted_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}
+              Reçu le {formatDateFr(selected.submitted_at)}
+              {selected.submitted_at && ` à ${new Date(selected.submitted_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}
             </p>
           </div>
 
@@ -551,7 +551,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
               </select>
             </div>
             <div>
-              <label>Priorit\u00e9</label>
+              <label>Priorité</label>
               <select
                 value={selected.priority || 'normal'}
                 onChange={e => handlePriorityChange(selected.id, e.target.value)}
@@ -562,12 +562,12 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
               </select>
             </div>
             <div>
-              <label>Assign\u00e9 \u00e0</label>
+              <label>Assigné à</label>
               <select
                 value={selected.assigned_to || ''}
                 onChange={e => handleAssignChange(selected.id, e.target.value)}
               >
-                <option value="">Non assign\u00e9</option>
+                <option value="">Non assigné</option>
                 {SOLLICITATION_ADMINS.map(name => (
                   <option key={name} value={name}>{name}</option>
                 ))}
@@ -593,28 +593,28 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
           {/* ── Reply section ──────────────────── */}
           <div style={{ marginBottom: 24 }}>
             <h4 style={{ fontSize: 16, marginBottom: 8, borderTop: `1px solid ${COLORS.border}`, paddingTop: 16 }}>
-              R\u00e9pondre
+              Répondre
             </h4>
             <p style={{ fontSize: 12, color: COLORS.textLight, marginBottom: 8 }}>
-              Exp\u00e9diteur : contact@institut-rousseau.fr \u2192 {selected.email}
+              Expéditeur : contact@institut-rousseau.fr → {selected.email}
             </p>
             <textarea
               value={replyText}
               onChange={e => setReplyText(e.target.value)}
-              placeholder="R\u00e9digez votre r\u00e9ponse\u2026"
+              placeholder="Rédigez votre réponse…"
               rows={4}
               style={{ marginBottom: 8 }}
             />
             <div className="flex-between">
               <p style={{ fontSize: 11, color: COLORS.textLight }}>
-                La r\u00e9ponse sera envoy\u00e9e par email via Brevo et enregistr\u00e9e dans l\u2019historique.
+                La réponse sera envoyée par email via Brevo et enregistrée dans l’historique.
               </p>
               <button
                 className="btn btn-primary"
                 onClick={handleReply}
                 disabled={!replyText.trim() || sendingReply}
               >
-                {sendingReply ? 'Envoi\u2026' : 'Envoyer la r\u00e9ponse'}
+                {sendingReply ? 'Envoi…' : 'Envoyer la réponse'}
               </button>
             </div>
           </div>
@@ -630,23 +630,23 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
                 <span className="timeline-icon">{'\u{1F4E8}'}</span>
                 <div>
                   <span className="timeline-date">{formatDateShort(selected.submitted_at)}</span>
-                  <span className="timeline-text">Message initial re\u00e7u</span>
+                  <span className="timeline-text">Message initial reçu</span>
                 </div>
               </div>
 
               {/* Notes & history entries */}
               {(selected.internal_notes || []).map((note, i) => {
                 let icon = '\u{1F4DD}';
-                if (note.type === 'status_change') icon = '\u2705';
+                if (note.type === 'status_change') icon = '✅';
                 if (note.type === 'reply_sent') icon = '\u{1F4E4}';
-                if (note.type === 'assign') icon = '\u{1F441}\uFE0F';
+                if (note.type === 'assign') icon = '\u{1F441}️';
                 return (
                   <div key={i} className="timeline-item">
                     <span className="timeline-icon">{icon}</span>
                     <div>
                       <span className="timeline-date">{formatDateShort(note.date)}</span>
                       <span className="timeline-text">{note.text}</span>
-                      {note.author && <span className="timeline-author"> \u2014 {note.author}</span>}
+                      {note.author && <span className="timeline-author"> — {note.author}</span>}
                     </div>
                   </div>
                 );
@@ -658,7 +658,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
                   <span className="timeline-icon">{'\u{1F4E4}'}</span>
                   <div>
                     <span className="timeline-date">{formatDateShort(reply.sent_at)}</span>
-                    <span className="timeline-text">R\u00e9ponse envoy\u00e9e par {reply.sent_by}</span>
+                    <span className="timeline-text">Réponse envoyée par {reply.sent_by}</span>
                     <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4, fontStyle: 'italic' }}>
                       &laquo;{truncate(reply.text, 120)}&raquo;
                     </p>
@@ -676,7 +676,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
             <textarea
               value={noteText}
               onChange={e => setNoteText(e.target.value)}
-              placeholder="Ajouter une note interne\u2026"
+              placeholder="Ajouter une note interne…"
               rows={2}
               style={{ marginBottom: 8 }}
             />
@@ -703,7 +703,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
                     onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
                     style={{ marginLeft: 4, fontWeight: 700, opacity: 0.6 }}
                   >
-                    \u00d7
+                    ×
                   </span>
                 </span>
               ))}
@@ -712,7 +712,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
               <input
                 value={tagInput}
                 onChange={e => setTagInput(e.target.value)}
-                placeholder="Ajouter un tag\u2026"
+                placeholder="Ajouter un tag…"
                 style={{ width: 200 }}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
               />

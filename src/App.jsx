@@ -21,34 +21,34 @@ import logoSvg from './assets/logo.svg';
 
 // ─── DEMO DATA ─────────────────────────────────────────
 const DEMO_ARTICLES = [
-  { id: 1, title: '\u00c9tats-Unis hors-la-loi, hors climat : quelles cons\u00e9quences pour l\u2019Europe ?', author: 'Nicolas Dufr\u00eane', date: '2025-03-15', tags: ['\u00c9cologie', 'Institutions'], summary: 'Analyse des cons\u00e9quences du retrait am\u00e9ricain des accords climatiques.', content: '', type: 'Note d\'analyse', pdfUrl: '', status: 'published' },
-  { id: 2, title: 'Relancer l\u2019offensive climatique europ\u00e9enne par des obligations cibl\u00e9es', author: 'Simon Pujau', date: '2025-02-20', tags: ['\u00c9cologie', '\u00c9conomie'], summary: 'Propositions pour financer la transition via des obligations vertes.', content: '', type: 'Note d\'analyse', pdfUrl: '', status: 'published' },
-  { id: 3, title: '\u00c9conomie circulaire : une critique n\u00e9cessaire', author: 'Arthur Boutiab', date: '2025-01-10', tags: ['\u00c9conomie', '\u00c9cologie'], summary: 'Retour critique sur les limites du mod\u00e8le d\u2019\u00e9conomie circulaire actuel.', content: '', type: 'Point de vue', pdfUrl: '', status: 'published' },
-  { id: 4, title: 'Souverainet\u00e9 num\u00e9rique et communs digitaux', author: 'Nicolas Music', date: '2026-04-01', tags: ['Culture'], summary: 'Pour une politique europ\u00e9enne des communs num\u00e9riques.', content: '', type: 'Note d\'analyse', pdfUrl: '', status: 'draft' },
-  { id: 5, title: 'L\u2019avenir de la protection sociale', author: 'Chlo\u00e9 Music', date: '2026-04-05', tags: ['Social'], summary: 'Repenser le mod\u00e8le social fran\u00e7ais face aux mutations du travail.', content: '', type: 'Point de vue', pdfUrl: '', status: 'review' },
-  { id: 6, title: 'Planification \u00e9cologique : bilan d\u2019un an', author: 'Pierre Music', date: '2026-04-08', tags: ['\u00c9cologie'], summary: 'Bilan de la premi\u00e8re ann\u00e9e de planification \u00e9cologique en France.', content: '', type: 'Note d\'analyse', pdfUrl: '', status: 'ready' },
+  { id: 1, title: 'États-Unis hors-la-loi, hors climat : quelles conséquences pour l’Europe ?', author: 'Nicolas Dufrêne', date: '2025-03-15', tags: ['Écologie', 'Institutions'], summary: 'Analyse des conséquences du retrait américain des accords climatiques.', content: '', type: 'Note d\'analyse', pdfUrl: '', status: 'published' },
+  { id: 2, title: 'Relancer l’offensive climatique européenne par des obligations ciblées', author: 'Simon Pujau', date: '2025-02-20', tags: ['Écologie', 'Économie'], summary: 'Propositions pour financer la transition via des obligations vertes.', content: '', type: 'Note d\'analyse', pdfUrl: '', status: 'published' },
+  { id: 3, title: 'Économie circulaire : une critique nécessaire', author: 'Arthur Boutiab', date: '2025-01-10', tags: ['Économie', 'Écologie'], summary: 'Retour critique sur les limites du modèle d’économie circulaire actuel.', content: '', type: 'Point de vue', pdfUrl: '', status: 'published' },
+  { id: 4, title: 'Souveraineté numérique et communs digitaux', author: 'Nicolas Music', date: '2026-04-01', tags: ['Culture'], summary: 'Pour une politique européenne des communs numériques.', content: '', type: 'Note d\'analyse', pdfUrl: '', status: 'draft' },
+  { id: 5, title: 'L’avenir de la protection sociale', author: 'Chloé Music', date: '2026-04-05', tags: ['Social'], summary: 'Repenser le modèle social français face aux mutations du travail.', content: '', type: 'Point de vue', pdfUrl: '', status: 'review' },
+  { id: 6, title: 'Planification écologique : bilan d’un an', author: 'Pierre Music', date: '2026-04-08', tags: ['Écologie'], summary: 'Bilan de la première année de planification écologique en France.', content: '', type: 'Note d\'analyse', pdfUrl: '', status: 'ready' },
 ];
 
 const DEMO_EVENTS = [
-  { id: 1, date: '2026-04-27', type: 'Conf\u00e9rence', title: 'La d\u00e9croissance', sousTitre: 'Cycle avec Les Canaux (1/4)', lieu: 'Les Canaux, 6 Quai de la Seine, 75019 Paris', intervenants: [], partenaire: 'Les Canaux', description: 'Premier volet du cycle de conf\u00e9rences sur la d\u00e9croissance.', lienInscription: '', lienConcours: '', status: 'confirme' },
+  { id: 1, date: '2026-04-27', type: 'Conférence', title: 'La décroissance', sousTitre: 'Cycle avec Les Canaux (1/4)', lieu: 'Les Canaux, 6 Quai de la Seine, 75019 Paris', intervenants: [], partenaire: 'Les Canaux', description: 'Premier volet du cycle de conférences sur la décroissance.', lienInscription: '', lienConcours: '', status: 'confirme' },
   { id: 2, date: '2026-06-03', type: 'Salon', title: 'Les think tanks, faiseurs de lois ?', sousTitre: 'Salon Affaires Publiques', lieu: 'Salon Affaires Publiques & Influences, Paris', intervenants: [], partenaire: '', description: 'Participation au Salon Affaires Publiques & Influences.', lienInscription: '', lienConcours: '', status: 'confirme' },
-  { id: 3, date: '2026-06-09', type: 'Cycle', title: 'D\u00e9mocratie et droit d\u2019amendement citoyen', sousTitre: 'Cycle Paris 1/3', lieu: 'CAP, 181 av Daumesnil, 75012 Paris', intervenants: [{ name: 'Beverley Toudic', titre: 'Directrice adjointe' }, { name: 'Mila Jeudy', titre: '' }], partenaire: 'Ville de Paris', description: 'Cycle de conf\u00e9rences sur la d\u00e9mocratie locale en partenariat avec la Ville de Paris.', lienInscription: '', lienConcours: '', status: 'confirme' },
-  { id: 4, date: '2026-09-15', type: 'Conf\u00e9rence', title: 'La pr\u00e9somption d\u2019innocence', sousTitre: 'Rencontres Culture & Controverse', lieu: '\u00c0 confirmer', intervenants: [{ name: 'Gabrielle Barnaud', titre: '' }, { name: 'Magali Lafourcade', titre: 'Secr\u00e9taire g\u00e9n\u00e9rale CNCDH' }, { name: '\u00c9milie Lory', titre: 'M\u00e9diation' }], partenaire: '', description: 'D\u00e9bat autour de la pr\u00e9somption d\u2019innocence.', lienInscription: '', lienConcours: '', status: 'en_preparation' },
-  { id: 5, date: '2026-10-01', type: 'Cycle', title: 'La transition \u00e9cologique \u00e0 Paris', sousTitre: 'Cycle Paris 2/3', lieu: 'Climate House, Paris', intervenants: [], partenaire: 'Ville de Paris', description: 'Deuxi\u00e8me volet du cycle parisien sur la transition \u00e9cologique.', lienInscription: '', lienConcours: '', status: 'en_preparation' },
-  { id: 6, date: '2026-11-15', type: 'Cycle', title: 'Les politiques publiques sociales', sousTitre: 'Cycle Paris 3/3', lieu: 'Th\u00e9\u00e2tre de la Concorde (sous r\u00e9serve)', intervenants: [], partenaire: 'Ville de Paris', description: 'Troisi\u00e8me volet du cycle parisien sur les politiques sociales.', lienInscription: '', lienConcours: '', status: 'en_preparation' },
+  { id: 3, date: '2026-06-09', type: 'Cycle', title: 'Démocratie et droit d’amendement citoyen', sousTitre: 'Cycle Paris 1/3', lieu: 'CAP, 181 av Daumesnil, 75012 Paris', intervenants: [{ name: 'Beverley Toudic', titre: 'Directrice adjointe' }, { name: 'Mila Jeudy', titre: '' }], partenaire: 'Ville de Paris', description: 'Cycle de conférences sur la démocratie locale en partenariat avec la Ville de Paris.', lienInscription: '', lienConcours: '', status: 'confirme' },
+  { id: 4, date: '2026-09-15', type: 'Conférence', title: 'La présomption d’innocence', sousTitre: 'Rencontres Culture & Controverse', lieu: 'À confirmer', intervenants: [{ name: 'Gabrielle Barnaud', titre: '' }, { name: 'Magali Lafourcade', titre: 'Secrétaire générale CNCDH' }, { name: 'Émilie Lory', titre: 'Médiation' }], partenaire: '', description: 'Débat autour de la présomption d’innocence.', lienInscription: '', lienConcours: '', status: 'en_preparation' },
+  { id: 5, date: '2026-10-01', type: 'Cycle', title: 'La transition écologique à Paris', sousTitre: 'Cycle Paris 2/3', lieu: 'Climate House, Paris', intervenants: [], partenaire: 'Ville de Paris', description: 'Deuxième volet du cycle parisien sur la transition écologique.', lienInscription: '', lienConcours: '', status: 'en_preparation' },
+  { id: 6, date: '2026-11-15', type: 'Cycle', title: 'Les politiques publiques sociales', sousTitre: 'Cycle Paris 3/3', lieu: 'Théâtre de la Concorde (sous réserve)', intervenants: [], partenaire: 'Ville de Paris', description: 'Troisième volet du cycle parisien sur les politiques sociales.', lienInscription: '', lienConcours: '', status: 'en_preparation' },
 ];
 
 const DEMO_PRESSE = [
-  { id: 1, type: 'Tribune', title: 'Institut Rousseau : un think tank au service de la reconstruction', auteur: 'Nicolas Dufr\u00eane', media: 'Le Monde', date: '2026-03-15', url: '', urlInterne: '' },
-  { id: 2, type: 'Entretien', title: 'Les propositions de l\u2019IR pour le climat', auteur: 'Chlo\u00e9 Ridel', media: 'Mediapart', date: '2026-02-20', url: '', urlInterne: '' },
-  { id: 3, type: 'Tribune', title: 'Road to Net Zero : le plan de d\u00e9carbonation', auteur: 'Ga\u00ebl Giraud', media: 'Les \u00c9chos', date: '2026-01-10', url: '', urlInterne: '' },
-  { id: 4, type: 'Entretien', title: 'R\u00e9forme des institutions : les id\u00e9es de l\u2019IR', auteur: 'Beverley Toudic', media: 'Lib\u00e9ration', date: '2025-12-05', url: '', urlInterne: '' },
-  { id: 5, type: 'Tribune', title: '\u00c9conomie circulaire : les limites point\u00e9es', auteur: 'Arthur Boutiab', media: 'Alternatives \u00c9conomiques', date: '2025-11-18', url: '', urlInterne: '' },
-  { id: 6, type: 'Podcast', title: 'Souverainet\u00e9 num\u00e9rique — \u00c9pisode 1', auteur: '', media: 'Spotify', date: '2025-10-22', url: '', urlInterne: '' },
-  { id: 7, type: 'Tribune', title: 'Militer pour la souverainet\u00e9 num\u00e9rique', auteur: 'Nicolas Music', media: 'La Tribune', date: '2025-10-01', url: '', urlInterne: '' },
-  { id: 8, type: 'Entretien', title: 'L\u2019\u00e9cologie au c\u0153ur de la relance', auteur: 'L\u00e9a Falco', media: 'France Inter', date: '2025-09-15', url: '', urlInterne: '' },
-  { id: 9, type: 'Podcast', title: 'Think tanks et politique \u2014 \u00c9pisode 2', auteur: '', media: 'Spotify', date: '2025-08-20', url: '', urlInterne: '' },
-  { id: 10, type: 'Tribune', title: 'Pour un Green New Deal europ\u00e9en', auteur: 'Simon Pujau', media: 'The Conversation', date: '2025-07-10', url: '', urlInterne: '' },
+  { id: 1, type: 'Tribune', title: 'Institut Rousseau : un think tank au service de la reconstruction', auteur: 'Nicolas Dufrêne', media: 'Le Monde', date: '2026-03-15', url: '', urlInterne: '' },
+  { id: 2, type: 'Entretien', title: 'Les propositions de l’IR pour le climat', auteur: 'Chloé Ridel', media: 'Mediapart', date: '2026-02-20', url: '', urlInterne: '' },
+  { id: 3, type: 'Tribune', title: 'Road to Net Zero : le plan de décarbonation', auteur: 'Gaël Giraud', media: 'Les Échos', date: '2026-01-10', url: '', urlInterne: '' },
+  { id: 4, type: 'Entretien', title: 'Réforme des institutions : les idées de l’IR', auteur: 'Beverley Toudic', media: 'Libération', date: '2025-12-05', url: '', urlInterne: '' },
+  { id: 5, type: 'Tribune', title: 'Économie circulaire : les limites pointées', auteur: 'Arthur Boutiab', media: 'Alternatives Économiques', date: '2025-11-18', url: '', urlInterne: '' },
+  { id: 6, type: 'Podcast', title: 'Souveraineté numérique — Épisode 1', auteur: '', media: 'Spotify', date: '2025-10-22', url: '', urlInterne: '' },
+  { id: 7, type: 'Tribune', title: 'Militer pour la souveraineté numérique', auteur: 'Nicolas Music', media: 'La Tribune', date: '2025-10-01', url: '', urlInterne: '' },
+  { id: 8, type: 'Entretien', title: 'L’écologie au cœur de la relance', auteur: 'Léa Falco', media: 'France Inter', date: '2025-09-15', url: '', urlInterne: '' },
+  { id: 9, type: 'Podcast', title: 'Think tanks et politique — Épisode 2', auteur: '', media: 'Spotify', date: '2025-08-20', url: '', urlInterne: '' },
+  { id: 10, type: 'Tribune', title: 'Pour un Green New Deal européen', auteur: 'Simon Pujau', media: 'The Conversation', date: '2025-07-10', url: '', urlInterne: '' },
 ];
 
 // Authors loaded from src/data/authors.json — fallback to inline demo
@@ -58,19 +58,19 @@ const DEMO_AUTEURS = authorsData.length ? authorsData.map(a => ({
   titre: a.role,
 })) : [
   { id: 'marine-yzquierdo', firstName: 'Marine', lastName: 'Yzquierdo', name: 'Marine Yzquierdo', role: 'Spécialiste travail et environnement', titre: 'Spécialiste travail et environnement', photo: '', bio: '', publications: 3 },
-  { id: 'nicolas-dufrene', firstName: 'Nicolas', lastName: 'Dufrêne', name: 'Nicolas Dufrêne', role: 'Directeur de l\u2019Institut Rousseau', titre: 'Directeur de l\u2019Institut Rousseau', photo: '', bio: '', publications: 12 },
+  { id: 'nicolas-dufrene', firstName: 'Nicolas', lastName: 'Dufrêne', name: 'Nicolas Dufrêne', role: 'Directeur de l’Institut Rousseau', titre: 'Directeur de l’Institut Rousseau', photo: '', bio: '', publications: 12 },
 ];
 
 const DEMO_SUBSCRIBERS = [
   { id: 1, name: 'Marie Dupont', email: 'marie.dupont@gmail.com', date: '2026-04-01', status: 'added', source: 'Site web' },
   { id: 2, name: 'Jean Martin', email: 'j.martin@outlook.fr', date: '2026-04-03', status: 'pending', source: 'Site web' },
-  { id: 3, name: 'Sophie Bernard', email: 'sophie.b@proton.me', date: '2026-04-05', status: 'added', source: '\u00c9v\u00e9nement' },
+  { id: 3, name: 'Sophie Bernard', email: 'sophie.b@proton.me', date: '2026-04-05', status: 'added', source: 'Événement' },
   { id: 4, name: 'Pierre Leclerc', email: 'p.leclerc@yahoo.fr', date: '2026-04-06', status: 'pending', source: 'Site web' },
   { id: 5, name: 'Alice Moreau', email: 'a.moreau@gmail.com', date: '2026-04-07', status: 'rejected', source: 'Manuel' },
   { id: 6, name: 'Lucas Rousseau', email: 'lucas.r@free.fr', date: '2026-04-08', status: 'pending', source: 'Site web' },
   { id: 7, name: 'Camille Durand', email: 'camille.d@gmail.com', date: '2026-04-09', status: 'pending', source: 'LinkedIn' },
   { id: 8, name: 'Nicolas Petit', email: 'n.petit@laposte.net', date: '2026-04-10', status: 'added', source: 'Site web' },
-  { id: 9, name: 'Emma Laurent', email: 'emma.l@gmail.com', date: '2026-04-10', status: 'pending', source: '\u00c9v\u00e9nement' },
+  { id: 9, name: 'Emma Laurent', email: 'emma.l@gmail.com', date: '2026-04-10', status: 'pending', source: 'Événement' },
   { id: 10, name: 'Hugo Garcia', email: 'hugo.g@outlook.fr', date: '2026-04-11', status: 'added', source: 'Site web' },
 ];
 
@@ -78,7 +78,7 @@ const DEMO_SOLLICITATIONS = [
   {
     id: 'msg_1712930400_a3f2', name: 'Marie Dupont', email: 'marie.dupont@media.fr',
     organization: 'Le Monde', phone: '+33 6 12 34 56 78', subject: 'presse',
-    message: 'Bonjour,\nNous pr\u00e9parons un dossier sp\u00e9cial sur la transition \u00e9cologique pour notre \u00e9dition de mai. Serait-il possible d\u2019interviewer un membre de votre conseil scientifique sur le sujet de la dette climatique ?\nCordialement, Marie Dupont',
+    message: 'Bonjour,\nNous préparons un dossier spécial sur la transition écologique pour notre édition de mai. Serait-il possible d’interviewer un membre de votre conseil scientifique sur le sujet de la dette climatique ?\nCordialement, Marie Dupont',
     consent: true, submitted_at: '2026-04-12T14:30:00Z', source_page: '/contact',
     status: 'new', assigned_to: null, priority: 'high',
     internal_notes: [], replies: [], tags: ['presse', 'road-to-net-zero'],
@@ -87,12 +87,12 @@ const DEMO_SOLLICITATIONS = [
   {
     id: 'msg_1712844000_b7e1', name: 'Jean Martin', email: 'j.martin@wwf.fr',
     organization: 'WWF France', phone: '', subject: 'partenariat',
-    message: 'Suite \u00e0 notre \u00e9change lors du Salon Affaires Publiques, nous souhaiterions explorer un partenariat pour un cycle de conf\u00e9rences sur la biodiversit\u00e9.',
+    message: 'Suite à notre échange lors du Salon Affaires Publiques, nous souhaiterions explorer un partenariat pour un cycle de conférences sur la biodiversité.',
     consent: true, submitted_at: '2026-04-11T10:00:00Z', source_page: '/contact',
     status: 'in_progress', assigned_to: 'Michel', priority: 'normal',
     internal_notes: [
-      { type: 'status_change', text: 'Statut \u2192 En cours', date: '2026-04-11T11:00:00Z', author: 'Michel' },
-      { type: 'note', text: 'Transmettre \u00e0 Guillaume pour le cycle biodiversit\u00e9', date: '2026-04-11T11:05:00Z', author: 'Michel' },
+      { type: 'status_change', text: 'Statut → En cours', date: '2026-04-11T11:00:00Z', author: 'Michel' },
+      { type: 'note', text: 'Transmettre à Guillaume pour le cycle biodiversité', date: '2026-04-11T11:05:00Z', author: 'Michel' },
     ],
     replies: [], tags: ['partenariat-ong'],
     updated_at: '2026-04-11T11:05:00Z', resolved_at: null,
@@ -100,22 +100,22 @@ const DEMO_SOLLICITATIONS = [
   {
     id: 'msg_1712671200_c5d9', name: 'Sophie Bernard', email: 'sophie.b@gmail.com',
     organization: '', phone: '', subject: 'general',
-    message: 'J\u2019aimerais savoir comment acc\u00e9der aux rapports en version PDF, notamment celui sur la planification \u00e9cologique.',
+    message: 'J’aimerais savoir comment accéder aux rapports en version PDF, notamment celui sur la planification écologique.',
     consent: true, submitted_at: '2026-04-03T09:00:00Z', source_page: '/contact',
-    status: 'resolved', assigned_to: 'B\u00e9n\u00e9dicte', priority: 'normal',
+    status: 'resolved', assigned_to: 'Bénédicte', priority: 'normal',
     internal_notes: [
-      { type: 'status_change', text: 'Statut \u2192 En cours', date: '2026-04-03T10:00:00Z', author: 'B\u00e9n\u00e9dicte' },
-      { type: 'reply_sent', text: 'R\u00e9ponse envoy\u00e9e par email', date: '2026-04-03T10:30:00Z', author: 'B\u00e9n\u00e9dicte' },
-      { type: 'status_change', text: 'Statut \u2192 R\u00e9solu', date: '2026-04-03T10:30:00Z', author: 'B\u00e9n\u00e9dicte' },
+      { type: 'status_change', text: 'Statut → En cours', date: '2026-04-03T10:00:00Z', author: 'Bénédicte' },
+      { type: 'reply_sent', text: 'Réponse envoyée par email', date: '2026-04-03T10:30:00Z', author: 'Bénédicte' },
+      { type: 'status_change', text: 'Statut → Résolu', date: '2026-04-03T10:30:00Z', author: 'Bénédicte' },
     ],
-    replies: [{ text: 'Bonjour Sophie, les rapports PDF sont disponibles sur notre page Publications. Voici le lien direct\u2026', sent_by: 'B\u00e9n\u00e9dicte', sent_at: '2026-04-03T10:30:00Z' }],
+    replies: [{ text: 'Bonjour Sophie, les rapports PDF sont disponibles sur notre page Publications. Voici le lien direct…', sent_by: 'Bénédicte', sent_at: '2026-04-03T10:30:00Z' }],
     tags: [],
     updated_at: '2026-04-03T10:30:00Z', resolved_at: '2026-04-03T10:30:00Z',
   },
   {
     id: 'msg_1712584800_d2a7', name: 'Paul Martin', email: 'paul.m@gmail.com',
     organization: '', phone: '+33 7 98 76 54 32', subject: 'evenement',
-    message: 'Bonjour, je souhaiterais participer \u00e0 la conf\u00e9rence du 27 avril sur la d\u00e9croissance. Y a-t-il encore des places disponibles ?',
+    message: 'Bonjour, je souhaiterais participer à la conférence du 27 avril sur la décroissance. Y a-t-il encore des places disponibles ?',
     consent: true, submitted_at: '2026-04-11T16:00:00Z', source_page: '/contact',
     status: 'new', assigned_to: null, priority: 'normal',
     internal_notes: [], replies: [], tags: ['evenement'],
@@ -124,11 +124,11 @@ const DEMO_SOLLICITATIONS = [
   {
     id: 'msg_1712498400_e9b3', name: 'Claire Dubois', email: 'claire.d@lemonde.fr',
     organization: 'Le Monde', phone: '', subject: 'presse',
-    message: 'Bonjour, je suis journaliste au Monde et je souhaiterais organiser un entretien avec Nicolas Dufr\u00eane au sujet du rapport Road to Net Zero. Nous pr\u00e9voyons un article pour la semaine prochaine.',
+    message: 'Bonjour, je suis journaliste au Monde et je souhaiterais organiser un entretien avec Nicolas Dufrêne au sujet du rapport Road to Net Zero. Nous prévoyons un article pour la semaine prochaine.',
     consent: true, submitted_at: '2026-04-10T08:30:00Z', source_page: '/contact',
     status: 'in_progress', assigned_to: 'Michel', priority: 'high',
     internal_notes: [
-      { type: 'status_change', text: 'Statut \u2192 En cours', date: '2026-04-10T09:00:00Z', author: 'Michel' },
+      { type: 'status_change', text: 'Statut → En cours', date: '2026-04-10T09:00:00Z', author: 'Michel' },
       { type: 'note', text: 'Contacter ND pour confirmer dispo interview', date: '2026-04-10T09:05:00Z', author: 'Michel' },
     ],
     replies: [], tags: ['presse', 'road-to-net-zero', 'urgent'],
@@ -137,29 +137,29 @@ const DEMO_SOLLICITATIONS = [
   {
     id: 'msg_1712325600_f1c4', name: 'Association Greenpeace', email: 'partenariats@greenpeace.fr',
     organization: 'Greenpeace France', phone: '', subject: 'partenariat',
-    message: 'Nous souhaiterions co-organiser un \u00e9v\u00e9nement sur le th\u00e8me de la d\u00e9carbonation industrielle. Serait-il possible de prendre contact ?',
+    message: 'Nous souhaiterions co-organiser un événement sur le thème de la décarbonation industrielle. Serait-il possible de prendre contact ?',
     consent: true, submitted_at: '2026-04-08T14:00:00Z', source_page: '/contact',
     status: 'resolved', assigned_to: 'Guillaume', priority: 'normal',
     internal_notes: [
-      { type: 'status_change', text: 'Statut \u2192 En cours', date: '2026-04-08T15:00:00Z', author: 'Guillaume' },
-      { type: 'reply_sent', text: 'R\u00e9ponse envoy\u00e9e par email', date: '2026-04-09T10:00:00Z', author: 'Guillaume' },
-      { type: 'status_change', text: 'Statut \u2192 R\u00e9solu', date: '2026-04-09T10:00:00Z', author: 'Guillaume' },
+      { type: 'status_change', text: 'Statut → En cours', date: '2026-04-08T15:00:00Z', author: 'Guillaume' },
+      { type: 'reply_sent', text: 'Réponse envoyée par email', date: '2026-04-09T10:00:00Z', author: 'Guillaume' },
+      { type: 'status_change', text: 'Statut → Résolu', date: '2026-04-09T10:00:00Z', author: 'Guillaume' },
     ],
-    replies: [{ text: 'Bonjour, merci pour votre int\u00e9r\u00eat. Je vous propose un appel la semaine prochaine pour en discuter.', sent_by: 'Guillaume', sent_at: '2026-04-09T10:00:00Z' }],
+    replies: [{ text: 'Bonjour, merci pour votre intérêt. Je vous propose un appel la semaine prochaine pour en discuter.', sent_by: 'Guillaume', sent_at: '2026-04-09T10:00:00Z' }],
     tags: ['partenariat-ong', 'decarbonation'],
     updated_at: '2026-04-09T10:00:00Z', resolved_at: '2026-04-09T10:00:00Z',
   },
   {
     id: 'msg_1712239200_g8h5', name: 'Marc Lefebvre', email: 'marc.l@free.fr',
     organization: '', phone: '', subject: 'general',
-    message: 'Bonjour, je souhaiterais m\u2019inscrire \u00e0 la newsletter de l\u2019Institut Rousseau mais je ne re\u00e7ois pas l\u2019email de confirmation. Pouvez-vous m\u2019aider\u00a0?',
+    message: 'Bonjour, je souhaiterais m’inscrire à la newsletter de l’Institut Rousseau mais je ne reçois pas l’email de confirmation. Pouvez-vous m’aider ?',
     consent: true, submitted_at: '2026-04-07T11:00:00Z', source_page: '/contact',
-    status: 'resolved', assigned_to: 'B\u00e9n\u00e9dicte', priority: 'low',
+    status: 'resolved', assigned_to: 'Bénédicte', priority: 'low',
     internal_notes: [
-      { type: 'reply_sent', text: 'R\u00e9ponse envoy\u00e9e par email', date: '2026-04-07T14:00:00Z', author: 'B\u00e9n\u00e9dicte' },
-      { type: 'status_change', text: 'Statut \u2192 R\u00e9solu', date: '2026-04-07T14:00:00Z', author: 'B\u00e9n\u00e9dicte' },
+      { type: 'reply_sent', text: 'Réponse envoyée par email', date: '2026-04-07T14:00:00Z', author: 'Bénédicte' },
+      { type: 'status_change', text: 'Statut → Résolu', date: '2026-04-07T14:00:00Z', author: 'Bénédicte' },
     ],
-    replies: [{ text: 'Bonjour Marc, nous avons renvoy\u00e9 l\u2019email de confirmation. V\u00e9rifiez vos spams.', sent_by: 'B\u00e9n\u00e9dicte', sent_at: '2026-04-07T14:00:00Z' }],
+    replies: [{ text: 'Bonjour Marc, nous avons renvoyé l’email de confirmation. Vérifiez vos spams.', sent_by: 'Bénédicte', sent_at: '2026-04-07T14:00:00Z' }],
     tags: [],
     updated_at: '2026-04-07T14:00:00Z', resolved_at: '2026-04-07T14:00:00Z',
   },
@@ -169,20 +169,20 @@ const DEMO_SOLLICITATIONS = [
     message: 'Buy cheap viagra online now!!!',
     consent: true, submitted_at: '2026-04-02T06:00:00Z', source_page: '/contact',
     status: 'archived', assigned_to: null, priority: 'low',
-    internal_notes: [{ type: 'status_change', text: 'Statut \u2192 Archiv\u00e9', date: '2026-04-02T08:00:00Z', author: 'Admin' }],
+    internal_notes: [{ type: 'status_change', text: 'Statut → Archivé', date: '2026-04-02T08:00:00Z', author: 'Admin' }],
     replies: [], tags: ['spam'],
     updated_at: '2026-04-02T08:00:00Z', resolved_at: null,
   },
 ];
 
 const DEMO_ACTIVITY = [
-  { date: '2026-04-11', text: 'Hugo Garcia ajout\u00e9 \u00e0 la newsletter' },
-  { date: '2026-04-11', text: 'Article "Souverainet\u00e9 num\u00e9rique" cr\u00e9\u00e9 en brouillon' },
-  { date: '2026-04-10', text: 'Page \u00c9v\u00e9nements mise \u00e0 jour sur le site' },
+  { date: '2026-04-11', text: 'Hugo Garcia ajouté à la newsletter' },
+  { date: '2026-04-11', text: 'Article "Souveraineté numérique" créé en brouillon' },
+  { date: '2026-04-10', text: 'Page Événements mise à jour sur le site' },
   { date: '2026-04-09', text: 'Camille Durand inscrite via LinkedIn' },
-  { date: '2026-04-08', text: 'Article "Planification \u00e9cologique" soumis pour relecture' },
-  { date: '2026-04-08', text: 'Demande de contact presse re\u00e7ue' },
-  { date: '2026-04-05', text: 'Demande de contact trait\u00e9e (JP Leclerc)' },
+  { date: '2026-04-08', text: 'Article "Planification écologique" soumis pour relecture' },
+  { date: '2026-04-08', text: 'Demande de contact presse reçue' },
+  { date: '2026-04-05', text: 'Demande de contact traitée (JP Leclerc)' },
 ];
 
 // ─── MAIN APP ──────────────────────────────────────────

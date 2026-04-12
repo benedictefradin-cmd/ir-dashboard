@@ -567,7 +567,7 @@ export default function Articles({
         {publishFlow && (
           <Modal
             title={
-              publishFlow.step === 1 ? 'Publier — Étape 1/3 : Sélection de l\u2019auteur' :
+              publishFlow.step === 1 ? 'Publier — Étape 1/3 : Sélection de l’auteur' :
               publishFlow.step === 2 ? 'Publier — Étape 2/3 : Prévisualisation' :
               'Publier — Étape 3/3 : Confirmation'
             }

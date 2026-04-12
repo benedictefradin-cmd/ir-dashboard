@@ -33,7 +33,7 @@ export default function Messagerie({ subscribers = [], services, toast }) {
   };
 
   const getRecipientList = () => {
-    const active = subscribers.filter(s => s.status === 'added' || s.status === 'abonn\u00e9');
+    const active = subscribers.filter(s => s.status === 'added' || s.status === 'abonné');
     if (recipients === 'all_subscribers' || recipients === 'all') return active;
     return [];
   };
@@ -42,7 +42,7 @@ export default function Messagerie({ subscribers = [], services, toast }) {
 
   const handleSend = async () => {
     if (!body.trim()) return toast('Le message est vide', 'error');
-    if (channel === 'email' && !subject.trim()) return toast('L\u2019objet est requis', 'error');
+    if (channel === 'email' && !subject.trim()) return toast('L’objet est requis', 'error');
 
     setSending(true);
     try {
@@ -56,30 +56,30 @@ export default function Messagerie({ subscribers = [], services, toast }) {
             htmlContent: `<div style="font-family: 'Source Sans 3', Arial, sans-serif; line-height: 1.6; color: #1a2744;">${htmlContent}</div>`,
             sender: { name: 'Institut Rousseau', email: 'contact@institut-rousseau.fr' },
           });
-          toast(`Email envoy\u00e9 \u00e0 ${recipientEmails.length} destinataire${recipientEmails.length > 1 ? 's' : ''}`);
+          toast(`Email envoyé à ${recipientEmails.length} destinataire${recipientEmails.length > 1 ? 's' : ''}`);
         } else {
           await new Promise(r => setTimeout(r, 1500));
-          toast(`Email envoy\u00e9 \u00e0 ${getRecipientCount()} destinataire${getRecipientCount() > 1 ? 's' : ''} (simulation)`);
+          toast(`Email envoyé à ${getRecipientCount()} destinataire${getRecipientCount() > 1 ? 's' : ''} (simulation)`);
         }
       } else if (channel === 'telegram-channel') {
         if (services?.telegram) {
           await sendChannelMessage(body);
-          toast('Message publi\u00e9 sur le canal Telegram');
+          toast('Message publié sur le canal Telegram');
         } else {
           await new Promise(r => setTimeout(r, 1000));
-          toast('Message publi\u00e9 sur le canal Telegram (simulation)');
+          toast('Message publié sur le canal Telegram (simulation)');
         }
       } else if (channel === 'telegram-private') {
         if (services?.telegram) {
           await sendMessage(null, body);
-          toast('Notification Telegram envoy\u00e9e');
+          toast('Notification Telegram envoyée');
         } else {
           await new Promise(r => setTimeout(r, 1000));
-          toast('Notification Telegram envoy\u00e9e (simulation)');
+          toast('Notification Telegram envoyée (simulation)');
         }
       }
 
-      // Ajouter \u00e0 l'historique
+      // Ajouter à l'historique
       setHistory(prev => [{
         id: Date.now(),
         channel,
@@ -94,7 +94,7 @@ export default function Messagerie({ subscribers = [], services, toast }) {
       setBody('');
       setTemplateKey('');
     } catch (err) {
-      toast(`Erreur d\u2019envoi\u00a0: ${err.message}`, 'error');
+      toast(`Erreur d’envoi : ${err.message}`, 'error');
     } finally {
       setSending(false);
     }
@@ -105,7 +105,7 @@ export default function Messagerie({ subscribers = [], services, toast }) {
       <div className="page-header">
         <div>
           <h1>Messagerie</h1>
-          <p className="page-header-sub">Envois cibl\u00e9s par email et Telegram</p>
+          <p className="page-header-sub">Envois ciblés par email et Telegram</p>
         </div>
         <div className="flex-center gap-8">
           <ServiceBadge service="brevo" />
@@ -118,9 +118,9 @@ export default function Messagerie({ subscribers = [], services, toast }) {
           <h3 style={{ fontSize: 15, marginBottom: 14 }}>Canal d&rsquo;envoi</h3>
           <div className="flex-wrap gap-8">
             {[
-              ['email', '\u2709\ufe0f Email (Brevo)', COLORS.sky, services?.brevo],
-              ['telegram-channel', '\ud83d\udce2 Canal Telegram', COLORS.green, services?.telegram],
-              ['telegram-private', '\ud83d\udd14 Notification priv\u00e9e', COLORS.ochre, services?.telegram],
+              ['email', '✉️ Email (Brevo)', COLORS.sky, services?.brevo],
+              ['telegram-channel', '📢 Canal Telegram', COLORS.green, services?.telegram],
+              ['telegram-private', '🔔 Notification privée', COLORS.ochre, services?.telegram],
             ].map(([key, label, color, connected]) => (
               <button
                 key={key}
@@ -182,12 +182,12 @@ export default function Messagerie({ subscribers = [], services, toast }) {
               <div className="card">
                 <p style={{ fontSize: 14, color: 'var(--text-light)', lineHeight: 1.6 }}>
                   {channel === 'telegram-channel'
-                    ? 'Le message sera publi\u00e9 sur le canal public Telegram de l\u2019Institut Rousseau.'
-                    : 'La notification sera envoy\u00e9e au chat priv\u00e9 de l\u2019admin configur\u00e9 dans les param\u00e8tres.'}
+                    ? 'Le message sera publié sur le canal public Telegram de l’Institut Rousseau.'
+                    : 'La notification sera envoyée au chat privé de l’admin configuré dans les paramètres.'}
                 </p>
                 {!services?.telegram && (
                   <p className="alert-banner alert-warning" style={{ marginTop: 12 }}>
-                    Telegram non connect\u00e9 \u2014 les envois seront simul\u00e9s
+                    Telegram non connecté — les envois seront simulés
                   </p>
                 )}
               </div>
@@ -196,7 +196,7 @@ export default function Messagerie({ subscribers = [], services, toast }) {
             {/* Historique */}
             {history.length > 0 && (
               <div className="card" style={{ marginTop: 16 }}>
-                <h3 style={{ fontSize: 15, marginBottom: 12 }}>Historique r\u00e9cent</h3>
+                <h3 style={{ fontSize: 15, marginBottom: 12 }}>Historique récent</h3>
                 {history.slice(0, 5).map(h => (
                   <div key={h.id} style={{ padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
                     <span className={`badge ${h.channel === 'email' ? 'badge-sky' : 'badge-green'}`} style={{ marginRight: 8 }}>
@@ -211,16 +211,16 @@ export default function Messagerie({ subscribers = [], services, toast }) {
             )}
           </div>
 
-          {/* \u00c9diteur */}
+          {/* Éditeur */}
           <div className="card">
             <h3 style={{ fontSize: 15, marginBottom: 14 }}>
-              {channel === 'email' ? 'Composer l\u2019email' : 'Composer le message'}
+              {channel === 'email' ? 'Composer l’email' : 'Composer le message'}
             </h3>
 
             {channel === 'email' && (
               <div style={{ marginBottom: 12 }}>
                 <label>Objet</label>
-                <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Objet de l\u2019email" />
+                <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Objet de l’email" />
               </div>
             )}
 
@@ -230,38 +230,38 @@ export default function Messagerie({ subscribers = [], services, toast }) {
                 rows={channel === 'email' ? 12 : 6}
                 value={body}
                 onChange={e => setBody(e.target.value)}
-                placeholder={channel === 'telegram-channel' ? 'Max 280 caract\u00e8res recommand\u00e9s + lien' : 'Votre message\u2026'}
+                placeholder={channel === 'telegram-channel' ? 'Max 280 caractères recommandés + lien' : 'Votre message…'}
               />
               {channel === 'telegram-channel' && (
                 <p style={{ fontSize: 12, color: body.length > 280 ? 'var(--terra)' : 'var(--text-light)', marginTop: 4 }}>
-                  {body.length} / 280 caract\u00e8res
+                  {body.length} / 280 caractères
                 </p>
               )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <button className="btn btn-outline" onClick={() => setShowPreview(true)} disabled={!body.trim()}>
-                Pr\u00e9visualiser
+                Prévisualiser
               </button>
               <button className="btn btn-primary btn-lg" onClick={handleSend} disabled={sending || !body.trim()}>
-                {sending ? 'Envoi en cours\u2026' : `Envoyer${channel === 'email' ? ` \u00e0 ${getRecipientCount()} contact${getRecipientCount() > 1 ? 's' : ''}` : ''}`}
+                {sending ? 'Envoi en cours…' : `Envoyer${channel === 'email' ? ` à ${getRecipientCount()} contact${getRecipientCount() > 1 ? 's' : ''}` : ''}`}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Pr\u00e9visualisation */}
+        {/* Prévisualisation */}
         {showPreview && (
-          <Modal title="Pr\u00e9visualisation" onClose={() => setShowPreview(false)}>
+          <Modal title="Prévisualisation" onClose={() => setShowPreview(false)}>
             {channel === 'email' ? (
               <>
-                <p style={{ fontWeight: 600, marginBottom: 8 }}>Objet\u00a0: {subject}</p>
+                <p style={{ fontWeight: 600, marginBottom: 8 }}>Objet : {subject}</p>
                 <div style={{ padding: 20, background: '#f9f9f7', borderRadius: 8, whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.7 }}>
                   {body}
                 </div>
                 <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 8 }}>
-                  Sera envoy\u00e9 \u00e0 {getRecipientCount()} destinataire{getRecipientCount() > 1 ? 's' : ''}
-                  {!services?.brevo && ' (simulation \u2014 Brevo non connect\u00e9)'}
+                  Sera envoyé à {getRecipientCount()} destinataire{getRecipientCount() > 1 ? 's' : ''}
+                  {!services?.brevo && ' (simulation — Brevo non connecté)'}
                 </p>
               </>
             ) : (

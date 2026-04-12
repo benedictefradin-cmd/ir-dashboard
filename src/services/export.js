@@ -53,7 +53,7 @@ export function parseFile(file) {
         const headers = XLSX.utils.sheet_to_json(sheet, { header: 1 })[0] || [];
         resolve({ data: jsonData, headers, sheetNames: workbook.SheetNames });
       } catch (err) {
-        reject(new Error('Impossible de lire ce fichier. V\u00e9rifiez le format.'));
+        reject(new Error('Impossible de lire ce fichier. Vérifiez le format.'));
       }
     };
     reader.onerror = () => reject(new Error('Erreur de lecture du fichier.'));
@@ -66,7 +66,7 @@ export function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// D\u00e9tecte les doublons par email
+// Détecte les doublons par email
 export function findDuplicates(newRows, existingEmails) {
   const seen = new Set(existingEmails.map(e => e.toLowerCase()));
   const duplicates = [];

@@ -81,12 +81,12 @@ export default function Presse({ presse, setPresse, loading, toast }) {
 
   const saveItem = () => {
     if (!form.title) return toast('Le titre est requis', 'error');
-    if (!form.auteur) return toast('L\u2019auteur est requis', 'error');
-    if (!form.media) return toast('Le m\u00e9dia est requis', 'error');
+    if (!form.auteur) return toast('L’auteur est requis', 'error');
+    if (!form.media) return toast('Le média est requis', 'error');
 
     if (editingItem) {
       setPresse(prev => prev.map(p => p.id === editingItem.id ? { ...p, ...form } : p));
-      toast('Entr\u00e9e presse mise \u00e0 jour');
+      toast('Entrée presse mise à jour');
     } else {
       const newItem = {
         id: Date.now(),
@@ -94,7 +94,7 @@ export default function Presse({ presse, setPresse, loading, toast }) {
         date: form.date || new Date().toISOString().split('T')[0],
       };
       setPresse(prev => [newItem, ...prev]);
-      toast('Entr\u00e9e presse cr\u00e9\u00e9e');
+      toast('Entrée presse créée');
     }
     closeForm();
   };
@@ -115,7 +115,7 @@ export default function Presse({ presse, setPresse, loading, toast }) {
 
   const deleteItem = (id) => {
     setPresse(prev => prev.filter(p => p.id !== id));
-    toast('Entr\u00e9e presse supprim\u00e9e');
+    toast('Entrée presse supprimée');
   };
 
   const publishItem = async (item) => {
@@ -130,10 +130,10 @@ export default function Presse({ presse, setPresse, loading, toast }) {
   <time>${formatDateSite(item.date)}</time>
 </article>`;
         await insertHtmlInPage('presse.html', cardHtml, `Ajout presse : ${item.title}`);
-        toast('Article presse publi\u00e9 sur le site');
+        toast('Article presse publié sur le site');
       } else {
         await new Promise(r => setTimeout(r, 1500));
-        toast('Article presse publi\u00e9 (simulation)');
+        toast('Article presse publié (simulation)');
       }
     } catch (e) {
       toast(e.message || 'Erreur de publication', 'error');
@@ -156,8 +156,8 @@ export default function Presse({ presse, setPresse, loading, toast }) {
     { key: 'auteur', label: 'Auteur(s)' },
     {
       key: 'media',
-      label: 'M\u00e9dia',
-      render: (v) => v ? <span className="badge badge-navy">{v}</span> : '\u2014',
+      label: 'Média',
+      render: (v) => v ? <span className="badge badge-navy">{v}</span> : '—',
     },
     {
       key: 'date',
@@ -171,16 +171,16 @@ export default function Presse({ presse, setPresse, loading, toast }) {
         <a href={v} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm" onClick={e => e.stopPropagation()}>
           Voir
         </a>
-      ) : '\u2014',
+      ) : '—',
     },
     {
       key: 'actions',
       label: 'Actions',
       render: (_, row) => (
         <div className="flex-center gap-8" style={{ flexWrap: 'nowrap' }}>
-          <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); startEdit(row); }}>\u00c9diter</button>
+          <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); startEdit(row); }}>Éditer</button>
           <button className="btn btn-green btn-sm" onClick={(e) => { e.stopPropagation(); publishItem(row); }} disabled={publishingId === row.id}>
-            {publishingId === row.id ? '\u2026' : 'Publier'}
+            {publishingId === row.id ? '…' : 'Publier'}
           </button>
           <button className="btn btn-outline btn-sm" style={{ color: 'var(--terra)' }} onClick={(e) => { e.stopPropagation(); deleteItem(row.id); }}>Supprimer</button>
         </div>
@@ -204,7 +204,7 @@ export default function Presse({ presse, setPresse, loading, toast }) {
         <div>
           <h1>Presse</h1>
           <p className="page-header-sub">
-            {stats.total} entr\u00e9es \u2014 {stats.tribune} tribunes, {stats.entretien} entretiens, {stats.podcast} podcasts
+            {stats.total} entrées — {stats.tribune} tribunes, {stats.entretien} entretiens, {stats.podcast} podcasts
           </p>
         </div>
         <div className="flex-center gap-8">
@@ -227,25 +227,25 @@ export default function Presse({ presse, setPresse, loading, toast }) {
           ))}
         </div>
 
-        {/* Recherche + filtre ann\u00e9e */}
+        {/* Recherche + filtre année */}
         <div className="flex-wrap mb-16">
-          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher titre, auteur, m\u00e9dia\u2026" />
+          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher titre, auteur, média…" />
           <select
             value={yearFilter}
             onChange={e => setYearFilter(e.target.value)}
             style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid var(--border)' }}
           >
-            <option value="all">Toutes les ann\u00e9es</option>
+            <option value="all">Toutes les années</option>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
 
-        <DataTable columns={columns} data={filtered} pageSize={15} emptyMessage="Aucune entr\u00e9e presse trouv\u00e9e" />
+        <DataTable columns={columns} data={filtered} pageSize={15} emptyMessage="Aucune entrée presse trouvée" />
 
         {/* Formulaire modal */}
         {showForm && (
           <Modal
-            title={editingItem ? 'Modifier l\u2019entr\u00e9e presse' : 'Nouvelle entr\u00e9e presse'}
+            title={editingItem ? 'Modifier l’entrée presse' : 'Nouvelle entrée presse'}
             onClose={closeForm}
             size="lg"
           >
@@ -271,23 +271,23 @@ export default function Presse({ presse, setPresse, loading, toast }) {
                 <input value={form.auteur} onChange={e => setForm({ ...form, auteur: e.target.value })} />
               </div>
               <div>
-                <label>M\u00e9dia source</label>
-                <input value={form.media} onChange={e => setForm({ ...form, media: e.target.value })} placeholder="Le Monde, France Inter\u2026" />
+                <label>Média source</label>
+                <input value={form.media} onChange={e => setForm({ ...form, media: e.target.value })} placeholder="Le Monde, France Inter…" />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
                 <label>URL externe</label>
-                <input type="url" value={form.urlExterne} onChange={e => setForm({ ...form, urlExterne: e.target.value })} placeholder="https://\u2026" />
+                <input type="url" value={form.urlExterne} onChange={e => setForm({ ...form, urlExterne: e.target.value })} placeholder="https://…" />
               </div>
               <div>
                 <label>URL publication interne (optionnel)</label>
-                <input type="url" value={form.urlInterne} onChange={e => setForm({ ...form, urlInterne: e.target.value })} placeholder="https://\u2026" />
+                <input type="url" value={form.urlInterne} onChange={e => setForm({ ...form, urlInterne: e.target.value })} placeholder="https://…" />
               </div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-outline" onClick={closeForm}>Annuler</button>
-              <button className="btn btn-sky" onClick={saveItem}>{editingItem ? 'Sauvegarder' : 'Cr\u00e9er'}</button>
+              <button className="btn btn-sky" onClick={saveItem}>{editingItem ? 'Sauvegarder' : 'Créer'}</button>
             </div>
           </Modal>
         )}

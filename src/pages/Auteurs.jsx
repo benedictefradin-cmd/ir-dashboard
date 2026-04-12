@@ -23,7 +23,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
   const debouncedSearch = useDebounce(search, 150);
 
   const normalize = (str) =>
-    (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    (str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
   const filtered = useMemo(() => {
     if (!debouncedSearch) return auteurs;
@@ -114,7 +114,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
     }
 
     const slug = `${form.firstName}-${form.lastName}`.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     let photoUrl = form.photo;
@@ -272,7 +272,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
       </div>
 
       {modalOpen && (
-        <Modal onClose={() => setModalOpen(false)} title={editId ? 'Modifier l\u2019auteur' : 'Ajouter un auteur'}>
+        <Modal onClose={() => setModalOpen(false)} title={editId ? 'Modifier l’auteur' : 'Ajouter un auteur'}>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>

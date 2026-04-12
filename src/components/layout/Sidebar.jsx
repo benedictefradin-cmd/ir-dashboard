@@ -32,8 +32,8 @@ export default function Sidebar({ activeTab, onTabChange, badges, collapsed, onT
         </nav>
 
         <div className="sidebar-footer">
-          <button className="sidebar-toggle" onClick={onToggle} title={collapsed ? 'Agrandir' : 'R\u00e9duire'}>
-            {collapsed ? '\u25B6' : '\u25C0'}
+          <button className="sidebar-toggle" onClick={onToggle} title={collapsed ? 'Agrandir' : 'Réduire'}>
+            {collapsed ? '▶' : '◀'}
           </button>
         </div>
       </aside>

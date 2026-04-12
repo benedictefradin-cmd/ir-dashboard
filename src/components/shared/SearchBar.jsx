@@ -6,7 +6,7 @@ export default function SearchBar({ value, onChange, placeholder }) {
         type="text"
         value={value}
         onChange={e => onChange(e.target.value)}
-        placeholder={placeholder || 'Rechercher\u2026'}
+        placeholder={placeholder || 'Rechercher…'}
         style={{ maxWidth: 300 }}
       />
     </div>

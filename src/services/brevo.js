@@ -12,12 +12,12 @@ export async function fetchAllContacts() {
   let offset = 0;
   const limit = 50;
 
-  // Premi\u00e8re page
+  // Première page
   const first = await fetchContacts(limit, 0);
   allContacts.push(...(first.contacts || []));
   const total = first.count || 0;
 
-  // Pages suivantes (max 5 requ\u00eates = 300 contacts)
+  // Pages suivantes (max 5 requêtes = 300 contacts)
   while (allContacts.length < total && offset + limit < total && allContacts.length < 300) {
     offset += limit;
     const page = await fetchContacts(limit, offset);

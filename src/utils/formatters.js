@@ -19,16 +19,16 @@ export function timeAgo(dateStr) {
   const diffH = Math.floor(diffMs / (1000 * 60 * 60));
   const diffD = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMin < 1) return "\u00e0 l\u2019instant";
-  if (diffMin < 60) return `il y a ${diffMin}\u00a0min`;
-  if (diffH < 24) return `il y a ${diffH}\u00a0h`;
-  if (diffD === 0) return "aujourd\u2019hui";
+  if (diffMin < 1) return "à l’instant";
+  if (diffMin < 60) return `il y a ${diffMin} min`;
+  if (diffH < 24) return `il y a ${diffH} h`;
+  if (diffD === 0) return "aujourd’hui";
   if (diffD === 1) return 'hier';
-  if (diffD < 30) return `il y a ${diffD}\u00a0jours`;
-  if (diffD < 60) return 'il y a 1\u00a0mois';
+  if (diffD < 30) return `il y a ${diffD} jours`;
+  if (diffD < 60) return 'il y a 1 mois';
   const months = Math.floor(diffD / 30);
-  if (months < 12) return `il y a ${months}\u00a0mois`;
-  return `il y a ${Math.floor(diffD / 365)}\u00a0an(s)`;
+  if (months < 12) return `il y a ${months} mois`;
+  return `il y a ${Math.floor(diffD / 365)} an(s)`;
 }
 
 // ─── Texte ────────────────────────────────────────────
@@ -36,14 +36,14 @@ export function slugify(str) {
   return str
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 }
 
 export function truncate(str, maxLen = 150) {
   if (!str || str.length <= maxLen) return str || '';
-  return str.slice(0, maxLen).trimEnd() + '\u2026';
+  return str.slice(0, maxLen).trimEnd() + '…';
 }
 
 export function capitalize(str) {

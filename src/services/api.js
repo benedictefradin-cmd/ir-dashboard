@@ -18,19 +18,19 @@ export class ApiError extends Error {
 }
 
 function errorMessage(status) {
-  if (status === 401) return 'Token invalide \u2014 v\u00e9rifiez vos identifiants';
-  if (status === 403) return 'Acc\u00e8s refus\u00e9 ou limite d\u2019appels atteinte';
-  if (status === 404) return 'Ressource non trouv\u00e9e';
-  if (status === 429) return 'Trop de requ\u00eates \u2014 r\u00e9essayez dans quelques secondes';
-  if (status === 503) return 'Service non configur\u00e9 sur le Worker';
-  if (status >= 500) return 'Erreur serveur \u2014 r\u00e9essayez plus tard';
-  return `Erreur\u00a0${status}`;
+  if (status === 401) return 'Token invalide — vérifiez vos identifiants';
+  if (status === 403) return 'Accès refusé ou limite d’appels atteinte';
+  if (status === 404) return 'Ressource non trouvée';
+  if (status === 429) return 'Trop de requêtes — réessayez dans quelques secondes';
+  if (status === 503) return 'Service non configuré sur le Worker';
+  if (status >= 500) return 'Erreur serveur — réessayez plus tard';
+  return `Erreur ${status}`;
 }
 
 async function request(endpoint, options = {}) {
   const workerUrl = getWorkerUrl();
   if (!workerUrl) {
-    throw new ApiError('URL du Worker non configur\u00e9e. Allez dans Param\u00e8tres.', 0, endpoint);
+    throw new ApiError('URL du Worker non configurée. Allez dans Paramètres.', 0, endpoint);
   }
 
   const url = `${workerUrl}${endpoint}`;
@@ -61,7 +61,7 @@ export const api = {
 };
 
 /**
- * V\u00e9rifie si le Worker est joignable et quels services sont configur\u00e9s.
+ * Vérifie si le Worker est joignable et quels services sont configurés.
  * @returns {{ status: string, services: { brevo: boolean, telegram: boolean } }}
  */
 export async function checkHealth() {

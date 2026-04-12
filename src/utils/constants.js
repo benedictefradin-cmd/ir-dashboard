@@ -24,25 +24,25 @@ export const COLORS = {
 
 // ─── Navigation ───────────────────────────────────────
 export const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', icon: '\u2302' },
+  { key: 'dashboard', label: 'Dashboard', icon: '⌂' },
   { key: 'separator-1', type: 'separator' },
   { key: 'articles', label: 'Publications', icon: '\u{1F4C4}' },
-  { key: 'evenements', label: '\u00c9v\u00e9nements', icon: '\u{1F4C5}' },
+  { key: 'evenements', label: 'Événements', icon: '\u{1F4C5}' },
   { key: 'presse', label: 'Presse', icon: '\u{1F4F0}' },
   { key: 'auteurs', label: 'Auteurs', icon: '\u{1F465}' },
   { key: 'separator-2', type: 'separator' },
-  { key: 'newsletter', label: 'Newsletter', icon: '\u2709' },
+  { key: 'newsletter', label: 'Newsletter', icon: '✉' },
   { key: 'messagerie', label: 'Messagerie', icon: '\u{1F4AC}' },
   { key: 'separator-3', type: 'separator' },
-  { key: 'contenu', label: 'Contenu', icon: '\u270E' },
+  { key: 'contenu', label: 'Contenu', icon: '✎' },
   { key: 'sollicitations', label: 'Sollicitations', icon: '\u{1F4EC}' },
   { key: 'separator-4', type: 'separator' },
-  { key: 'settings', label: 'Config', icon: '\u2699' },
+  { key: 'settings', label: 'Config', icon: '⚙' },
 ];
 
-// ─── Cat\u00e9gories et sources ──────────────────────────
+// ─── Catégories et sources ──────────────────────────
 export const CATEGORIES = [
-  '\u00c9conomie', '\u00c9cologie', 'Social', 'Num\u00e9rique', 'G\u00e9opolitique', 'D\u00e9mocratie',
+  'Économie', 'Écologie', 'Social', 'Numérique', 'Géopolitique', 'Démocratie',
 ];
 
 export const THEMATIQUES = [
@@ -51,7 +51,7 @@ export const THEMATIQUES = [
 
 export const PUB_TYPES = ['Note d\'analyse', 'Point de vue', 'Rapport', 'Rapport phare', 'Tribune'];
 
-export const SOURCES = ['Site web', '\u00c9v\u00e9nement', 'LinkedIn', 'Manuel', 'Brevo'];
+export const SOURCES = ['Site web', 'Événement', 'LinkedIn', 'Manuel', 'Brevo'];
 
 // ─── Statuts ──────────────────────────────────────────
 export const ARTICLE_STATUSES = {
@@ -63,27 +63,27 @@ export const ARTICLE_STATUSES = {
 };
 
 export const SUB_STATUSES = {
-  added: { label: 'Ajout\u00e9', badgeClass: 'badge-green' },
+  added: { label: 'Ajouté', badgeClass: 'badge-green' },
   pending: { label: 'En attente', badgeClass: 'badge-ochre' },
-  rejected: { label: 'Refus\u00e9', badgeClass: 'badge-danger' },
+  rejected: { label: 'Refusé', badgeClass: 'badge-danger' },
 };
 
-export const EVT_TYPES = ['Conf\u00e9rence', 'Atelier', 'Salon', 'Cycle', 'Anniversaire', 'Partenariat'];
+export const EVT_TYPES = ['Conférence', 'Atelier', 'Salon', 'Cycle', 'Anniversaire', 'Partenariat'];
 
 export const EVT_STATUSES = {
-  confirme: { label: 'Confirm\u00e9', badgeClass: 'badge-green' },
-  en_preparation: { label: 'En pr\u00e9paration', badgeClass: 'badge-ochre' },
-  annule: { label: 'Annul\u00e9', badgeClass: 'badge-terra' },
-  passe: { label: 'Pass\u00e9', badgeClass: 'badge-gray' },
+  confirme: { label: 'Confirmé', badgeClass: 'badge-green' },
+  en_preparation: { label: 'En préparation', badgeClass: 'badge-ochre' },
+  annule: { label: 'Annulé', badgeClass: 'badge-terra' },
+  passe: { label: 'Passé', badgeClass: 'badge-gray' },
 };
 
 export const PRESSE_TYPES = ['Tribune', 'Entretien', 'Podcast'];
 
 export const CONTACT_SUBJECTS = [
-  { key: 'general', label: 'Question g\u00e9n\u00e9rale' },
-  { key: 'presse', label: 'Demande presse / m\u00e9dia' },
+  { key: 'general', label: 'Question générale' },
+  { key: 'presse', label: 'Demande presse / média' },
   { key: 'partenariat', label: 'Partenariat' },
-  { key: 'evenement', label: '\u00c9v\u00e9nement' },
+  { key: 'evenement', label: 'Événement' },
   { key: 'newsletter', label: 'Newsletter' },
   { key: 'autre', label: 'Autre' },
 ];
@@ -91,8 +91,8 @@ export const CONTACT_SUBJECTS = [
 export const SOLLICITATION_STATUSES = {
   new: { label: 'Nouveau', badgeClass: 'badge-sky', color: '#4a90d9' },
   in_progress: { label: 'En cours', badgeClass: 'badge-ochre', color: '#d4a843' },
-  resolved: { label: 'R\u00e9solu', badgeClass: 'badge-green', color: '#2d8a4e' },
-  archived: { label: 'Archiv\u00e9', badgeClass: 'badge-gray', color: '#8a8a8a' },
+  resolved: { label: 'Résolu', badgeClass: 'badge-green', color: '#2d8a4e' },
+  archived: { label: 'Archivé', badgeClass: 'badge-gray', color: '#8a8a8a' },
 };
 
 export const SOLLICITATION_PRIORITIES = {
@@ -102,34 +102,34 @@ export const SOLLICITATION_PRIORITIES = {
   urgent: { label: 'Urgente', badgeClass: 'badge-danger' },
 };
 
-export const SOLLICITATION_ADMINS = ['Michel', 'B\u00e9n\u00e9dicte', 'Guillaume'];
+export const SOLLICITATION_ADMINS = ['Michel', 'Bénédicte', 'Guillaume'];
 
 // Legacy compat
 export const CONTACT_STATUSES = {
   nouveau: { label: 'Nouveau', badgeClass: 'badge-sky' },
   lu: { label: 'Lu', badgeClass: 'badge-ochre' },
-  traite: { label: 'Trait\u00e9', badgeClass: 'badge-green' },
-  a_suivre: { label: '\u00c0 suivre', badgeClass: 'badge-terra' },
+  traite: { label: 'Traité', badgeClass: 'badge-green' },
+  a_suivre: { label: 'À suivre', badgeClass: 'badge-terra' },
 };
 
 // ─── Templates email ──────────────────────────────────
 export const EMAIL_TEMPLATES = {
   publication: {
     name: 'Nouvelle publication',
-    subject: '{titre_article} \u2014 Nouvelle publication',
+    subject: '{titre_article} — Nouvelle publication',
     body: `Bonjour,
 
-L\u2019Institut Rousseau publie aujourd\u2019hui une nouvelle note\u00a0:
+L’Institut Rousseau publie aujourd’hui une nouvelle note :
 
 {titre_article}
 Par {auteur}
 
 {extrait}...
 
-\u2192 Lire la publication\u00a0: {lien_article}
+→ Lire la publication : {lien_article}
 
 Bonne lecture,
-L\u2019Institut Rousseau`,
+L’Institut Rousseau`,
   },
 };
 
@@ -145,7 +145,7 @@ export const LS_KEYS = {
   sidebarCollapsed: 'sidebar-collapsed',
 };
 
-// ─── Config par d\u00e9faut ──────────────────────────────
+// ─── Config par défaut ──────────────────────────────
 export const DEFAULT_WORKER_URL = import.meta.env.VITE_WORKER_URL || '';
 export const DEFAULT_PAGE_SIZE = 50;
 

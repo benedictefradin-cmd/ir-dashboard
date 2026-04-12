@@ -23,7 +23,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
   const [githubOwner, setGithubOwner] = useState(() => loadLocal('ir_github_owner', ''));
   const [githubSiteRepo, setGithubSiteRepo] = useState(() => loadLocal('ir_github_site_repo', ''));
 
-  // ─── Op\u00e9rateur ──────────────────────────────
+  // ─── Opérateur ──────────────────────────────
   const [operator, setOperator] = useState(() => loadLocal(LS_KEYS.operator, ''));
 
   // ─── Import ───────────────────────────────────
@@ -104,16 +104,16 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
           brevo: health.services?.brevo ? 'ok' : 'error',
           telegram: health.services?.telegram ? 'ok' : 'error',
         }));
-        toast(`Worker connect\u00e9 \u2014 Brevo\u00a0: ${health.services?.brevo ? '\u2705' : '\u274c'}, Telegram\u00a0: ${health.services?.telegram ? '\u2705' : '\u274c'}`);
+        toast(`Worker connecté — Brevo : ${health.services?.brevo ? '✅' : '❌'}, Telegram : ${health.services?.telegram ? '✅' : '❌'}`);
         if (onRefresh) onRefresh();
       } else if (service === 'telegram') {
         await testTelegram();
         setTesting(prev => ({ ...prev, telegram: 'ok' }));
-        toast('Message test envoy\u00e9 sur Telegram');
+        toast('Message test envoyé sur Telegram');
       }
     } catch (err) {
       setTesting(prev => ({ ...prev, [service]: 'error' }));
-      toast(`Erreur\u00a0: ${err.message}`, 'error');
+      toast(`Erreur : ${err.message}`, 'error');
     }
   };
 
@@ -127,7 +127,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
       setImportHeaders(result.headers);
       // Auto-mapping
       const autoMap = {};
-      const headerLower = result.headers.map(h => h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
+      const headerLower = result.headers.map(h => h.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim());
       const mappings = {
         nom: ['nom', 'name', 'last_name', 'lastname', 'nom de famille'],
         prenom: ['prenom', 'first_name', 'firstname'],
@@ -143,7 +143,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
       }
       setImportMapping(autoMap);
       setImportStep(1);
-      toast(`${result.data.length} lignes d\u00e9tect\u00e9es`, 'info');
+      toast(`${result.data.length} lignes détectées`, 'info');
     } catch (err) {
       toast(err.message, 'error');
     }
@@ -211,7 +211,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
 
     onImportSubscribers(newItems);
 
-    // Tenter de pousser vers Brevo si connect\u00e9 et import newsletter
+    // Tenter de pousser vers Brevo si connecté et import newsletter
     if (importTarget === 'newsletter' && services?.brevo) {
       let synced = 0;
       for (const item of newItems.slice(0, 50)) {
@@ -226,14 +226,14 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
         } catch { /* continue */ }
       }
       if (synced > 0) {
-        toast(`${synced} contact${synced > 1 ? 's' : ''} synchronis\u00e9${synced > 1 ? 's' : ''} avec Brevo`, 'info');
+        toast(`${synced} contact${synced > 1 ? 's' : ''} synchronisé${synced > 1 ? 's' : ''} avec Brevo`, 'info');
       }
     }
 
     setImporting(false);
     setImportStep(0);
     setImportData(null);
-    toast(`${newItems.length} contact${newItems.length > 1 ? 's' : ''} import\u00e9${newItems.length > 1 ? 's' : ''}`);
+    toast(`${newItems.length} contact${newItems.length > 1 ? 's' : ''} importé${newItems.length > 1 ? 's' : ''}`);
   };
 
   // ─── Export global ────────────────────────────
@@ -245,13 +245,13 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
     exportMultiSheet([
       { data: subscribersData, name: 'Newsletter' },
     ], `export-global-IR-${new Date().toISOString().slice(0, 10)}.xlsx`);
-    toast('Export global t\u00e9l\u00e9charg\u00e9');
+    toast('Export global téléchargé');
   };
 
   const statusIcon = (s) => {
     if (s === 'ok') return <span className="status-dot green" style={{ marginLeft: 8 }} />;
     if (s === 'error') return <span className="status-dot red" style={{ marginLeft: 8 }} />;
-    if (s === 'loading') return <span style={{ marginLeft: 8, fontSize: 12, color: 'var(--text-light)' }}>Test\u2026</span>;
+    if (s === 'loading') return <span style={{ marginLeft: 8, fontSize: 12, color: 'var(--text-light)' }}>Test…</span>;
     return <span className="status-dot gray" style={{ marginLeft: 8 }} />;
   };
 
@@ -320,30 +320,30 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
             </div>
 
             <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 12, lineHeight: 1.6 }}>
-              Les cl\u00e9s API sont stock\u00e9es en secrets sur le Cloudflare Worker (jamais c\u00f4t\u00e9 client).
-              Pour configurer\u00a0: <code style={{ fontSize: 11, background: '#f0f0f0', padding: '1px 4px', borderRadius: 3 }}>wrangler secret put NOM_SECRET</code>
+              Les clés API sont stockées en secrets sur le Cloudflare Worker (jamais côté client).
+              Pour configurer : <code style={{ fontSize: 11, background: '#f0f0f0', padding: '1px 4px', borderRadius: 3 }}>wrangler secret put NOM_SECRET</code>
             </p>
           </div>
 
-          {/* Op\u00e9rateur + Export */}
+          {/* Opérateur + Export */}
           <div>
             <div className="card mb-16">
-              <h3 style={{ fontSize: 16, marginBottom: 16 }}>Op\u00e9rateur actif</h3>
+              <h3 style={{ fontSize: 16, marginBottom: 16 }}>Opérateur actif</h3>
               <label>Votre nom</label>
-              <input value={operator} onChange={e => setOperator(e.target.value)} placeholder="Ex\u00a0: Marie, Lucas, B\u00e9n\u00e9dicte" />
+              <input value={operator} onChange={e => setOperator(e.target.value)} placeholder="Ex : Marie, Lucas, Bénédicte" />
               <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 8 }}>
-                Les actions seront logu\u00e9es avec ce nom.
+                Les actions seront loguées avec ce nom.
               </p>
             </div>
 
             <div className="card mb-16">
               <h3 style={{ fontSize: 16, marginBottom: 16 }}>Export global</h3>
               <p style={{ fontSize: 14, color: 'var(--text-light)', marginBottom: 12 }}>
-                T\u00e9l\u00e9chargez toutes les donn\u00e9es en un fichier Excel avec des onglets s\u00e9par\u00e9s
-                ({subscribers.length} abonn\u00e9s).
+                Téléchargez toutes les données en un fichier Excel avec des onglets séparés
+                ({subscribers.length} abonnés).
               </p>
               <button className="btn btn-primary" onClick={handleExportGlobal}>
-                T\u00e9l\u00e9charger l&rsquo;export global
+                Télécharger l&rsquo;export global
               </button>
             </div>
 
@@ -351,7 +351,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
             <div className="card">
               <h3 style={{ fontSize: 16, marginBottom: 16 }}>Automatisations</h3>
               {[
-                ['telegramNewSubscriber', 'Notif Telegram (nouvel abonn\u00e9 newsletter)'],
+                ['telegramNewSubscriber', 'Notif Telegram (nouvel abonné newsletter)'],
               ].map(([key, label]) => (
                 <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
                   <span style={{ fontSize: 14 }}>{label}</span>
@@ -467,7 +467,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
                 <div>
                   <label>Type d&rsquo;import</label>
                   <select value={importTarget} onChange={e => setImportTarget(e.target.value)} style={{ width: 'auto', minWidth: 200 }}>
-                    <option value="newsletter">Abonn\u00e9s newsletter</option>
+                    <option value="newsletter">Abonnés newsletter</option>
                   </select>
                 </div>
               </div>
@@ -481,10 +481,10 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
           {importStep >= 1 && importData && (
             <>
               <div className="alert-banner alert-info mb-16">
-                {importData.length} lignes d\u00e9tect\u00e9es \u2014 Colonnes\u00a0: {importHeaders.join(', ')}
+                {importData.length} lignes détectées — Colonnes : {importHeaders.join(', ')}
               </div>
 
-              {/* Pr\u00e9visualisation */}
+              {/* Prévisualisation */}
               <div className="table-wrap mb-16" style={{ maxHeight: 200, overflow: 'auto' }}>
                 <table className="data-table">
                   <thead>
@@ -509,7 +509,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
                       onChange={e => setImportMapping(prev => ({ ...prev, [field]: e.target.value }))}
                       style={{ fontSize: 13 }}
                     >
-                      <option value="">\u2014 Non mapp\u00e9 \u2014</option>
+                      <option value="">— Non mappé —</option>
                       {importHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                     </select>
                   </div>
@@ -536,7 +536,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
                         </label>
                         <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', textTransform: 'none', fontWeight: 400, fontSize: 14 }}>
                           <input type="radio" name="dupAction" checked={duplicateAction === 'update'} onChange={() => setDuplicateAction('update')} />
-                          Mettre \u00e0 jour les existants
+                          Mettre à jour les existants
                         </label>
                       </div>
                     </div>
@@ -551,7 +551,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
                   onClick={executeImport}
                   disabled={importing || !validationSummary || validationSummary.ok === 0}
                 >
-                  {importing ? 'Import en cours\u2026' : `Importer ${(validationSummary?.ok || 0) + (duplicateAction === 'update' ? (validationSummary?.duplicates || 0) : 0)} contacts`}
+                  {importing ? 'Import en cours…' : `Importer ${(validationSummary?.ok || 0) + (duplicateAction === 'update' ? (validationSummary?.duplicates || 0) : 0)} contacts`}
                 </button>
               </div>
             </>

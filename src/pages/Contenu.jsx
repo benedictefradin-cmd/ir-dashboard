@@ -130,7 +130,7 @@ export default function Contenu({ contenu, setContenu, toast }) {
   const renderThematiques = () => (
     <>
       {THEMATIQUES.map((theme) => (
-        renderTextSection('thematiques', theme, theme.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))
+        renderTextSection('thematiques', theme, theme.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''))
       ))}
       <button className="btn btn-primary" onClick={() => handleSave('thématiques')}>Sauvegarder</button>
     </>

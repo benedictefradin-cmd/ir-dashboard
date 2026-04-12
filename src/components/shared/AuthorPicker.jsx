@@ -5,7 +5,7 @@ import { COLORS } from '../../utils/constants';
 const avatarColors = [COLORS.navy, COLORS.sky, COLORS.terra, COLORS.ochre, COLORS.green];
 
 function normalize(str) {
-  return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return (str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
 export default function AuthorPicker({ authors = [], selected = [], onChange, multiple = true, onAddNew }) {

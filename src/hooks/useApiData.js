@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 
 /**
- * Hook g\u00e9n\u00e9rique pour fetch + loading + error.
- * @param {Function} fetchFn - Fonction async qui retourne les donn\u00e9es
- * @param {Array} deps - D\u00e9pendances pour re-fetch
+ * Hook générique pour fetch + loading + error.
+ * @param {Function} fetchFn - Fonction async qui retourne les données
+ * @param {Array} deps - Dépendances pour re-fetch
  * @param {Object} options - { autoFetch: true, initialData: null }
  */
 export default function useApiData(fetchFn, deps = [], options = {}) {
@@ -29,7 +29,7 @@ export default function useApiData(fetchFn, deps = [], options = {}) {
 
   useEffect(() => {
     if (autoFetch) {
-      execute().catch(() => {}); // erreur d\u00e9j\u00e0 stock\u00e9e dans state
+      execute().catch(() => {}); // erreur déjà stockée dans state
     }
   }, [execute, autoFetch]);
 

@@ -11,13 +11,13 @@ export async function sendChannelMessage(text) {
 }
 
 export async function testConnection() {
-  return sendMessage(null, '\u2705 Connexion Telegram v\u00e9rifi\u00e9e depuis le back-office Institut Rousseau.');
+  return sendMessage(null, '✅ Connexion Telegram vérifiée depuis le back-office Institut Rousseau.');
 }
 
 // Formate un message article pour le canal public
 export function formatArticleMessage(article) {
   const lines = [];
-  lines.push(`\ud83d\udcc4 <b>${article.title}</b>`);
+  lines.push(`📄 <b>${article.title}</b>`);
   if (article.author) lines.push(`Par ${article.author}`);
   if (article.excerpt) {
     lines.push('');
@@ -25,18 +25,18 @@ export function formatArticleMessage(article) {
   }
   if (article.url) {
     lines.push('');
-    lines.push(`\u2192 ${article.url}`);
+    lines.push(`→ ${article.url}`);
   }
   return lines.join('\n');
 }
 
-// Formate une notification priv\u00e9e
+// Formate une notification privée
 export function formatNotification(type, data) {
   switch (type) {
     case 'new_subscriber':
-      return `\ud83d\udcec Nouvel abonn\u00e9 newsletter\u00a0: ${data.email}`;
+      return `📬 Nouvel abonné newsletter : ${data.email}`;
     case 'api_error':
-      return `\u26a0\ufe0f Erreur sync ${data.service}\u00a0: ${data.message}`;
+      return `⚠️ Erreur sync ${data.service} : ${data.message}`;
     default:
       return data.message || '';
   }

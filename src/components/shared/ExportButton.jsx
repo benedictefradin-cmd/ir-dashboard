@@ -16,7 +16,7 @@ export default function ExportButton({ data, columns, sheetName, filename, label
     });
 
     const date = new Date().toISOString().slice(0, 10);
-    exportToExcel(exportData, sheetName || 'Donn\u00e9es', filename || `export-IR-${date}.xlsx`);
+    exportToExcel(exportData, sheetName || 'Données', filename || `export-IR-${date}.xlsx`);
   };
 
   return (

@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 
 /**
- * Tableau g\u00e9n\u00e9rique avec pagination.
+ * Tableau générique avec pagination.
  * @param {Array} columns - [{ key, label, render?, width?, align? }]
- * @param {Array} data - Lignes de donn\u00e9es
- * @param {number} pageSize - Items par page (d\u00e9faut 20)
+ * @param {Array} data - Lignes de données
+ * @param {number} pageSize - Items par page (défaut 20)
  * @param {Function} onRowClick - Optionnel
  * @param {React.ReactNode} footer - Contenu additionnel sous le tableau
  */
@@ -16,7 +16,7 @@ export default function DataTable({ columns, data, pageSize = 20, onRowClick, fo
     return (data || []).slice(page * pageSize, (page + 1) * pageSize);
   }, [data, page, pageSize]);
 
-  // Reset page quand les donn\u00e9es changent
+  // Reset page quand les données changent
   useMemo(() => {
     if (page >= totalPages && totalPages > 0) setPage(totalPages - 1);
     if (totalPages === 0) setPage(0);
@@ -27,7 +27,7 @@ export default function DataTable({ columns, data, pageSize = 20, onRowClick, fo
       <div className="card">
         <div className="empty-state">
           <div className="empty-icon">{'\u{1F4CB}'}</div>
-          <p>{emptyMessage || 'Aucune donn\u00e9e \u00e0 afficher'}</p>
+          <p>{emptyMessage || 'Aucune donnée à afficher'}</p>
         </div>
       </div>
     );
@@ -66,7 +66,7 @@ export default function DataTable({ columns, data, pageSize = 20, onRowClick, fo
       </div>
 
       <div className="table-footer">
-        <span>{data.length} r\u00e9sultat{data.length > 1 ? 's' : ''}</span>
+        <span>{data.length} résultat{data.length > 1 ? 's' : ''}</span>
 
         {totalPages > 1 && (
           <div className="pagination">

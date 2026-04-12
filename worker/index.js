@@ -1,7 +1,7 @@
 /**
  * Cloudflare Worker — API proxy pour le dashboard Institut Rousseau
  *
- * Les cl\u00e9s API sont stock\u00e9es en secrets Cloudflare (wrangler secret put).
+ * Les clés API sont stockées en secrets Cloudflare (wrangler secret put).
  * Le front n'envoie jamais de credentials.
  *
  * Secrets requis :
@@ -42,7 +42,7 @@ export default {
         const orgSlug = env.HELLOASSO_ORG_SLUG || 'institut-rousseau';
 
         if (!clientId || !clientSecret) {
-          return json({ error: 'HelloAsso non configur\u00e9. Ajoutez HELLOASSO_CLIENT_ID et HELLOASSO_CLIENT_SECRET en secrets.' }, 503);
+          return json({ error: 'HelloAsso non configuré. Ajoutez HELLOASSO_CLIENT_ID et HELLOASSO_CLIENT_SECRET en secrets.' }, 503);
         }
 
         // OAuth token
@@ -52,7 +52,7 @@ export default {
           body: `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}`,
         });
         if (!tokenResp.ok) {
-          return json({ error: 'HelloAsso\u00a0: authentification \u00e9chou\u00e9e', status: tokenResp.status }, 401);
+          return json({ error: 'HelloAsso : authentification échouée', status: tokenResp.status }, 401);
         }
         const { access_token } = await tokenResp.json();
         const headers = { Authorization: `Bearer ${access_token}` };
@@ -65,9 +65,9 @@ export default {
             `https://api.helloasso.com/v5/organizations/${orgSlug}/forms/Membership/items?pageIndex=${pageIndex}&pageSize=${pageSize}&withDetails=true`,
             { headers }
           );
-          if (!resp.ok) return json({ error: `HelloAsso adhesions\u00a0: ${resp.status}` }, resp.status);
+          if (!resp.ok) return json({ error: `HelloAsso adhesions : ${resp.status}` }, resp.status);
           const data = await resp.json();
-          return json(normalizeHelloAssoItems(data, 'Adh\u00e9sion'));
+          return json(normalizeHelloAssoItems(data, 'Adhésion'));
         }
 
         // ─── /api/helloasso/dons ───
@@ -78,7 +78,7 @@ export default {
             `https://api.helloasso.com/v5/organizations/${orgSlug}/forms/Donation/items?pageIndex=${pageIndex}&pageSize=${pageSize}&withDetails=true`,
             { headers }
           );
-          if (!resp.ok) return json({ error: `HelloAsso dons\u00a0: ${resp.status}` }, resp.status);
+          if (!resp.ok) return json({ error: `HelloAsso dons : ${resp.status}` }, resp.status);
           const data = await resp.json();
           return json(normalizeHelloAssoItems(data, 'Don'));
         }
@@ -91,9 +91,9 @@ export default {
             `https://api.helloasso.com/v5/organizations/${orgSlug}/members?pageIndex=${pageIndex}&pageSize=${pageSize}`,
             { headers }
           );
-          if (!resp.ok) return json({ error: `HelloAsso members\u00a0: ${resp.status}` }, resp.status);
+          if (!resp.ok) return json({ error: `HelloAsso members : ${resp.status}` }, resp.status);
           const data = await resp.json();
-          return json(normalizeHelloAssoItems(data, 'Adh\u00e9sion'));
+          return json(normalizeHelloAssoItems(data, 'Adhésion'));
         }
 
         // ─── /api/helloasso/payments ───
@@ -104,7 +104,7 @@ export default {
             `https://api.helloasso.com/v5/organizations/${orgSlug}/payments?pageIndex=${pageIndex}&pageSize=${pageSize}`,
             { headers }
           );
-          if (!resp.ok) return json({ error: `HelloAsso payments\u00a0: ${resp.status}` }, resp.status);
+          if (!resp.ok) return json({ error: `HelloAsso payments : ${resp.status}` }, resp.status);
           const data = await resp.json();
           return json(normalizeHelloAssoPayments(data));
         }
@@ -119,7 +119,7 @@ export default {
       if (path.startsWith('/api/brevo/')) {
         const apiKey = env.BREVO_API_KEY;
         if (!apiKey) {
-          return json({ error: 'Brevo non configur\u00e9. Ajoutez BREVO_API_KEY en secret.' }, 503);
+          return json({ error: 'Brevo non configuré. Ajoutez BREVO_API_KEY en secret.' }, 503);
         }
         const brevoHeaders = {
           'api-key': apiKey,
@@ -135,7 +135,7 @@ export default {
             `https://api.brevo.com/v3/contacts?limit=${limit}&offset=${offset}`,
             { headers: brevoHeaders }
           );
-          if (!resp.ok) return json({ error: `Brevo contacts\u00a0: ${resp.status}` }, resp.status);
+          if (!resp.ok) return json({ error: `Brevo contacts : ${resp.status}` }, resp.status);
           const data = await resp.json();
           return json({
             contacts: (data.contacts || []).map(normalizeBrevoContact),
@@ -152,7 +152,7 @@ export default {
             body: JSON.stringify(body),
           });
           const data = await resp.json();
-          if (!resp.ok) return json({ error: data.message || `Brevo\u00a0: ${resp.status}` }, resp.status);
+          if (!resp.ok) return json({ error: data.message || `Brevo : ${resp.status}` }, resp.status);
           return json(data);
         }
 
@@ -167,7 +167,7 @@ export default {
           });
           if (resp.status === 204) return json({ success: true });
           const data = await resp.json().catch(() => ({}));
-          if (!resp.ok) return json({ error: data.message || `Brevo\u00a0: ${resp.status}` }, resp.status);
+          if (!resp.ok) return json({ error: data.message || `Brevo : ${resp.status}` }, resp.status);
           return json(data);
         }
 
@@ -176,7 +176,7 @@ export default {
           const resp = await fetch('https://api.brevo.com/v3/contacts/lists?limit=50&offset=0', {
             headers: brevoHeaders,
           });
-          if (!resp.ok) return json({ error: `Brevo listes\u00a0: ${resp.status}` }, resp.status);
+          if (!resp.ok) return json({ error: `Brevo listes : ${resp.status}` }, resp.status);
           return json(await resp.json());
         }
 
@@ -206,7 +206,7 @@ export default {
             `https://api.brevo.com/v3/emailCampaigns?type=classic&status=sent&limit=${limit}&offset=${offset}&sort=desc`,
             { headers: brevoHeaders }
           );
-          if (!resp.ok) return json({ error: `Brevo campagnes\u00a0: ${resp.status}` }, resp.status);
+          if (!resp.ok) return json({ error: `Brevo campagnes : ${resp.status}` }, resp.status);
           const data = await resp.json();
           return json({
             campaigns: (data.campaigns || []).map(c => ({
@@ -237,7 +237,7 @@ export default {
       if (path.startsWith('/api/telegram/')) {
         const botToken = env.TELEGRAM_BOT_TOKEN;
         if (!botToken) {
-          return json({ error: 'Telegram non configur\u00e9. Ajoutez TELEGRAM_BOT_TOKEN en secret.' }, 503);
+          return json({ error: 'Telegram non configuré. Ajoutez TELEGRAM_BOT_TOKEN en secret.' }, 503);
         }
 
         // ─── POST /api/telegram/send ───
@@ -259,7 +259,7 @@ export default {
         if (path === '/api/telegram/send-channel') {
           const { text } = await request.json();
           const channelId = env.TELEGRAM_CHANNEL_ID;
-          if (!channelId) return json({ error: 'Channel ID non configur\u00e9' }, 400);
+          if (!channelId) return json({ error: 'Channel ID non configuré' }, 400);
           const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -808,7 +808,7 @@ export default {
       }
 
       // ═══════════════════════════════════════════
-      // LEGACY ROUTES (compatibilit\u00e9 avec l'ancien front)
+      // LEGACY ROUTES (compatibilité avec l'ancien front)
       // ═══════════════════════════════════════════
 
       if (path === '/helloasso/members' || path === '/helloasso/donations') {
@@ -909,7 +909,7 @@ function normalizeHelloAssoPayments(apiResponse) {
     email: (p.payer?.email || '').toLowerCase(),
     amount: p.amount ? p.amount / 100 : 0,
     date: p.date?.slice(0, 10) || '',
-    type: p.paymentType === 'Donation' ? 'Don' : 'Adh\u00e9sion',
+    type: p.paymentType === 'Donation' ? 'Don' : 'Adhésion',
     status: p.state === 'Authorized' ? 'actif' : 'en_attente',
     source: 'HelloAsso',
   })).filter(c => c.email);
