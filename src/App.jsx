@@ -344,6 +344,8 @@ export default function App() {
     evenements: 0,
     presse: 0,
     auteurs: 0,
+    adherents: 0,
+    dons: 0,
     newsletter: subscribers.filter(s => s.status === 'pending').length,
     messagerie: 0,
     contenu: 0,
@@ -392,6 +394,10 @@ export default function App() {
         return <Presse presse={presse} setPresse={setPresse} loading={loading} toast={toast} />;
       case 'auteurs':
         return <Auteurs auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} loading={loading} toast={toast} />;
+      case 'adherents':
+        return <Adherents adherents={adherents} loading={loading} error={!services.helloasso ? 'Mode démonstration — configurez le Worker pour synchroniser HelloAsso' : ''} onRefresh={loadData} toast={toast} />;
+      case 'dons':
+        return <Dons dons={dons} setDons={setDons} services={services} loading={loading} onRefresh={loadData} toast={toast} />;
       case 'newsletter':
         return <Newsletter subscribers={subscribers} setSubscribers={setSubscribers} campaigns={campaigns} loading={loading} connected={services.brevo} onRefresh={loadData} toast={toast} />;
       case 'messagerie':
