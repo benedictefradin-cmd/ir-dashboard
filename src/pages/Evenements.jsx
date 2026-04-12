@@ -5,7 +5,7 @@ import Modal from '../components/shared/Modal';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
 import { formatDateFr } from '../utils/formatters';
 import { COLORS, EVT_TYPES, EVT_STATUSES } from '../utils/constants';
-import { hasGitHub, insertHtmlInPage, formatDateSite } from '../services/github';
+import { hasGitHub } from '../services/github';
 
 const isFuture = (dateStr) => {
   if (!dateStr) return false;
@@ -124,28 +124,18 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
     toast(`${count} événement(s) archivé(s)`);
   };
 
-  // Publier sur le site via GitHub API
-  const publishEvent = async (evt) => {
-    setPublishingId(evt.id);
+  // Publier tous les événements sur le site via data/events.json
+  const publishEvent = async () => {
+    setPublishingId('all');
     try {
-      if (hasGitHub()) {
-        const intervenantsHtml = (evt.intervenants || []).map(i =>
-          `<span class="intervenant">${i.name}${i.titre ? ` — ${i.titre}` : ''}</span>`
-        ).join('\n  ');
-
-        const cardHtml = `
-<article class="event-card" data-status="${evt.status}">
-  <time>${formatDateSite(evt.date)}</time>
-  <span class="type">${evt.type}</span>
-  <h3>${evt.title}</h3>${evt.sousTitre ? `\n  <p class="sous-titre">${evt.sousTitre}</p>` : ''}
-  <p class="lieu">${evt.lieu || ''}</p>${evt.partenaire ? `\n  <p class="partenaire">En partenariat avec ${evt.partenaire}</p>` : ''}${intervenantsHtml ? `\n  <div class="intervenants">${intervenantsHtml}</div>` : ''}
-  <p>${evt.description || ''}</p>${evt.lienInscription ? `\n  <a href="${evt.lienInscription}" target="_blank" class="btn-inscription">S'inscrire</a>` : ''}
-</article>`;
-        await insertHtmlInPage('evenements.html', cardHtml, `Ajout événement : ${evt.title}`);
-        toast('Événement publié sur le site');
+      if (hasGitHub() && saveToSite) {
+        const cleanEvents = events.map(({ id, date, type, title, sousTitre, lieu, intervenants, partenaire, description, lienInscription, status }) => ({
+          id, date, type, title, sousTitre, lieu, intervenants: (intervenants || []).filter(i => i.name), partenaire, description, lienInscription, status,
+        }));
+        await saveToSite('events', cleanEvents, 'Mise à jour événements depuis le back-office');
+        toast('Événements publiés sur le site');
       } else {
-        await new Promise(r => setTimeout(r, 1500));
-        toast('Événement publié (simulation — configurez VITE_GITHUB_TOKEN)');
+        toast('GitHub non configuré — allez dans Config', 'error');
       }
     } catch (e) {
       toast(e.message || 'Erreur de publication', 'error');
@@ -171,8 +161,8 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
         <div className="flex-center gap-8">
           <ServiceBadge service="github" />
           {saveToSite && hasGitHub() && (
-            <button className="btn btn-green" onClick={() => saveToSite('events', events.map(({ id, date, type, title, sousTitre, lieu, intervenants, partenaire, description, lienInscription, status }) => ({ id, date, type, title, sousTitre, lieu, intervenants, partenaire, description, lienInscription, status })))}>
-              Publier tout sur le site
+            <button className="btn btn-green" onClick={publishEvent} disabled={publishingId === 'all'}>
+              {publishingId === 'all' ? 'Publication…' : 'Publier sur le site'}
             </button>
           )}
           <button className="btn btn-outline" onClick={archivePasses}>Archiver les passés</button>
@@ -259,14 +249,10 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
                   <input value={form.lieu} onChange={e => setField('lieu', e.target.value)}
                     placeholder="adresse complète"
                     style={{ display: 'inline-block', width: 320, padding: '4px 8px', fontSize: 14 }} />
-                  {form.partenaire || true ? (
-                    <>
-                      {', en partenariat avec '}
-                      <input value={form.partenaire} onChange={e => setField('partenaire', e.target.value)}
-                        placeholder="partenaire (optionnel)"
-                        style={{ display: 'inline-block', width: 200, padding: '4px 8px', fontSize: 14 }} />
-                    </>
-                  ) : null}
+                  {', en partenariat avec '}
+                  <input value={form.partenaire} onChange={e => setField('partenaire', e.target.value)}
+                    placeholder="partenaire (optionnel)"
+                    style={{ display: 'inline-block', width: 200, padding: '4px 8px', fontSize: 14 }} />
                   {'.'}
                 </p>
                 <p>
@@ -423,13 +409,6 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center' }}>
                     <button className="btn btn-outline btn-sm" onClick={() => openEdit(evt)}>Modifier</button>
                     <button className="btn btn-outline btn-sm" onClick={() => setPreviewEvt(evt)}>Prévisualiser</button>
-                    <button
-                      className="btn btn-green btn-sm"
-                      onClick={() => publishEvent(evt)}
-                      disabled={publishingId === evt.id}
-                    >
-                      {publishingId === evt.id ? 'Publication…' : 'Publier'}
-                    </button>
                     <button className="btn btn-outline btn-sm" style={{ color: 'var(--terra)' }} onClick={() => setConfirmDelete(evt)}>Supprimer</button>
                   </div>
                 </div>
@@ -502,8 +481,8 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
           </div>
           <div className="modal-footer">
             <button className="btn btn-outline" onClick={() => setPreviewEvt(null)}>Fermer</button>
-            <button className="btn btn-green" onClick={() => { setPreviewEvt(null); publishEvent(previewEvt); }}>
-              Publier sur le site
+            <button className="btn btn-green" onClick={() => { setPreviewEvt(null); publishEvent(); }}>
+              Publier tout sur le site
             </button>
           </div>
         </Modal>

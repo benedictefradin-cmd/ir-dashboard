@@ -210,7 +210,7 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
         <div className="flex-center gap-8">
           <ServiceBadge service="github" />
           {saveToSite && hasGitHub() && (
-            <button className="btn btn-green" onClick={() => saveToSite('presse', presse.map(({ id, type, title, auteur, media, date, url, urlInterne }) => ({ id, type, title, auteur, media, date, url, urlInterne: urlInterne || '' })))}>
+            <button className="btn btn-green" onClick={() => saveToSite('presse', presse.map(({ id, type, title, auteur, media, date, urlExterne, urlInterne }) => ({ id, type, title, auteur, media, date, url: urlExterne || '', urlInterne: urlInterne || '' })))}>
               Publier tout sur le site
             </button>
           )}

@@ -1,8 +1,9 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import SearchBar from '../components/shared/SearchBar';
 import { hasGitHub, githubUploadImage, githubGetFile } from '../services/github';
 import { SITE_URL } from '../utils/constants';
+import { loadLocal } from '../utils/localStorage';
 import useDebounce from '../hooks/useDebounce';
 
 const MEDIA_FOLDERS = [
@@ -37,14 +38,17 @@ export default function Medias({ toast }) {
     }
     setLoading(true);
     try {
+      const ghToken = loadLocal('ir_github_token', '') || import.meta.env.VITE_GITHUB_TOKEN || '';
+      const ghOwner = loadLocal('ir_github_owner', '') || import.meta.env.VITE_GITHUB_OWNER || 'benedictefradin-cmd';
+      const ghRepo = loadLocal('ir_github_site_repo', '') || import.meta.env.VITE_GITHUB_SITE_REPO || 'institut-rousseau';
       const folders = ['images/auteurs', 'images/publications', 'images/evenements', 'images/partenaires', 'images/site', 'documents'];
       const results = [];
 
       for (const folder of folders) {
         try {
           const res = await fetch(
-            `https://api.github.com/repos/${import.meta.env.VITE_GITHUB_OWNER || 'benedictefradin-cmd'}/${import.meta.env.VITE_GITHUB_SITE_REPO || 'institut-rousseau'}/contents/${folder}`,
-            { headers: { 'Authorization': `Bearer ${import.meta.env.VITE_GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' } }
+            `https://api.github.com/repos/${ghOwner}/${ghRepo}/contents/${folder}`,
+            { headers: { 'Authorization': `Bearer ${ghToken}`, 'Accept': 'application/vnd.github.v3+json' } }
           );
           if (res.ok) {
             const files = await res.json();
@@ -76,6 +80,13 @@ export default function Medias({ toast }) {
     }
     setLoading(false);
   }, [toast]);
+
+  // Auto-charger les médias au premier affichage
+  useEffect(() => {
+    if (hasGitHub() && medias.length === 0) {
+      loadMedias();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpload = async (e) => {
     const files = e.target.files;
@@ -222,7 +233,7 @@ export default function Medias({ toast }) {
         {medias.length === 0 && !loading && (
           <div className="card" style={{ padding: 40, textAlign: 'center' }}>
             <p style={{ color: 'var(--text-light)', fontSize: 15 }}>
-              Cliquez sur "Charger les médias" pour voir les fichiers du site
+              {hasGitHub() ? 'Aucun fichier trouvé sur le site' : 'Configurez GitHub dans les Paramètres pour accéder aux médias'}
             </p>
           </div>
         )}

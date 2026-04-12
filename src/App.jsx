@@ -14,6 +14,8 @@ import Accueil from './pages/Accueil';
 import SEO from './pages/SEO';
 import Medias from './pages/Medias';
 import Navigation from './pages/Navigation';
+import Equipe from './pages/Equipe';
+import Technique from './pages/Technique';
 import Sollicitations from './pages/Sollicitations';
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
@@ -22,6 +24,7 @@ import { fetchAllSiteData, normalizePublications, normalizeEvents, normalizePres
 import { hasGitHub } from './services/github';
 import { loadLocal, saveLocal } from './utils/localStorage';
 import { LS_KEYS, COLORS } from './utils/constants';
+import { getActivity, logActivity } from './utils/activity';
 import useNotionSync from './hooks/useNotionSync';
 import logoSvg from './assets/logo.svg';
 
@@ -59,7 +62,7 @@ export default function App() {
   const [subscribers, setSubscribers] = useState([]);
   const [sollicitations, setSollicitations] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
-  const [activity, setActivity] = useState([]);
+  const [activity, setActivity] = useState(() => getActivity());
   const [contenu, setContenu] = useState({});
 
   // Services
@@ -73,6 +76,10 @@ export default function App() {
     const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+    // Logger les actions réussies dans le feed d'activité
+    if (type === 'success') {
+      setActivity(logActivity(message));
+    }
   }, []);
 
   const changeTab = useCallback((key) => {
@@ -193,6 +200,8 @@ export default function App() {
     seo: 0,
     medias: 0,
     navigation: 0,
+    equipe: 0,
+    technique: 0,
     sollicitations: sollicitations.filter(s => s.status === 'new').length,
     settings: 0,
   };
@@ -254,6 +263,10 @@ export default function App() {
         return <Medias toast={toast} />;
       case 'navigation':
         return <Navigation contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
+      case 'equipe':
+        return <Equipe contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
+      case 'technique':
+        return <Technique toast={toast} />;
       case 'sollicitations':
         return <Sollicitations sollicitations={sollicitations} setSollicitations={setSollicitations} loading={loading} toast={toast} />;
       case 'settings':
