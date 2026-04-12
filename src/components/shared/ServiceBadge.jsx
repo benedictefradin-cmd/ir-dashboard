@@ -4,6 +4,7 @@ const SERVICES = {
   helloasso: { label: 'HelloAsso', className: 'service-badge-helloasso' },
   github: { label: 'GitHub', className: 'service-badge-github' },
   cloudflare: { label: 'Cloudflare', className: 'service-badge-cloudflare' },
+  vercel: { label: 'Vercel', className: 'service-badge-vercel' },
 };
 
 export default function ServiceBadge({ service }) {

@@ -18,6 +18,8 @@ import { fetchContacts, fetchCampaigns } from './services/brevo';
 import { fetchAdherents as fetchHelloAssoAdherents, fetchDons as fetchHelloAssoDons } from './services/helloasso';
 import { loadLocal, saveLocal } from './utils/localStorage';
 import { LS_KEYS, COLORS } from './utils/constants';
+import useNotionSync from './hooks/useNotionSync';
+import authorsData from './data/authors.json';
 
 // ─── DEMO DATA ─────────────────────────────────────────
 const DEMO_ARTICLES = [
@@ -51,15 +53,14 @@ const DEMO_PRESSE = [
   { id: 10, type: 'Tribune', title: 'Pour un Green New Deal europ\u00e9en', auteur: 'Simon Pujau', media: 'The Conversation', date: '2025-07-10', url: '', urlInterne: '' },
 ];
 
-const DEMO_AUTEURS = [
-  { id: 1, name: 'Marine Yzquierdo', titre: 'Sp\u00e9cialiste travail et environnement', photo: '', bio: '', publications: 3 },
-  { id: 2, name: 'Magali Lafourcade', titre: 'Secr\u00e9taire g\u00e9n\u00e9rale CNCDH', photo: '', bio: '', publications: 5 },
-  { id: 3, name: 'Pierre Micheletti', titre: 'M\u00e9decin, ancien pr\u00e9sident ACF', photo: '', bio: '', publications: 2 },
-  { id: 4, name: 'Robert Bell', titre: 'Professeur, sp\u00e9cialiste majors p\u00e9troli\u00e8res', photo: '', bio: '', publications: 4 },
-  { id: 5, name: 'Nicolas Dufr\u00eane', titre: 'Directeur de l\u2019Institut Rousseau', photo: '', bio: '', publications: 12 },
-  { id: 6, name: 'Chlo\u00e9 Ridel', titre: 'Pr\u00e9sidente de l\u2019Institut Rousseau', photo: '', bio: '', publications: 8 },
-  { id: 7, name: 'Ga\u00ebl Giraud', titre: '\u00c9conomiste', photo: '', bio: '', publications: 6 },
-  { id: 8, name: 'Beverley Toudic', titre: 'Directrice adjointe', photo: '', bio: '', publications: 3 },
+// Authors loaded from src/data/authors.json — fallback to inline demo
+const DEMO_AUTEURS = authorsData.length ? authorsData.map(a => ({
+  ...a,
+  name: `${a.firstName} ${a.lastName}`,
+  titre: a.role,
+})) : [
+  { id: 'marine-yzquierdo', firstName: 'Marine', lastName: 'Yzquierdo', name: 'Marine Yzquierdo', role: 'Spécialiste travail et environnement', titre: 'Spécialiste travail et environnement', photo: '', bio: '', publications: 3 },
+  { id: 'nicolas-dufrene', firstName: 'Nicolas', lastName: 'Dufrêne', name: 'Nicolas Dufrêne', role: 'Directeur de l\u2019Institut Rousseau', titre: 'Directeur de l\u2019Institut Rousseau', photo: '', bio: '', publications: 12 },
 ];
 
 const DEMO_SUBSCRIBERS = [
@@ -244,6 +245,9 @@ export default function App() {
   const [services, setServices] = useState({ helloasso: false, brevo: false, telegram: false });
   const [loading, setLoading] = useState(true);
 
+  // Notion sync
+  const { notionArticles, notionCounts, notionLoading, notionError, syncNotion, notionConfigured } = useNotionSync();
+
   const toast = useCallback((message, type = 'success') => {
     const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -340,9 +344,10 @@ export default function App() {
   };
 
   // Computed badges
+  const readyCount = (notionCounts.ready || 0) + articles.filter(a => a.status === 'ready').length;
   const badges = {
     dashboard: 0,
-    articles: articles.filter(a => a.status === 'review').length,
+    articles: readyCount || articles.filter(a => a.status === 'review').length,
     evenements: 0,
     presse: 0,
     auteurs: 0,
@@ -381,9 +386,15 @@ export default function App() {
           adherents={adherents} subscribers={subscribers} articles={articles}
           events={events} presse={presse} dons={dons} sollicitations={sollicitations}
           activity={activity} loading={loading} onTabChange={changeTab}
+          notionArticles={notionArticles} notionCounts={notionCounts}
         />;
       case 'articles':
-        return <Articles articles={articles} setArticles={setArticles} loading={loading} toast={toast} />;
+        return <Articles
+          articles={articles} setArticles={setArticles} loading={loading} toast={toast}
+          notionArticles={notionArticles} notionCounts={notionCounts}
+          notionLoading={notionLoading} syncNotion={syncNotion}
+          notionConfigured={notionConfigured} auteurs={auteurs}
+        />;
       case 'evenements':
         return <Evenements events={events} setEvents={setEvents} loading={loading} toast={toast} />;
       case 'presse':
@@ -414,6 +425,7 @@ export default function App() {
           adherents={adherents} subscribers={subscribers} articles={articles}
           events={events} presse={presse} dons={dons} sollicitations={sollicitations}
           activity={activity} loading={loading} onTabChange={changeTab}
+          notionArticles={notionArticles} notionCounts={notionCounts}
         />;
     }
   };

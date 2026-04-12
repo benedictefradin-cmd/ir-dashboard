@@ -8,7 +8,7 @@ import { useState, useMemo } from 'react';
  * @param {Function} onRowClick - Optionnel
  * @param {React.ReactNode} footer - Contenu additionnel sous le tableau
  */
-export default function DataTable({ columns, data, pageSize = 20, onRowClick, footer, emptyMessage }) {
+export default function DataTable({ columns, data, pageSize = 20, onRowClick, footer, emptyMessage, rowClassName }) {
   const [page, setPage] = useState(0);
 
   const totalPages = Math.ceil((data?.length || 0) / pageSize);
@@ -50,6 +50,7 @@ export default function DataTable({ columns, data, pageSize = 20, onRowClick, fo
             {pageData.map((row, i) => (
               <tr
                 key={row.id || i}
+                className={rowClassName ? rowClassName(row) : ''}
                 onClick={() => onRowClick?.(row)}
                 style={{ cursor: onRowClick ? 'pointer' : 'default' }}
               >

@@ -48,10 +48,10 @@ export const CATEGORIES = [
 ];
 
 export const THEMATIQUES = [
-  '\u00c9cologie', '\u00c9conomie', 'Institutions', 'Social', 'International', 'Culture',
+  'Écologie', 'Économie', 'Institutions', 'Social', 'International', 'Culture et Controverses',
 ];
 
-export const PUB_TYPES = ['Note d\'analyse', 'Point de vue', 'Rapport', 'Rapport phare'];
+export const PUB_TYPES = ['Note d\'analyse', 'Point de vue', 'Rapport', 'Rapport phare', 'Tribune'];
 
 export const SOURCES = ['Site web', '\u00c9v\u00e9nement', 'LinkedIn', 'Manuel', 'HelloAsso', 'Brevo'];
 
@@ -64,9 +64,10 @@ export const ADHERENT_STATUSES = {
 
 export const ARTICLE_STATUSES = {
   draft: { label: 'Brouillon', badgeClass: 'badge-gray' },
-  review: { label: '\u00c0 relire', badgeClass: 'badge-ochre' },
-  ready: { label: 'Pr\u00eat', badgeClass: 'badge-sky' },
-  published: { label: 'Publi\u00e9', badgeClass: 'badge-green' },
+  review: { label: 'À relire', badgeClass: 'badge-ochre' },
+  ready: { label: 'Prêt à publier', badgeClass: 'badge-amber' },
+  published: { label: 'Publié', badgeClass: 'badge-green' },
+  archived: { label: 'Archivé', badgeClass: 'badge-gray' },
 };
 
 export const SUB_STATUSES = {
