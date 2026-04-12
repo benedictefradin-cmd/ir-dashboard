@@ -13,6 +13,7 @@ import Contenu from './pages/Contenu';
 import Sollicitations from './pages/Sollicitations';
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
+import { fetchSollicitations } from './services/contact';
 import { fetchAllSiteData, normalizePublications, normalizeEvents, normalizePresse, normalizeAuteurs, saveSiteData } from './services/siteData';
 import { hasGitHub } from './services/github';
 import { loadLocal, saveLocal } from './utils/localStorage';
@@ -135,6 +136,14 @@ export default function App() {
       } catch (err) {
         console.warn('[App] Erreur chargement données site :', err.message);
       }
+    }
+
+    // Charger les sollicitations depuis le Worker (KV)
+    try {
+      const solData = await fetchSollicitations({ limit: 200 });
+      if (solData?.items?.length) setSollicitations(solData.items);
+    } catch (err) {
+      console.warn('[App] Erreur chargement sollicitations :', err.message);
     }
 
     // Charger les contacts Brevo et vérifier les services

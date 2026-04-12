@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import StatsCard from '../components/shared/StatsCard';
 import SearchBar from '../components/shared/SearchBar';
+import MultiSelect from '../components/shared/MultiSelect';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard, SkeletonTable } from '../components/shared/SkeletonLoader';
@@ -13,6 +14,10 @@ import {
   SOLLICITATION_PRIORITIES,
   SOLLICITATION_ADMINS,
 } from '../utils/constants';
+import {
+  updateSollicitation as apiUpdateSollicitation,
+  replySollicitation as apiReplySollicitation,
+} from '../services/contact';
 import useDebounce from '../hooks/useDebounce';
 
 // ─── Helper : status badge ─────────────────────────
@@ -36,8 +41,8 @@ function getSubjectLabel(subject) {
 // ─── Main Component ─────────────────────────────────
 export default function Sollicitations({ sollicitations, setSollicitations, loading, toast }) {
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterSubject, setFilterSubject] = useState('all');
+  const [filterStatus, setFilterStatus] = useState([]);
+  const [filterSubject, setFilterSubject] = useState([]);
   const [sortBy, setSortBy] = useState('date_desc');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
@@ -101,16 +106,16 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
     let result = [...sollicitations];
 
     // Filter by status
-    if (filterStatus !== 'all') {
-      result = result.filter(s => s.status === filterStatus);
+    if (filterStatus.length > 0) {
+      result = result.filter(s => filterStatus.includes(s.status));
     } else {
       // Par défaut, masquer les archivés
       result = result.filter(s => s.status !== 'archived');
     }
 
     // Filter by subject
-    if (filterSubject !== 'all') {
-      result = result.filter(s => s.subject === filterSubject);
+    if (filterSubject.length > 0) {
+      result = result.filter(s => filterSubject.includes(s.subject));
     }
 
     // Full-text search
@@ -147,6 +152,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
 
   // ─── Actions ────────────────────────────────
   const updateSollicitation = useCallback((id, updates) => {
+    // Mise à jour locale immédiate (optimistic)
     setSollicitations(prev => prev.map(s => {
       if (s.id !== id) return s;
       const updated = { ...s, ...updates, updated_at: new Date().toISOString() };
@@ -165,6 +171,10 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
         return updated;
       });
     }
+    // Persister vers le Worker (fire & forget)
+    apiUpdateSollicitation(id, updates).catch(err => {
+      console.warn('[Sollicitations] Erreur persistance :', err.message);
+    });
   }, [selected, setSollicitations]);
 
   const handleStatusChange = (id, newStatus) => {
@@ -207,31 +217,24 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
     if (!replyText.trim() || !selected) return;
     setSendingReply(true);
 
-    const reply = {
-      text: replyText.trim(),
-      sent_by: 'Admin',
-      sent_at: new Date().toISOString(),
-    };
+    try {
+      // Envoyer la réponse via le Worker (email Brevo + persistance KV)
+      const updated = await apiReplySollicitation(selected.id, {
+        text: replyText.trim(),
+        sent_by: 'Admin',
+      });
 
-    const history = {
-      type: 'reply_sent',
-      text: 'Réponse envoyée par email',
-      date: new Date().toISOString(),
-      author: 'Admin',
-    };
-
-    // TODO: Call POST /api/contact/:id/reply when Worker is ready
-    // For now, update locally
-    const item = sollicitations.find(s => s.id === selected.id);
-    updateSollicitation(selected.id, {
-      replies: [...(item?.replies || []), reply],
-      status: 'resolved',
-      internal_notes: [...(item?.internal_notes || []), history],
-    });
-
-    setReplyText('');
-    setSendingReply(false);
-    toast('Réponse envoyée et statut mis à jour');
+      // Mettre à jour le state local avec la réponse du Worker
+      setSollicitations(prev => prev.map(s => s.id === selected.id ? updated : s));
+      setSelected(updated);
+      setReplyText('');
+      toast('Réponse envoyée par email et statut mis à jour');
+    } catch (err) {
+      console.warn('[Sollicitations] Erreur envoi réponse :', err.message);
+      toast(`Erreur : ${err.message}`, 'error');
+    } finally {
+      setSendingReply(false);
+    }
   };
 
   const handleAddNote = () => {
@@ -345,20 +348,20 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
             label="Nouvelles"
             value={stats.newCount}
             accentColor={COLORS.sky}
-            onClick={() => { setFilterStatus('new'); setPage(1); }}
+            onClick={() => { setFilterStatus(['new']); setPage(1); }}
           />
           <StatsCard
             label="En cours"
             value={stats.inProgress}
             accentColor={COLORS.ochre}
-            onClick={() => { setFilterStatus('in_progress'); setPage(1); }}
+            onClick={() => { setFilterStatus(['in_progress']); setPage(1); }}
           />
           <StatsCard
             label="Résolues"
             value={stats.resolved}
             sub={stats.avgResponseTime != null ? `~${stats.avgResponseTime} j` : ''}
             accentColor={COLORS.green}
-            onClick={() => { setFilterStatus('resolved'); setPage(1); }}
+            onClick={() => { setFilterStatus(['resolved']); setPage(1); }}
           />
         </div>
 
@@ -369,27 +372,23 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
             onChange={setSearch}
             placeholder="Rechercher nom, email, message…"
           />
-          <select
-            className="filter-select"
-            value={filterStatus}
-            onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="new">Nouveau ({stats.newCount})</option>
-            <option value="in_progress">En cours ({stats.inProgress})</option>
-            <option value="resolved">Résolu ({stats.resolved})</option>
-            <option value="archived">Archivé ({stats.archived})</option>
-          </select>
-          <select
-            className="filter-select"
-            value={filterSubject}
-            onChange={e => { setFilterSubject(e.target.value); setPage(1); }}
-          >
-            <option value="all">Tous les sujets</option>
-            {CONTACT_SUBJECTS.map(s => (
-              <option key={s.key} value={s.key}>{s.label}</option>
-            ))}
-          </select>
+          <MultiSelect
+            label={`Statut (${stats.total})`}
+            selected={filterStatus}
+            onChange={v => { setFilterStatus(v); setPage(1); }}
+            options={[
+              { value: 'new', label: `Nouveau (${stats.newCount})` },
+              { value: 'in_progress', label: `En cours (${stats.inProgress})` },
+              { value: 'resolved', label: `Résolu (${stats.resolved})` },
+              { value: 'archived', label: `Archivé (${stats.archived})` },
+            ]}
+          />
+          <MultiSelect
+            label="Sujet"
+            selected={filterSubject}
+            onChange={v => { setFilterSubject(v); setPage(1); }}
+            options={CONTACT_SUBJECTS.map(s => ({ value: s.key, label: s.label }))}
+          />
           <select
             className="filter-select"
             value={sortBy}
@@ -399,7 +398,31 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
             <option value="date_asc">Plus ancien</option>
             <option value="priority">Priorité</option>
           </select>
+          {(filterStatus.length > 0 || filterSubject.length > 0) && (
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => { setFilterStatus([]); setFilterSubject([]); }}
+            >
+              Effacer filtres
+            </button>
+          )}
         </div>
+        {(filterStatus.length > 0 || filterSubject.length > 0) && (
+          <div className="filter-tags">
+            {filterStatus.map(v => (
+              <span key={`s-${v}`} className="filter-tag">
+                {SOLLICITATION_STATUSES[v]?.label || v}
+                <button type="button" onClick={() => setFilterStatus(filterStatus.filter(x => x !== v))}>×</button>
+              </span>
+            ))}
+            {filterSubject.map(v => (
+              <span key={`j-${v}`} className="filter-tag">
+                {getSubjectLabel(v)}
+                <button type="button" onClick={() => setFilterSubject(filterSubject.filter(x => x !== v))}>×</button>
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* ── Solicitation cards ──────────────── */}
         {paginated.length === 0 ? (
