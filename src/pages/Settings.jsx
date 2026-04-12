@@ -26,6 +26,9 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
   // ─── Vercel deploy hook ───────────────────────
   const [deployHook, setDeployHook] = useState(() => loadLocal(LS_KEYS.vercelDeployHook, ''));
 
+  // ─── Contact auth token ──────────────────────
+  const [contactAuthToken, setContactAuthToken] = useState(() => loadLocal(LS_KEYS.contactAuthToken, ''));
+
   // ─── Opérateur ──────────────────────────────
   const [operator, setOperator] = useState(() => loadLocal(LS_KEYS.operator, ''));
 
@@ -62,6 +65,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
     saveLocal('ir_github_owner', githubOwner);
     saveLocal('ir_github_site_repo', githubSiteRepo);
     saveLocal(LS_KEYS.vercelDeployHook, deployHook);
+    saveLocal(LS_KEYS.contactAuthToken, contactAuthToken);
     toast('Configuration sauvegardée');
     if (onRefresh) onRefresh();
   };
@@ -470,6 +474,27 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
                 value={deployHook}
                 onChange={e => setDeployHook(e.target.value)}
                 placeholder="https://api.vercel.com/v1/integrations/deploy/prj_..."
+              />
+            </div>
+          </div>
+
+          {/* Contact auth token */}
+          <div className="card">
+            <h3 style={{ fontSize: 16, marginBottom: 16 }}>
+              Sollicitations — Token d'accès
+              {statusIcon(contactAuthToken ? 'ok' : '')}
+            </h3>
+            <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 16 }}>
+              Si vous avez configuré un <code style={{ fontSize: 11, background: '#f0f0f0', padding: '1px 4px', borderRadius: 3 }}>CONTACT_AUTH_TOKEN</code> sur le Worker,
+              renseignez-le ici pour que le dashboard puisse lire et g&eacute;rer les sollicitations.
+            </p>
+            <div style={{ marginBottom: 12 }}>
+              <label>Bearer token</label>
+              <input
+                type="password"
+                value={contactAuthToken}
+                onChange={e => setContactAuthToken(e.target.value)}
+                placeholder="Votre token (optionnel si pas de token côté Worker)"
               />
             </div>
           </div>

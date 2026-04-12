@@ -171,11 +171,12 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
         return updated;
       });
     }
-    // Persister vers le Worker (fire & forget)
+    // Persister vers le Worker (fire & forget avec notification d'erreur)
     apiUpdateSollicitation(id, updates).catch(err => {
       console.warn('[Sollicitations] Erreur persistance :', err.message);
+      toast(`Erreur de synchronisation : ${err.message}`, 'error');
     });
-  }, [selected, setSollicitations]);
+  }, [selected, setSollicitations, toast]);
 
   const handleStatusChange = (id, newStatus) => {
     const labels = SOLLICITATION_STATUSES[newStatus]?.label || newStatus;

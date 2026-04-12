@@ -43,7 +43,7 @@ export default function Articles({
   const [typeFilter, setTypeFilter] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingArt, setEditingArt] = useState(null);
-  const [form, setForm] = useState({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '' });
+  const [form, setForm] = useState({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '' });
   const [publishingId, setPublishingId] = useState(null);
   const debouncedSearch = useDebounce(search);
 
@@ -319,7 +319,7 @@ export default function Articles({
       const newArt = {
         id: Date.now(),
         ...form,
-        status: 'draft',
+        status: form.scheduledDate ? 'scheduled' : 'draft',
         date: new Date().toISOString().split('T')[0],
         synced: false,
       };
@@ -335,6 +335,7 @@ export default function Articles({
       title: art.title, author: art.author, tags: [...(art.tags || [])],
       summary: art.summary || '', content: art.content || '',
       type: art.type || 'Note d\'analyse', pdfUrl: art.pdfUrl || '',
+      scheduledDate: art.scheduledDate || '',
     });
     setShowForm(true);
   };
@@ -342,7 +343,7 @@ export default function Articles({
   const closeForm = () => {
     setShowForm(false);
     setEditingArt(null);
-    setForm({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '' });
+    setForm({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '' });
   };
 
   // ─── Colonnes tableau ─────────────────────────
@@ -563,6 +564,29 @@ export default function Articles({
                 <label>Lien PDF (optionnel)</label>
                 <input value={form.pdfUrl} onChange={e => setForm({ ...form, pdfUrl: e.target.value })} placeholder="https://..." />
               </div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label>Publication programmée (optionnel)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <input
+                  type="datetime-local"
+                  value={form.scheduledDate || ''}
+                  onChange={e => setForm({ ...form, scheduledDate: e.target.value })}
+                  style={{ maxWidth: 260 }}
+                />
+                {form.scheduledDate && (
+                  <>
+                    <span className="badge badge-ochre" style={{ fontSize: 12 }}>
+                      Programmé le {new Date(form.scheduledDate).toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <button className="btn btn-outline btn-sm" onClick={() => setForm({ ...form, scheduledDate: '' })} style={{ fontSize: 11 }}>Annuler</button>
+                  </>
+                )}
+              </div>
+              <p style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 4 }}>
+                Laissez vide pour une publication manuelle. Si renseigné, l'article passera en statut "Programmé".
+              </p>
             </div>
 
             <div style={{ marginBottom: 16 }}>

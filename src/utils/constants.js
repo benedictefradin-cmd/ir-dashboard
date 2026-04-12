@@ -34,9 +34,14 @@ export const NAV_ITEMS = [
   { key: 'newsletter', label: 'Newsletter', icon: '✉' },
   { key: 'messagerie', label: 'Messagerie', icon: '\u{1F4AC}' },
   { key: 'separator-3', type: 'separator' },
+  { key: 'accueil', label: 'Accueil', icon: '\u{1F3E0}' },
   { key: 'contenu', label: 'Contenu', icon: '✎' },
-  { key: 'sollicitations', label: 'Sollicitations', icon: '\u{1F4EC}' },
+  { key: 'navigation', label: 'Navigation', icon: '\u{1F517}' },
+  { key: 'medias', label: 'Médias', icon: '\u{1F5BC}' },
+  { key: 'seo', label: 'SEO', icon: '\u{1F50D}' },
   { key: 'separator-4', type: 'separator' },
+  { key: 'sollicitations', label: 'Sollicitations', icon: '\u{1F4EC}' },
+  { key: 'separator-5', type: 'separator' },
   { key: 'settings', label: 'Config', icon: '⚙' },
 ];
 
@@ -58,6 +63,7 @@ export const ARTICLE_STATUSES = {
   draft: { label: 'Brouillon', badgeClass: 'badge-gray' },
   review: { label: 'À relire', badgeClass: 'badge-ochre' },
   ready: { label: 'Prêt à publier', badgeClass: 'badge-amber' },
+  scheduled: { label: 'Programmé', badgeClass: 'badge-sky' },
   published: { label: 'Publié', badgeClass: 'badge-green' },
   archived: { label: 'Archivé', badgeClass: 'badge-gray' },
 };
@@ -144,6 +150,7 @@ export const LS_KEYS = {
   telegramChannelId: 'tg-channel-id',
   sidebarCollapsed: 'sidebar-collapsed',
   vercelDeployHook: 'vercel-deploy-hook',
+  contactAuthToken: 'contact-auth-token',
 };
 
 // ─── Config par défaut ──────────────────────────────

@@ -34,9 +34,10 @@ async function request(endpoint, options = {}) {
   }
 
   const url = `${workerUrl}${endpoint}`;
+  const { headers: extraHeaders, ...rest } = options;
   const config = {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
+    ...rest,
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
   };
 
   const resp = await fetch(url, config);
@@ -54,10 +55,10 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
-  get: (endpoint) => request(endpoint, { method: 'GET' }),
-  post: (endpoint, body) => request(endpoint, { method: 'POST', body: JSON.stringify(body) }),
-  put: (endpoint, body) => request(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
-  patch: (endpoint, body) => request(endpoint, { method: 'PATCH', body: JSON.stringify(body) }),
+  get: (endpoint, opts = {}) => request(endpoint, { method: 'GET', ...opts }),
+  post: (endpoint, body, opts = {}) => request(endpoint, { method: 'POST', body: JSON.stringify(body), ...opts }),
+  put: (endpoint, body, opts = {}) => request(endpoint, { method: 'PUT', body: JSON.stringify(body), ...opts }),
+  patch: (endpoint, body, opts = {}) => request(endpoint, { method: 'PATCH', body: JSON.stringify(body), ...opts }),
 };
 
 /**

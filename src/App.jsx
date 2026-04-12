@@ -10,6 +10,10 @@ import Evenements from './pages/Evenements';
 import Presse from './pages/Presse';
 import Auteurs from './pages/Auteurs';
 import Contenu from './pages/Contenu';
+import Accueil from './pages/Accueil';
+import SEO from './pages/SEO';
+import Medias from './pages/Medias';
+import Navigation from './pages/Navigation';
 import Sollicitations from './pages/Sollicitations';
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
@@ -185,6 +189,10 @@ export default function App() {
     newsletter: subscribers.filter(s => s.status === 'pending').length,
     messagerie: 0,
     contenu: 0,
+    accueil: 0,
+    seo: 0,
+    medias: 0,
+    navigation: 0,
     sollicitations: sollicitations.filter(s => s.status === 'new').length,
     settings: 0,
   };
@@ -238,6 +246,14 @@ export default function App() {
         return <Messagerie subscribers={subscribers} presse={presse} auteurs={auteurs} events={events} services={services} toast={toast} />;
       case 'contenu':
         return <Contenu contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
+      case 'accueil':
+        return <Accueil contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
+      case 'seo':
+        return <SEO contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
+      case 'medias':
+        return <Medias toast={toast} />;
+      case 'navigation':
+        return <Navigation contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
       case 'sollicitations':
         return <Sollicitations sollicitations={sollicitations} setSollicitations={setSollicitations} loading={loading} toast={toast} />;
       case 'settings':

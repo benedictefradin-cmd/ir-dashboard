@@ -5,9 +5,7 @@ compatibility_date = "2024-01-01"
 # KV Namespace pour les sollicitations
 [[kv_namespaces]]
 binding = "CONTACT_SUBMISSIONS"
-id = "REMPLACER_PAR_VOTRE_KV_NAMESPACE_ID"
-# Créer le namespace : wrangler kv:namespace create "CONTACT_SUBMISSIONS"
-# Puis remplacer l'id ci-dessus par l'ID retourné.
+id = "539bcd0d0e2c43eda11a6994a3375880"
 
 # Secrets à configurer avec : wrangler secret put <NOM>
 # BREVO_API_KEY
