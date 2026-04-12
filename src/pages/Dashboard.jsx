@@ -24,7 +24,6 @@ export default function Dashboard({
   const thisMonth = now.getMonth();
   const thisYear = now.getFullYear();
 
-  // ─── Helper : filtrer par mois ──────────────────
   const isThisMonth = (dateStr) => {
     if (!dateStr) return false;
     const d = new Date(dateStr);
@@ -39,25 +38,19 @@ export default function Dashboard({
     return d.getMonth() === lm && d.getFullYear() === ly;
   };
 
-  // ─── KPI : Publications ─────────────────────────
+  // ─── KPIs ──────────────────────────────────────
   const pubStats = useMemo(() => {
     const total = articles.length;
     const newThisMonth = articles.filter(a => isThisMonth(a.date || a.created)).length;
     return { total, newThisMonth };
   }, [articles, thisMonth, thisYear]);
 
-  // ─── KPI : Evenements ───────────────────────────
   const evtStats = useMemo(() => {
-    const upcoming = events.filter(e => {
-      const d = new Date(e.date);
-      return d >= now;
-    });
+    const upcoming = events.filter(e => new Date(e.date) >= now);
     upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
-    const next = upcoming[0] || null;
-    return { upcomingCount: upcoming.length, next };
+    return { upcomingCount: upcoming.length, next: upcoming[0] || null };
   }, [events]);
 
-  // ─── KPI : Adherents ───────────────────────────
   const adherentStats = useMemo(() => {
     const actifs = adherents.filter(a => a.status === 'actif' || a.status === 'Payé').length;
     const thisMo = adherents.filter(a => isThisMonth(a.date)).length;
@@ -65,10 +58,8 @@ export default function Dashboard({
     return { actifs, variation: calcVariation(thisMo, lastMo) };
   }, [adherents, thisMonth, thisYear]);
 
-  // ─── KPI : Newsletter ──────────────────────────
   const nlStats = useMemo(() => {
     const total = subscribers.length;
-    // Chercher le dernier taux d'ouverture dans l'activite ou les subscribers
     const lastOpenRate = subscribers.reduce((best, s) => {
       if (s.openRate != null && s.openRate > 0) return s.openRate;
       return best;
@@ -76,7 +67,6 @@ export default function Dashboard({
     return { total, lastOpenRate };
   }, [subscribers]);
 
-  // ─── KPI : Dons ─────────────────────────────────
   const donStats = useMemo(() => {
     const thisMonthDons = dons.filter(d => isThisMonth(d.date));
     const lastMonthDons = dons.filter(d => isLastMonth(d.date));
@@ -85,7 +75,6 @@ export default function Dashboard({
     return { totalThisMonth, variation: calcVariation(totalThisMonth, totalLastMonth) };
   }, [dons, thisMonth, thisYear]);
 
-  // ─── Graphique : evolution des dons sur 6 mois ──
   const donChartData = useMemo(() => {
     const months = [];
     for (let i = 5; i >= 0; i--) {
@@ -106,17 +95,14 @@ export default function Dashboard({
     return months;
   }, [dons, thisMonth, thisYear]);
 
-  // ─── Prochain evenement ─────────────────────────
   const nextEvent = evtStats.next;
+  const newSollCount = sollicitations.filter(s => s.status === 'new').length;
 
-  // ─── Loading state ──────────────────────────────
   if (loading) {
     return (
       <>
         <div className="page-header"><h1>Dashboard</h1></div>
-        <div className="page-body">
-          <SkeletonCard count={5} />
-        </div>
+        <div className="page-body"><SkeletonCard count={5} /></div>
       </>
     );
   }
@@ -128,18 +114,15 @@ export default function Dashboard({
           <h1>Dashboard</h1>
           <p className="page-header-sub">Vue d&rsquo;ensemble de l&rsquo;Institut Rousseau</p>
         </div>
-        <div className="flex-wrap" style={{ gap: 8 }}>
+        <div className="flex-wrap" style={{ gap: 6 }}>
           <ServiceBadge service="notion" />
-          <ServiceBadge service="brevo" />
-          <ServiceBadge service="helloasso" />
           <ServiceBadge service="github" />
-          <ServiceBadge service="cloudflare" />
         </div>
       </div>
 
       <div className="page-body">
-        {/* ── KPI Bar : 5 cartes cliquables ──────── */}
-        <div className="grid grid-5 mb-24">
+        {/* ── KPI cards ──────────────────────────── */}
+        <div className="grid grid-5 mb-16">
           <StatsCard
             label="Publications"
             value={pubStats.total}
@@ -150,14 +133,14 @@ export default function Dashboard({
           <StatsCard
             label="Evenements"
             value={`${evtStats.upcomingCount} a venir`}
-            sub={nextEvent ? `${formatDateFr(nextEvent.date)} — ${nextEvent.titre || nextEvent.title || ''}` : 'Aucun prevu'}
+            sub={nextEvent ? formatDateFr(nextEvent.date) : 'Aucun prevu'}
             accentColor={COLORS.sky}
             onClick={() => onTabChange('evenements')}
           />
           <StatsCard
-            label="Adherents actifs"
+            label="Adherents"
             value={adherentStats.actifs}
-            sub="membres"
+            sub="actifs"
             accentColor={COLORS.green}
             variation={adherentStats.variation}
             onClick={() => onTabChange('adherents')}
@@ -165,21 +148,33 @@ export default function Dashboard({
           <StatsCard
             label="Newsletter"
             value={nlStats.total}
-            sub={nlStats.lastOpenRate != null ? `Taux d'ouverture : ${nlStats.lastOpenRate} %` : 'Abonnes'}
+            sub="abonnes"
             accentColor={COLORS.navy}
             onClick={() => onTabChange('newsletter')}
           />
           <StatsCard
             label="Dons du mois"
             value={`${donStats.totalThisMonth.toLocaleString('fr-FR')}\u00a0\u20ac`}
-            sub="collectes ce mois"
             accentColor={COLORS.terra}
             variation={donStats.variation}
             onClick={() => onTabChange('dons')}
           />
         </div>
 
-        {/* ── Alerte publications prêtes ────────── */}
+        {/* ── Actions rapides ────────────────────── */}
+        <div className="flex-wrap mb-16 fade-in" style={{ gap: 8 }}>
+          <button className="btn btn-outline btn-sm" onClick={() => onTabChange('articles')}>+ Article</button>
+          <button className="btn btn-outline btn-sm" onClick={() => onTabChange('evenements')}>+ Evenement</button>
+          <button className="btn btn-outline btn-sm" onClick={() => onTabChange('presse')}>+ Presse</button>
+          <button className="btn btn-outline btn-sm" onClick={() => onTabChange('newsletter')}>Newsletter</button>
+          {newSollCount > 0 && (
+            <button className="btn btn-sky btn-sm" onClick={() => onTabChange('sollicitations')}>
+              {newSollCount} sollicitation{newSollCount > 1 ? 's' : ''} en attente
+            </button>
+          )}
+        </div>
+
+        {/* ── Alerte publications pretes ─────────── */}
         {(notionCounts.ready > 0 || articles.filter(a => a.status === 'ready').length > 0) && (() => {
           const readyNotionArticles = notionArticles.filter(a => {
             const s = (a.status || '').toLowerCase();
@@ -188,226 +183,80 @@ export default function Dashboard({
           const readyLocal = articles.filter(a => a.status === 'ready');
           const readyAll = [...readyNotionArticles, ...readyLocal];
           return (
-            <div className="alert-banner alert-banner-amber mb-24 slide-up">
-              <span className="alert-banner-icon">&#128276;</span>
+            <div className="alert-banner alert-banner-amber mb-16 slide-up">
+              <span className="alert-banner-icon"></span>
               <div style={{ flex: 1 }}>
                 <strong>{readyAll.length} article{readyAll.length > 1 ? 's' : ''} en attente de publication</strong>
-                {readyAll.slice(0, 3).map((a, i) => (
-                  <div key={a.id || i} style={{ fontSize: 13, color: COLORS.text, marginTop: 4 }}>
-                    <strong>{a.title}</strong>
-                    {a.authors && <span style={{ color: COLORS.textLight }}> — par {a.authors}</span>}
-                    {a.lastEdited && <span style={{ color: COLORS.textLight }}> — {timeAgo(a.lastEdited)}</span>}
-                  </div>
-                ))}
               </div>
               <button className="btn btn-sm btn-primary" onClick={() => onTabChange('articles')}>
-                Voir →
+                Voir &rarr;
               </button>
             </div>
           );
         })()}
 
-        {/* ── Actions rapides ────────────────────── */}
-        <div className="card mb-24 fade-in">
-          <h2 style={{ fontSize: 18, marginBottom: 16 }}>Actions rapides</h2>
-          <div className="flex-wrap" style={{ gap: 10 }}>
-            <button
-              className="quick-action-btn btn btn-primary"
-              onClick={() => onTabChange('articles')}
-            >
-              + Nouvel article
-            </button>
-            <button
-              className="quick-action-btn btn btn-primary"
-              style={{ backgroundColor: COLORS.sky }}
-              onClick={() => onTabChange('evenements')}
-            >
-              + Nouvel evenement
-            </button>
-            <button
-              className="quick-action-btn btn btn-primary"
-              style={{ backgroundColor: COLORS.terra }}
-              onClick={() => onTabChange('presse')}
-            >
-              + Retombee presse
-            </button>
-            <button
-              className="quick-action-btn btn btn-primary"
-              style={{ backgroundColor: COLORS.green }}
-              onClick={() => onTabChange('newsletter')}
-            >
-              Envoyer newsletter
-            </button>
-          </div>
-        </div>
-
-        {/* ── Widget Sollicitations ────────────────── */}
-        <div className="card mb-24 fade-in">
-          <div className="flex-between" style={{ marginBottom: 16 }}>
-            <h2 style={{ fontSize: 18 }}>Sollicitations</h2>
-            <button
-              className="btn btn-outline btn-sm"
-              onClick={() => onTabChange('sollicitations')}
-            >
-              Voir toutes les sollicitations &rarr;
-            </button>
-          </div>
-          <div className="flex-wrap mb-16" style={{ gap: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{
-                width: 32, height: 32, borderRadius: 8,
-                background: COLORS.skyLight, color: COLORS.sky,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 700, fontSize: 15,
-              }}>
-                {sollicitations.filter(s => s.status === 'new').length}
-              </span>
-              <span style={{ fontSize: 14, color: COLORS.textLight }}>nouvelles</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{
-                width: 32, height: 32, borderRadius: 8,
-                background: COLORS.ochreLight, color: '#9A7B1A',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 700, fontSize: 15,
-              }}>
-                {sollicitations.filter(s => s.status === 'in_progress').length}
-              </span>
-              <span style={{ fontSize: 14, color: COLORS.textLight }}>en cours</span>
-            </div>
-          </div>
-          {sollicitations
-            .filter(s => s.status !== 'archived')
-            .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
-            .slice(0, 3)
-            .map((s, i) => (
-              <div
-                key={s.id}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '8px 0',
-                  borderBottom: i < 2 ? `1px solid ${COLORS.border}` : 'none',
-                  cursor: 'pointer',
-                }}
-                onClick={() => onTabChange('sollicitations')}
-              >
-                <span className={`badge ${SOLLICITATION_STATUSES[s.status]?.badgeClass || 'badge-gray'}`} style={{ fontSize: 11 }}>
-                  {SOLLICITATION_STATUSES[s.status]?.label || s.status}
-                </span>
-                <span style={{ fontWeight: 500, fontSize: 14 }}>{s.name || 'Anonyme'}</span>
-                <span style={{ color: COLORS.textLight, fontSize: 13, flex: 1 }}>
-                  &mdash; {truncate(s.message, 50)}
-                </span>
-                <span style={{ fontSize: 12, color: COLORS.textLight, whiteSpace: 'nowrap' }}>
-                  {timeAgo(s.submitted_at)}
-                </span>
-              </div>
-            ))}
-          {sollicitations.filter(s => s.status !== 'archived').length === 0 && (
-            <p style={{ color: COLORS.textLight, fontSize: 14 }}>Aucune sollicitation en attente</p>
-          )}
-        </div>
-
-        {/* ── Graphique + Prochain evenement ──────── */}
-        <div className="grid grid-2 mb-24">
-          {/* Graphique dons 6 mois */}
+        {/* ── Graphique dons + Prochain evenement ── */}
+        <div className="grid grid-2 mb-16">
           <div className="card fade-in">
-            <h2 style={{ fontSize: 18, marginBottom: 16 }}>Evolution des dons (6 mois)</h2>
-            <ResponsiveContainer width="100%" height={240}>
+            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Dons (6 mois)</h2>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={donChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={COLORS.border} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 12, fill: COLORS.textLight }}
-                />
-                <YAxis
-                  tick={{ fontSize: 12, fill: COLORS.textLight }}
-                  allowDecimals={false}
-                  tickFormatter={(v) => `${v}\u00a0\u20ac`}
-                />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: COLORS.textLight }} />
+                <YAxis tick={{ fontSize: 11, fill: COLORS.textLight }} allowDecimals={false} tickFormatter={(v) => `${v}\u00a0\u20ac`} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 13 }}
+                  contentStyle={{ borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 12 }}
                   formatter={(value) => [`${value.toLocaleString('fr-FR')}\u00a0\u20ac`, 'Dons']}
                 />
-                <Bar
-                  dataKey="dons"
-                  fill={COLORS.terra}
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={48}
-                />
+                <Bar dataKey="dons" fill={COLORS.terra} radius={[4, 4, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Prochain evenement */}
-          <div className="card fade-in">
-            <h2 style={{ fontSize: 18, marginBottom: 16 }}>Prochain evenement</h2>
+          <div className="card fade-in" style={{ cursor: 'pointer' }} onClick={() => onTabChange('evenements')}>
+            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Prochain evenement</h2>
             {nextEvent ? (
-              <div
-                style={{
-                  padding: 20,
-                  borderRadius: 10,
-                  backgroundColor: COLORS.skyLight,
-                  border: `1px solid ${COLORS.sky}`,
-                }}
-              >
-                <p style={{ fontSize: 13, color: COLORS.sky, fontWeight: 600, marginBottom: 6 }}>
+              <div>
+                <p style={{ fontSize: 13, color: COLORS.sky, fontWeight: 600, marginBottom: 4 }}>
                   {formatDateFr(nextEvent.date)}
                 </p>
-                <p style={{ fontSize: 20, fontWeight: 700, color: COLORS.navy, marginBottom: 8, fontFamily: 'Cormorant Garamond, serif' }}>
+                <p style={{ fontSize: 18, fontWeight: 700, color: COLORS.navy, fontFamily: 'Cormorant Garamond, serif' }}>
                   {nextEvent.titre || nextEvent.title || 'Sans titre'}
                 </p>
                 {(nextEvent.lieu || nextEvent.location) && (
-                  <p style={{ fontSize: 14, color: COLORS.textLight }}>
+                  <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>
                     {nextEvent.lieu || nextEvent.location}
                   </p>
                 )}
-                {nextEvent.type && (
-                  <span className="badge badge-sky" style={{ marginTop: 10, display: 'inline-block' }}>
-                    {nextEvent.type}
-                  </span>
-                )}
               </div>
             ) : (
-              <p style={{ color: COLORS.textLight, fontSize: 14 }}>
-                Aucun evenement a venir pour le moment.
-              </p>
+              <p style={{ color: COLORS.textLight, fontSize: 13 }}>Aucun evenement a venir.</p>
             )}
           </div>
         </div>
 
-        {/* ── Fil d'activite ─────────────────────── */}
+        {/* ── Activite recente ───────────────────── */}
         <div className="card fade-in">
-          <h2 style={{ fontSize: 18, marginBottom: 16 }}>Activite recente</h2>
+          <h2 style={{ fontSize: 16, marginBottom: 12 }}>Activite recente</h2>
           {activity.length === 0 && (
-            <p style={{ color: COLORS.textLight, fontSize: 14 }}>Aucune activite recente</p>
+            <p style={{ color: COLORS.textLight, fontSize: 13 }}>Aucune activite recente</p>
           )}
           <div>
-            {activity.slice(0, 12).map((a, i) => (
+            {activity.slice(0, 8).map((a, i) => (
               <div
                 key={i}
-                className="slide-up"
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: 14,
-                  padding: '10px 0',
-                  borderBottom: i < Math.min(activity.length, 12) - 1 ? `1px solid ${COLORS.border}` : 'none',
-                  animationDelay: `${i * 40}ms`,
+                  gap: 10,
+                  padding: '6px 0',
+                  borderBottom: i < Math.min(activity.length, 8) - 1 ? `1px solid ${COLORS.border}` : 'none',
                 }}
               >
-                <span
-                  style={{
-                    color: COLORS.textLight,
-                    fontSize: 12,
-                    minWidth: 80,
-                    flexShrink: 0,
-                    paddingTop: 2,
-                  }}
-                >
+                <span style={{ color: COLORS.textLight, fontSize: 11, minWidth: 70, flexShrink: 0, paddingTop: 2 }}>
                   {timeAgo(a.date)}
                 </span>
-                <span style={{ fontSize: 14, color: COLORS.text, lineHeight: 1.5 }}>
+                <span style={{ fontSize: 13, color: COLORS.text, lineHeight: 1.4 }}>
                   {a.text}
                 </span>
               </div>

@@ -68,6 +68,45 @@ export async function insertHtmlInPage(path, cardHtml, commitMessage) {
 }
 
 /**
+ * Upload une image (fichier binaire) sur le repo GitHub.
+ * @param {string} path - Chemin dans le repo (ex: 'images/auteurs/nicolas-dufrene.jpg')
+ * @param {string} base64Content - Contenu du fichier encodé en base64 (sans préfixe data:…)
+ * @param {string} [message] - Message de commit
+ * @returns {{ sha: string, url: string }} - SHA du fichier et URL brute
+ */
+export async function githubUploadImage(path, base64Content, message) {
+  // Vérifier si le fichier existe déjà (pour récupérer le SHA)
+  let existingSha = null;
+  try {
+    const res = await fetch(`${GITHUB_API}/${path}`, {
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      existingSha = data.sha;
+    }
+  } catch { /* fichier n'existe pas encore */ }
+
+  const body = {
+    message: message || `Ajout photo auteur : ${path}`,
+    content: base64Content,
+    branch: 'main',
+  };
+  if (existingSha) body.sha = existingSha;
+
+  const res = await fetch(`${GITHUB_API}/${path}`, {
+    method: 'PUT',
+    headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(handleHttpError(res.status));
+  const data = await res.json();
+
+  const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/${path}`;
+  return { sha: data.content?.sha || null, url: rawUrl };
+}
+
+/**
  * Formate la date en français pour l'affichage sur le site.
  */
 export function formatDateSite(dateStr) {

@@ -450,41 +450,51 @@ export default function Articles({
             <span className="alert-banner-text">
               <strong>{counts.ready}</strong> article{counts.ready > 1 ? 's' : ''} en attente de publication
             </span>
-            <button className="btn btn-sm btn-outline" onClick={() => setStatusFilter('ready')}>
+            <button className="btn btn-sm btn-primary" onClick={() => setStatusFilter('ready')}>
               Voir
             </button>
           </div>
         )}
 
-        {/* Recherche + filtres */}
-        <div className="flex-wrap mb-16">
+        {/* Barre de filtres compacte */}
+        <div className="filter-bar mb-16">
           <SearchBar value={search} onChange={setSearch} placeholder="Rechercher une publication…" />
-        </div>
-
-        {/* Filtre par statut */}
-        <div className="mb-8">
-          {[['all', 'Tous'], ['draft', 'Brouillons'], ['review', 'À relire'], ['ready', 'Prêts à publier'], ['published', 'Publiés'], ['archived', 'Archivés']].map(([k, l]) => (
-            <span key={k} className={`pill${statusFilter === k ? ' active' : ''}`} onClick={() => setStatusFilter(k)}>
-              {l}
-              {k !== 'all' && counts[k] > 0 && <span className="pill-count">{counts[k]}</span>}
-            </span>
-          ))}
-        </div>
-
-        {/* Filtre par pôle */}
-        <div className="mb-8">
-          <span className={`pill${themeFilter === 'all' ? ' active' : ''}`} onClick={() => setThemeFilter('all')}>Tous les pôles</span>
-          {THEMATIQUES.map(t => (
-            <span key={t} className={`pill${themeFilter === t ? ' active' : ''}`} onClick={() => setThemeFilter(t)}>{t}</span>
-          ))}
-        </div>
-
-        {/* Filtre par type */}
-        <div className="mb-16">
-          <span className={`pill${typeFilter === 'all' ? ' active' : ''}`} onClick={() => setTypeFilter('all')}>Tous les types</span>
-          {[...PUB_TYPES, 'Tribune'].map(t => (
-            <span key={t} className={`pill${typeFilter === t ? ' active' : ''}`} onClick={() => setTypeFilter(t)}>{t}</span>
-          ))}
+          <select
+            className="filter-select"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+          >
+            <option value="all">Tous les statuts ({counts.total})</option>
+            <option value="draft">Brouillons ({counts.draft})</option>
+            <option value="review">À relire ({counts.review})</option>
+            <option value="ready">Prêts à publier ({counts.ready})</option>
+            <option value="published">Publiés ({counts.published})</option>
+            <option value="archived">Archivés ({counts.archived})</option>
+          </select>
+          <select
+            className="filter-select"
+            value={themeFilter}
+            onChange={e => setThemeFilter(e.target.value)}
+          >
+            <option value="all">Tous les pôles</option>
+            {THEMATIQUES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <select
+            className="filter-select"
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+          >
+            <option value="all">Tous les types</option>
+            {[...PUB_TYPES, 'Tribune'].map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          {(statusFilter !== 'all' || themeFilter !== 'all' || typeFilter !== 'all') && (
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => { setStatusFilter('all'); setThemeFilter('all'); setTypeFilter('all'); }}
+            >
+              Effacer filtres
+            </button>
+          )}
         </div>
 
         <DataTable

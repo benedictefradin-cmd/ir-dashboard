@@ -339,8 +339,8 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
       </div>
 
       <div className="page-body">
-        {/* ── Stats cards ──────────────────────── */}
-        <div className="grid grid-4 mb-24">
+        {/* ── Stats compactes ────────────────────── */}
+        <div className="grid grid-3 mb-16">
           <StatsCard
             label="Nouvelles"
             value={stats.newCount}
@@ -354,49 +354,36 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
             onClick={() => { setFilterStatus('in_progress'); setPage(1); }}
           />
           <StatsCard
-            label="R\u00e9solues"
+            label="Résolues"
             value={stats.resolved}
+            sub={stats.avgResponseTime != null ? `~${stats.avgResponseTime} j` : ''}
             accentColor={COLORS.green}
             onClick={() => { setFilterStatus('resolved'); setPage(1); }}
           />
-          <StatsCard
-            label="Ce mois"
-            value={stats.thisMonthCount}
-            sub={stats.avgResponseTime != null ? `Temps moyen : ${stats.avgResponseTime}\u00a0j` : ''}
-            accentColor={COLORS.navy}
-          />
-        </div>
-
-        {/* ── Status tabs ──────────────────────── */}
-        <div className="flex-wrap mb-16">
-          {[
-            ['all', 'Tous', null],
-            ['new', 'Nouveau', stats.newCount],
-            ['in_progress', 'En cours', stats.inProgress],
-            ['resolved', 'R\u00e9solu', stats.resolved],
-            ['archived', 'Archiv\u00e9', stats.archived],
-          ].map(([key, label, count]) => (
-            <span
-              key={key}
-              className={`pill${filterStatus === key ? ' active' : ''}`}
-              onClick={() => { setFilterStatus(key); setPage(1); }}
-            >
-              {label}{count != null ? ` (${count})` : ''}
-            </span>
-          ))}
         </div>
 
         {/* ── Search & filters ────────────────── */}
-        <div className="flex-wrap mb-16">
+        <div className="filter-bar mb-16">
           <SearchBar
             value={search}
             onChange={setSearch}
-            placeholder="Rechercher par nom, email, organisation, message\u2026"
+            placeholder="Rechercher nom, email, message…"
           />
           <select
+            className="filter-select"
+            value={filterStatus}
+            onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+          >
+            <option value="all">Tous les statuts</option>
+            <option value="new">Nouveau ({stats.newCount})</option>
+            <option value="in_progress">En cours ({stats.inProgress})</option>
+            <option value="resolved">Résolu ({stats.resolved})</option>
+            <option value="archived">Archivé ({stats.archived})</option>
+          </select>
+          <select
+            className="filter-select"
             value={filterSubject}
             onChange={e => { setFilterSubject(e.target.value); setPage(1); }}
-            style={{ width: 'auto', minWidth: 180 }}
           >
             <option value="all">Tous les sujets</option>
             {CONTACT_SUBJECTS.map(s => (
@@ -404,13 +391,13 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
             ))}
           </select>
           <select
+            className="filter-select"
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
-            style={{ width: 'auto', minWidth: 160 }}
           >
-            <option value="date_desc">Plus r\u00e9cent</option>
+            <option value="date_desc">Plus récent</option>
             <option value="date_asc">Plus ancien</option>
-            <option value="priority">Priorit\u00e9</option>
+            <option value="priority">Priorité</option>
           </select>
         </div>
 
