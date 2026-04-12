@@ -3,19 +3,16 @@ import './styles.css';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Articles from './pages/Articles';
-import Adherents from './pages/Adherents';
 import Newsletter from './pages/Newsletter';
 import Messagerie from './pages/Messagerie';
 import Settings from './pages/Settings';
 import Evenements from './pages/Evenements';
 import Presse from './pages/Presse';
 import Auteurs from './pages/Auteurs';
-import Dons from './pages/Dons';
 import Contenu from './pages/Contenu';
 import Sollicitations from './pages/Sollicitations';
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
-import { fetchAdherents as fetchHelloAssoAdherents, fetchDons as fetchHelloAssoDons } from './services/helloasso';
 import { loadLocal, saveLocal } from './utils/localStorage';
 import { LS_KEYS, COLORS } from './utils/constants';
 import useNotionSync from './hooks/useNotionSync';
@@ -330,7 +327,7 @@ export default function App() {
             if (campaignsData?.length) setCampaigns(campaignsData);
           } catch { /* use demo */ }
         }
-        // HelloAsso data loaded from demo; real sync requires Worker config
+        // HelloAsso sync handled via Worker when configured
       }
     } catch { /* worker not available, use demo data */ }
     setLoading(false);
@@ -344,8 +341,6 @@ export default function App() {
     evenements: 0,
     presse: 0,
     auteurs: 0,
-    adherents: 0,
-    dons: 0,
     newsletter: subscribers.filter(s => s.status === 'pending').length,
     messagerie: 0,
     contenu: 0,
@@ -394,10 +389,6 @@ export default function App() {
         return <Presse presse={presse} setPresse={setPresse} loading={loading} toast={toast} />;
       case 'auteurs':
         return <Auteurs auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} loading={loading} toast={toast} />;
-      case 'adherents':
-        return <Adherents adherents={adherents} loading={loading} error={!services.helloasso ? 'Mode démonstration — configurez le Worker pour synchroniser HelloAsso' : ''} onRefresh={loadData} toast={toast} />;
-      case 'dons':
-        return <Dons dons={dons} setDons={setDons} services={services} loading={loading} onRefresh={loadData} toast={toast} />;
       case 'newsletter':
         return <Newsletter subscribers={subscribers} setSubscribers={setSubscribers} campaigns={campaigns} loading={loading} connected={services.brevo} onRefresh={loadData} toast={toast} />;
       case 'messagerie':
@@ -408,8 +399,7 @@ export default function App() {
         return <Sollicitations sollicitations={sollicitations} setSollicitations={setSollicitations} loading={loading} toast={toast} />;
       case 'settings':
         return <Settings
-          adherents={adherents} subscribers={subscribers} services={services}
-          onImportAdherents={(items) => setAdherents(prev => [...items, ...prev])}
+          subscribers={subscribers} services={services}
           onImportSubscribers={(items) => setSubscribers(prev => [...items, ...prev])}
           onRefresh={loadData} toast={toast}
         />;

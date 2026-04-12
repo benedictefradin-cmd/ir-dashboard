@@ -273,7 +273,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
       </div>
 
       <div className="page-body">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div className="settings-grid">
 
           {/* Config API */}
           <div className="card">
@@ -363,7 +363,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
         </div>
 
         {/* Notion + GitHub config */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 20 }}>
+        <div className="settings-grid" style={{ marginTop: 20 }}>
           {/* Notion */}
           <div className="card">
             <h3 style={{ fontSize: 16, marginBottom: 16 }}>
