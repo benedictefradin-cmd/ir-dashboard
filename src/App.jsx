@@ -17,6 +17,7 @@ import { loadLocal, saveLocal } from './utils/localStorage';
 import { LS_KEYS, COLORS } from './utils/constants';
 import useNotionSync from './hooks/useNotionSync';
 import authorsData from './data/authors.json';
+import logoSvg from './assets/logo.svg';
 
 // ─── DEMO DATA ─────────────────────────────────────────
 const DEMO_ARTICLES = [

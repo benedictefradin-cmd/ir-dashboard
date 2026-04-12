@@ -33,8 +33,6 @@ export function formatArticleMessage(article) {
 // Formate une notification priv\u00e9e
 export function formatNotification(type, data) {
   switch (type) {
-    case 'new_adherent':
-      return `\ud83c\udd95 Nouvelle adh\u00e9sion\u00a0: ${data.name} (${data.email}) \u2014 ${data.amount}\u00a0\u20ac`;
     case 'new_subscriber':
       return `\ud83d\udcec Nouvel abonn\u00e9 newsletter\u00a0: ${data.email}`;
     case 'api_error':

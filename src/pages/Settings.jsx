@@ -205,7 +205,6 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
       email: row._email || '',
       phone: importMapping.telephone ? String(row[importMapping.telephone] || '') : '',
       date: importMapping.date ? String(row[importMapping.date] || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
-      amount: importMapping.montant ? parseFloat(row[importMapping.montant]) || 0 : 0,
       status: importMapping.statut ? String(row[importMapping.statut] || '') : 'added',
       source: importMapping.source ? String(row[importMapping.source] || 'Import') : 'Import',
     }));
@@ -285,26 +284,40 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
               </div>
             </div>
 
+            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--navy)' }}>État des services</h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <div style={{ textAlign: 'center', padding: 12, background: 'var(--cream)', borderRadius: 8 }}>
-                <p style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 4 }}>Brevo {statusIcon(testing.brevo || (services?.brevo ? 'ok' : ''))}</p>
-                <p style={{ fontWeight: 600, fontSize: 14, color: services?.brevo ? 'var(--green)' : 'var(--text-light)' }}>
-                  {services?.brevo ? 'Connect\u00e9' : 'Non configur\u00e9'}
-                </p>
-              </div>
-              <div style={{ textAlign: 'center', padding: 12, background: 'var(--cream)', borderRadius: 8 }}>
-                <p style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 4 }}>Telegram {statusIcon(testing.telegram || (services?.telegram ? 'ok' : ''))}</p>
-                <p style={{ fontWeight: 600, fontSize: 14, color: services?.telegram ? 'var(--green)' : 'var(--text-light)' }}>
-                  {services?.telegram ? 'Connect\u00e9' : 'Non configur\u00e9'}
-                </p>
-              </div>
+              {[
+                { key: 'brevo', label: 'Brevo', connected: services?.brevo },
+                { key: 'telegram', label: 'Telegram', connected: services?.telegram },
+                { key: 'notion', label: 'Notion', connected: !!(notionToken && notionDbId) },
+                { key: 'github', label: 'GitHub', connected: !!(githubToken && githubOwner && githubSiteRepo) },
+              ].map(({ key, label, connected }) => (
+                <div key={key} style={{ textAlign: 'center', padding: 12, background: 'var(--cream)', borderRadius: 8 }}>
+                  <p style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 4 }}>
+                    {label} {statusIcon(testing[key] || (connected ? 'ok' : ''))}
+                  </p>
+                  <p style={{ fontWeight: 600, fontSize: 14, color: connected ? 'var(--green)' : 'var(--text-light)' }}>
+                    {connected ? 'Configuré' : 'Non configuré'}
+                  </p>
+                </div>
+              ))}
             </div>
 
-            {services?.telegram && (
-              <button className="btn btn-outline btn-sm" onClick={() => testService('telegram')}>
-                Envoyer un message test Telegram
-              </button>
-            )}
+            <div className="flex-wrap gap-8" style={{ marginBottom: 12 }}>
+              {services?.telegram && (
+                <button className="btn btn-outline btn-sm" onClick={() => testService('telegram')}>Test Telegram</button>
+              )}
+              {notionToken && notionDbId && (
+                <button className="btn btn-outline btn-sm" onClick={testNotion} disabled={testing.notion === 'loading'}>
+                  {testing.notion === 'loading' ? 'Test…' : 'Test Notion'}
+                </button>
+              )}
+              {githubToken && githubOwner && githubSiteRepo && (
+                <button className="btn btn-outline btn-sm" onClick={testGitHub} disabled={testing.github === 'loading'}>
+                  {testing.github === 'loading' ? 'Test…' : 'Test GitHub'}
+                </button>
+              )}
+            </div>
 
             <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 12, lineHeight: 1.6 }}>
               Les cl\u00e9s API sont stock\u00e9es en secrets sur le Cloudflare Worker (jamais c\u00f4t\u00e9 client).
@@ -338,10 +351,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
             <div className="card">
               <h3 style={{ fontSize: 16, marginBottom: 16 }}>Automatisations</h3>
               {[
-                ['welcomeEmail', 'Email de bienvenue (nouvel adh\u00e9rent)'],
-                ['renewalReminder', 'Rappel de renouvellement (30j avant expiration)'],
-                ['telegramNewAdherent', 'Notif Telegram (nouvelle adh\u00e9sion)'],
-                ['telegramNewSubscriber', 'Notif Telegram (nouvel abonn\u00e9)'],
+                ['telegramNewSubscriber', 'Notif Telegram (nouvel abonn\u00e9 newsletter)'],
               ].map(([key, label]) => (
                 <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
                   <span style={{ fontSize: 14 }}>{label}</span>

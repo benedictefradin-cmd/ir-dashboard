@@ -31,17 +31,6 @@ export function timeAgo(dateStr) {
   return `il y a ${Math.floor(diffD / 365)}\u00a0an(s)`;
 }
 
-// ─── Montants ─────────────────────────────────────────
-export function formatMoney(amount) {
-  if (amount == null) return '';
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 // ─── Texte ────────────────────────────────────────────
 export function slugify(str) {
   return str
