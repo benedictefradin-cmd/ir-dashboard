@@ -376,8 +376,8 @@ export default function App() {
     switch (tab) {
       case 'dashboard':
         return <Dashboard
-          adherents={adherents} subscribers={subscribers} articles={articles}
-          events={events} presse={presse} dons={dons} sollicitations={sollicitations}
+          subscribers={subscribers} articles={articles}
+          events={events} presse={presse} sollicitations={sollicitations}
           activity={activity} loading={loading} onTabChange={changeTab}
           notionArticles={notionArticles} notionCounts={notionCounts}
         />;
@@ -394,10 +394,6 @@ export default function App() {
         return <Presse presse={presse} setPresse={setPresse} loading={loading} toast={toast} />;
       case 'auteurs':
         return <Auteurs auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} loading={loading} toast={toast} />;
-      case 'adherents':
-        return <Adherents adherents={adherents} loading={loading} error={!services.helloasso ? 'Mode d\u00e9monstration \u2014 configurez le Worker pour synchroniser HelloAsso' : ''} onRefresh={loadData} toast={toast} />;
-      case 'dons':
-        return <Dons dons={dons} setDons={setDons} services={services} loading={loading} onRefresh={loadData} toast={toast} />;
       case 'newsletter':
         return <Newsletter subscribers={subscribers} setSubscribers={setSubscribers} campaigns={campaigns} loading={loading} connected={services.brevo} onRefresh={loadData} toast={toast} />;
       case 'messagerie':
