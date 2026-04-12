@@ -73,23 +73,6 @@ const DEMO_SUBSCRIBERS = [
   { id: 10, name: 'Hugo Garcia', email: 'hugo.g@outlook.fr', date: '2026-04-11', status: 'added', source: 'Site web' },
 ];
 
-const DEMO_ADHERENTS = [
-  { id: 1, name: 'Marie Dupont', email: 'marie.dupont@gmail.com', date: '2026-03-15', amount: 30, type: 'Adh\u00e9sion', status: 'actif', source: 'HelloAsso', formule: 'normal' },
-  { id: 2, name: 'Jean Martin', email: 'j.martin@outlook.fr', date: '2026-02-10', amount: 10, type: 'Adh\u00e9sion', status: 'actif', source: 'HelloAsso', formule: 'reduit' },
-  { id: 3, name: 'Sophie Bernard', email: 'sophie.b@proton.me', date: '2025-08-20', amount: 30, type: 'Adh\u00e9sion', status: 'expire', source: 'HelloAsso', formule: 'normal' },
-  { id: 4, name: 'Pierre Leclerc', email: 'p.leclerc@yahoo.fr', date: '2026-04-01', amount: 30, type: 'Adh\u00e9sion', status: 'actif', source: 'HelloAsso', formule: 'normal' },
-  { id: 5, name: 'Alice Moreau', email: 'a.moreau@gmail.com', date: '2026-01-05', amount: 10, type: 'Adh\u00e9sion', status: 'actif', source: 'HelloAsso', formule: 'reduit' },
-];
-
-const DEMO_DONS = [
-  { id: 101, name: 'Lucas Rousseau', email: 'lucas.r@free.fr', date: '2026-04-10', amount: 50, type: 'ponctuel', status: 'actif', source: 'HelloAsso' },
-  { id: 102, name: 'Camille Durand', email: 'camille.d@gmail.com', date: '2026-04-08', amount: 25, type: 'ponctuel', status: 'actif', source: 'HelloAsso' },
-  { id: 103, name: 'Nicolas Petit', email: 'n.petit@laposte.net', date: '2026-03-15', amount: 100, type: 'ponctuel', status: 'actif', source: 'HelloAsso' },
-  { id: 104, name: 'Emma Laurent', email: 'emma.l@gmail.com', date: '2026-03-01', amount: 10, type: 'recurrent', status: 'actif', source: 'HelloAsso' },
-  { id: 105, name: 'Hugo Garcia', email: 'hugo.g@outlook.fr', date: '2026-02-20', amount: 200, type: 'ponctuel', status: 'actif', source: 'HelloAsso' },
-  { id: 106, name: 'Marie Dupont', email: 'marie.dupont@gmail.com', date: '2026-02-10', amount: 25, type: 'recurrent', status: 'actif', source: 'HelloAsso' },
-];
-
 const DEMO_SOLLICITATIONS = [
   {
     id: 'msg_1712930400_a3f2', name: 'Marie Dupont', email: 'marie.dupont@media.fr',
@@ -195,7 +178,6 @@ const DEMO_ACTIVITY = [
   { date: '2026-04-11', text: 'Hugo Garcia ajout\u00e9 \u00e0 la newsletter' },
   { date: '2026-04-11', text: 'Article "Souverainet\u00e9 num\u00e9rique" cr\u00e9\u00e9 en brouillon' },
   { date: '2026-04-10', text: 'Page \u00c9v\u00e9nements mise \u00e0 jour sur le site' },
-  { date: '2026-04-10', text: 'Don de 50\u00a0\u20ac re\u00e7u (Lucas Rousseau)' },
   { date: '2026-04-09', text: 'Camille Durand inscrite via LinkedIn' },
   { date: '2026-04-08', text: 'Article "Planification \u00e9cologique" soumis pour relecture' },
   { date: '2026-04-08', text: 'Demande de contact presse re\u00e7ue' },
@@ -230,8 +212,6 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [presse, setPresse] = useState([]);
   const [auteurs, setAuteurs] = useState([]);
-  const [adherents, setAdherents] = useState([]);
-  const [dons, setDons] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
   const [sollicitations, setSollicitations] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
@@ -239,7 +219,7 @@ export default function App() {
   const [contenu, setContenu] = useState({});
 
   // Services
-  const [services, setServices] = useState({ helloasso: false, brevo: false, telegram: false });
+  const [services, setServices] = useState({ brevo: false, telegram: false });
   const [loading, setLoading] = useState(true);
 
   // Notion sync
@@ -308,8 +288,6 @@ export default function App() {
     setEvents([...DEMO_EVENTS]);
     setPresse([...DEMO_PRESSE]);
     setAuteurs([...DEMO_AUTEURS]);
-    setAdherents([...DEMO_ADHERENTS]);
-    setDons([...DEMO_DONS]);
     setSubscribers([...DEMO_SUBSCRIBERS]);
     setSollicitations([...DEMO_SOLLICITATIONS]);
     setActivity([...DEMO_ACTIVITY]);
@@ -327,7 +305,6 @@ export default function App() {
             if (campaignsData?.length) setCampaigns(campaignsData);
           } catch { /* use demo */ }
         }
-        // HelloAsso sync handled via Worker when configured
       }
     } catch { /* worker not available, use demo data */ }
     setLoading(false);

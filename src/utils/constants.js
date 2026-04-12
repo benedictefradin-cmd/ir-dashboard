@@ -31,8 +31,6 @@ export const NAV_ITEMS = [
   { key: 'presse', label: 'Presse', icon: '\u{1F4F0}' },
   { key: 'auteurs', label: 'Auteurs', icon: '\u{1F465}' },
   { key: 'separator-2', type: 'separator' },
-  { key: 'adherents', label: 'Adh\u00e9rents', icon: '\u{1F4CB}' },
-  { key: 'dons', label: 'Dons', icon: '\u2764' },
   { key: 'newsletter', label: 'Newsletter', icon: '\u2709' },
   { key: 'messagerie', label: 'Messagerie', icon: '\u{1F4AC}' },
   { key: 'separator-3', type: 'separator' },
@@ -53,7 +51,7 @@ export const THEMATIQUES = [
 
 export const PUB_TYPES = ['Note d\'analyse', 'Point de vue', 'Rapport', 'Rapport phare', 'Tribune'];
 
-export const SOURCES = ['Site web', '\u00c9v\u00e9nement', 'LinkedIn', 'Manuel', 'HelloAsso', 'Brevo'];
+export const SOURCES = ['Site web', '\u00c9v\u00e9nement', 'LinkedIn', 'Manuel', 'Brevo'];
 
 // ─── Statuts ──────────────────────────────────────────
 export const ADHERENT_STATUSES = {
