@@ -28,7 +28,7 @@ const emptyForm = {
   urlInterne: '',
 };
 
-export default function Presse({ presse, setPresse, loading, toast }) {
+export default function Presse({ presse, setPresse, sollicitations = [], loading, toast, saveToSite }) {
   const [activeTab, setActiveTab] = useState('Tribunes');
   const [search, setSearch] = useState('');
   const [yearFilter, setYearFilter] = useState('all');
@@ -209,6 +209,11 @@ export default function Presse({ presse, setPresse, loading, toast }) {
         </div>
         <div className="flex-center gap-8">
           <ServiceBadge service="github" />
+          {saveToSite && hasGitHub() && (
+            <button className="btn btn-green" onClick={() => saveToSite('presse', presse.map(({ id, type, title, auteur, media, date, url, urlInterne }) => ({ id, type, title, auteur, media, date, url, urlInterne: urlInterne || '' })))}>
+              Publier tout sur le site
+            </button>
+          )}
           <button className="btn btn-sky" onClick={() => { closeForm(); setShowForm(true); }}>Ajouter</button>
         </div>
       </div>
@@ -241,6 +246,41 @@ export default function Presse({ presse, setPresse, loading, toast }) {
         </div>
 
         <DataTable columns={columns} data={filtered} pageSize={15} emptyMessage="Aucune entrée presse trouvée" />
+
+        {/* Demandes de contact presse */}
+        {(() => {
+          const presseSolls = sollicitations.filter(s => s.subject === 'presse' && s.status !== 'archived');
+          if (presseSolls.length === 0) return null;
+          return (
+            <div className="card mt-16 fade-in">
+              <h3 style={{ fontSize: 15, marginBottom: 12 }}>Demandes de contact presse ({presseSolls.length})</h3>
+              {presseSolls.map((s, i) => (
+                <div
+                  key={s.id || i}
+                  style={{
+                    padding: '10px 0',
+                    borderBottom: i < presseSolls.length - 1 ? '1px solid var(--border)' : 'none',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontWeight: 600, fontSize: 14 }}>{s.name}</span>
+                    {s.organization && <span style={{ fontSize: 13, color: 'var(--text-light)', marginLeft: 8 }}>{s.organization}</span>}
+                    <p style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {s.message}
+                    </p>
+                  </div>
+                  <span className={`badge ${s.status === 'new' ? 'badge-sky' : s.status === 'in_progress' ? 'badge-ochre' : 'badge-green'}`}>
+                    {s.status === 'new' ? 'Nouveau' : s.status === 'in_progress' ? 'En cours' : 'Résolu'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* Formulaire modal */}
         {showForm && (

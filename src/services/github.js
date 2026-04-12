@@ -107,6 +107,57 @@ export async function githubUploadImage(path, base64Content, message) {
 }
 
 /**
+ * Sauvegarde le fichier authors.json dans le repo ir-dashboard via l'API GitHub.
+ * Utilise le token + owner configurés dans Settings (pas VITE_GITHUB_TOKEN).
+ * @param {Array} authors - Tableau d'auteurs à sauvegarder
+ * @returns {string|null} - SHA du commit ou null
+ */
+export async function saveAuthorsToGitHub(authors) {
+  const { loadLocal } = await import('../utils/localStorage');
+  const token = loadLocal('ir_github_token', '');
+  const owner = loadLocal('ir_github_owner', '');
+  if (!token || !owner) throw new Error('Token ou owner GitHub non configuré');
+
+  const repo = 'ir-dashboard';
+  const path = 'src/data/authors.json';
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+  const headers = { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' };
+
+  // Récupérer le SHA actuel du fichier
+  let sha = null;
+  try {
+    const res = await fetch(apiUrl, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      sha = data.sha;
+    }
+  } catch { /* fichier n'existe pas encore */ }
+
+  // Préparer le contenu (auteurs clean sans champs d'affichage temporaires)
+  const cleanAuthors = authors.map(({ id, firstName, lastName, role, photo, bio, email, publications }) => ({
+    id, firstName, lastName, role, photo: photo || '', bio: bio || '', email: email || '', publications: publications || 0,
+  }));
+
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(cleanAuthors, null, 2) + '\n')));
+
+  const body = {
+    message: 'Mise à jour authors.json depuis le back-office',
+    content,
+    branch: 'main',
+  };
+  if (sha) body.sha = sha;
+
+  const res = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(handleHttpError(res.status));
+  const data = await res.json();
+  return data.content?.sha || null;
+}
+
+/**
  * Formate la date en français pour l'affichage sur le site.
  */
 export function formatDateSite(dateStr) {

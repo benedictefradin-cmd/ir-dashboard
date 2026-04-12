@@ -26,6 +26,7 @@ const emptyForm = {
   partenaire: '',
   lienInscription: '',
   lienConcours: '',
+  inscriptions: 0,
   status: 'confirme',
 };
 
@@ -37,12 +38,15 @@ const statusDot = (status, isPast) => {
   return COLORS.textLight;
 };
 
-export default function Evenements({ events, setEvents, loading, toast }) {
+export default function Evenements({ events, setEvents, loading, toast, saveToSite }) {
   const [showForm, setShowForm] = useState(false);
   const [editingEvt, setEditingEvt] = useState(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [publishingId, setPublishingId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [previewEvt, setPreviewEvt] = useState(null);
+  const [formMode, setFormMode] = useState('template'); // 'template' | 'classique'
 
   // Stats
   const stats = useMemo(() => {
@@ -52,12 +56,16 @@ export default function Evenements({ events, setEvents, loading, toast }) {
     return { aVenir, passes, enPrep };
   }, [events]);
 
-  // Tri : futurs d'abord, puis passés
+  // Filtrage + tri : futurs d'abord, puis passés
   const sorted = useMemo(() => {
-    const futurs = events.filter(e => isFuture(e.date)).sort((a, b) => new Date(a.date) - new Date(b.date));
-    const passes = events.filter(e => !isFuture(e.date)).sort((a, b) => new Date(b.date) - new Date(a.date));
+    let list = events;
+    if (statusFilter === 'a_venir') list = list.filter(e => isFuture(e.date) && e.status !== 'annule');
+    else if (statusFilter === 'passe') list = list.filter(e => !isFuture(e.date));
+    else if (statusFilter !== 'all') list = list.filter(e => e.status === statusFilter);
+    const futurs = list.filter(e => isFuture(e.date)).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const passes = list.filter(e => !isFuture(e.date)).sort((a, b) => new Date(b.date) - new Date(a.date));
     return [...futurs, ...passes];
-  }, [events]);
+  }, [events, statusFilter]);
 
   // Form helpers
   const setField = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
@@ -80,7 +88,8 @@ export default function Evenements({ events, setEvents, loading, toast }) {
       sousTitre: evt.sousTitre || '', description: evt.description || '', lieu: evt.lieu || '',
       intervenants: evt.intervenants?.length ? evt.intervenants.map(i => ({ ...i })) : [{ name: '', titre: '' }],
       partenaire: evt.partenaire || '', lienInscription: evt.lienInscription || '',
-      lienConcours: evt.lienConcours || '', status: evt.status || 'confirme',
+      lienConcours: evt.lienConcours || '', inscriptions: evt.inscriptions || 0,
+      status: evt.status || 'confirme',
     });
     setShowForm(true);
   };
@@ -130,7 +139,7 @@ export default function Evenements({ events, setEvents, loading, toast }) {
   <span class="type">${evt.type}</span>
   <h3>${evt.title}</h3>${evt.sousTitre ? `\n  <p class="sous-titre">${evt.sousTitre}</p>` : ''}
   <p class="lieu">${evt.lieu || ''}</p>${evt.partenaire ? `\n  <p class="partenaire">En partenariat avec ${evt.partenaire}</p>` : ''}${intervenantsHtml ? `\n  <div class="intervenants">${intervenantsHtml}</div>` : ''}
-  <p>${evt.description || ''}</p>${evt.lienInscription ? `\n  <a href="${evt.lienInscription}" target="_blank" class="btn-inscription">S’inscrire</a>` : ''}
+  <p>${evt.description || ''}</p>${evt.lienInscription ? `\n  <a href="${evt.lienInscription}" target="_blank" class="btn-inscription">S'inscrire</a>` : ''}
 </article>`;
         await insertHtmlInPage('evenements.html', cardHtml, `Ajout événement : ${evt.title}`);
         toast('Événement publié sur le site');
@@ -161,6 +170,11 @@ export default function Evenements({ events, setEvents, loading, toast }) {
         </div>
         <div className="flex-center gap-8">
           <ServiceBadge service="github" />
+          {saveToSite && hasGitHub() && (
+            <button className="btn btn-green" onClick={() => saveToSite('events', events.map(({ id, date, type, title, sousTitre, lieu, intervenants, partenaire, description, lienInscription, status }) => ({ id, date, type, title, sousTitre, lieu, intervenants, partenaire, description, lienInscription, status })))}>
+              Publier tout sur le site
+            </button>
+          )}
           <button className="btn btn-outline" onClick={archivePasses}>Archiver les passés</button>
           <button className="btn btn-primary" onClick={openNew}>+ Nouvel événement</button>
         </div>
@@ -180,62 +194,178 @@ export default function Evenements({ events, setEvents, loading, toast }) {
           <StatsCard label="En préparation" value={stats.enPrep} accentColor={COLORS.ochre} sub="à confirmer" />
         </div>
 
+        {/* Filtre par statut */}
+        <div className="flex-wrap mb-16" style={{ gap: 8 }}>
+          {[
+            ['all', 'Tous'],
+            ['a_venir', 'À venir'],
+            ['confirme', 'Confirmés'],
+            ['en_preparation', 'En préparation'],
+            ['passe', 'Passés'],
+            ['annule', 'Annulés'],
+          ].map(([key, label]) => (
+            <span
+              key={key}
+              className={`pill${statusFilter === key ? ' active' : ''}`}
+              onClick={() => setStatusFilter(key)}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+
         {/* Formulaire */}
         {showForm && (
           <div className="card mb-24 slide-down" style={{ padding: 24 }}>
-            <h3 style={{ marginBottom: 16 }}>{editingEvt ? 'Modifier l’événement' : 'Nouvel événement'}</h3>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <div><label>Date *</label><input type="date" value={form.date} onChange={e => setField('date', e.target.value)} /></div>
-              <div><label>Type</label>
-                <select value={form.type} onChange={e => setField('type', e.target.value)}>
-                  {EVT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <div><label>Statut</label>
-                <select value={form.status} onChange={e => setField('status', e.target.value)}>
-                  {Object.entries(EVT_STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 16 }}>
-              <div><label>Titre *</label><input value={form.title} onChange={e => setField('title', e.target.value)} placeholder="Titre de l’événement" /></div>
-              <div><label>Sous-titre</label><input value={form.sousTitre} onChange={e => setField('sousTitre', e.target.value)} placeholder="Optionnel" /></div>
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label>Description</label>
-              <textarea rows={3} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="Description de l’événement" />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <div><label>Lieu / Adresse</label><input value={form.lieu} onChange={e => setField('lieu', e.target.value)} /></div>
-              <div><label>Partenaire</label><input value={form.partenaire} onChange={e => setField('partenaire', e.target.value)} placeholder="Optionnel" /></div>
-              <div><label>Lien d’inscription</label><input value={form.lienInscription} onChange={e => setField('lienInscription', e.target.value)} placeholder="https://..." /></div>
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label>Lien concours (optionnel)</label>
-              <input value={form.lienConcours} onChange={e => setField('lienConcours', e.target.value)} placeholder="https://..." style={{ maxWidth: 400 }} />
-            </div>
-
-            {/* Intervenants */}
-            <div style={{ marginBottom: 16 }}>
-              <label>Intervenants</label>
-              {form.intervenants.map((inter, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                  <input value={inter.name} onChange={e => updateIntervenant(idx, 'name', e.target.value)} placeholder="Nom" style={{ flex: 1 }} />
-                  <input value={inter.titre} onChange={e => updateIntervenant(idx, 'titre', e.target.value)} placeholder="Titre / Fonction" style={{ flex: 1 }} />
-                  {form.intervenants.length > 1 && (
-                    <button className="btn btn-outline btn-sm" onClick={() => removeIntervenant(idx)} style={{ color: 'var(--terra)' }}>&times;</button>
-                  )}
+            <div className="flex-between mb-16">
+              <h3>{editingEvt ? "Modifier l\u2019\u00e9v\u00e9nement" : "Nouvel \u00e9v\u00e9nement"}</h3>
+              {!editingEvt && (
+                <div className="flex-center gap-8">
+                  <span
+                    className={`pill${formMode === 'template' ? ' active' : ''}`}
+                    onClick={() => setFormMode('template')}
+                  >
+                    Texte à trou
+                  </span>
+                  <span
+                    className={`pill${formMode === 'classique' ? ' active' : ''}`}
+                    onClick={() => setFormMode('classique')}
+                  >
+                    Formulaire classique
+                  </span>
                 </div>
-              ))}
-              <button className="btn btn-outline btn-sm" onClick={addIntervenant}>+ Ajouter un intervenant</button>
+              )}
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
+            {/* ── Mode texte à trou ──────────────── */}
+            {(formMode === 'template' && !editingEvt) && (
+              <div style={{ fontSize: 15, lineHeight: 2.4, color: COLORS.navy }}>
+                <p>
+                  Le{' '}
+                  <input type="date" value={form.date} onChange={e => setField('date', e.target.value)}
+                    style={{ display: 'inline-block', width: 160, padding: '4px 8px', fontSize: 14 }} />{', '}
+                  <select value={form.type} onChange={e => setField('type', e.target.value)}
+                    style={{ display: 'inline-block', width: 140, padding: '4px 8px', fontSize: 14 }}>
+                    {EVT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  {' « '}
+                  <input value={form.title} onChange={e => setField('title', e.target.value)}
+                    placeholder="titre de l'événement"
+                    style={{ display: 'inline-block', width: 280, padding: '4px 8px', fontSize: 14 }} />
+                  {' »'}
+                </p>
+                <p>
+                  {'à '}
+                  <input value={form.lieu} onChange={e => setField('lieu', e.target.value)}
+                    placeholder="adresse complète"
+                    style={{ display: 'inline-block', width: 320, padding: '4px 8px', fontSize: 14 }} />
+                  {form.partenaire || true ? (
+                    <>
+                      {', en partenariat avec '}
+                      <input value={form.partenaire} onChange={e => setField('partenaire', e.target.value)}
+                        placeholder="partenaire (optionnel)"
+                        style={{ display: 'inline-block', width: 200, padding: '4px 8px', fontSize: 14 }} />
+                    </>
+                  ) : null}
+                  {'.'}
+                </p>
+                <p>
+                  {'Intervenant(s) : '}
+                  {form.intervenants.map((inter, idx) => (
+                    <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      {idx > 0 && ', '}
+                      <input value={inter.name} onChange={e => updateIntervenant(idx, 'name', e.target.value)}
+                        placeholder="Nom"
+                        style={{ display: 'inline-block', width: 140, padding: '4px 8px', fontSize: 14 }} />
+                      {' ('}
+                      <input value={inter.titre} onChange={e => updateIntervenant(idx, 'titre', e.target.value)}
+                        placeholder="fonction"
+                        style={{ display: 'inline-block', width: 140, padding: '4px 8px', fontSize: 14 }} />
+                      {')'}
+                      {form.intervenants.length > 1 && (
+                        <button className="btn btn-outline btn-sm" onClick={() => removeIntervenant(idx)}
+                          style={{ color: 'var(--terra)', padding: '0 4px', minWidth: 0, lineHeight: 1 }}>&times;</button>
+                      )}
+                    </span>
+                  ))}
+                  {' '}
+                  <button className="btn btn-outline btn-sm" onClick={addIntervenant} style={{ fontSize: 12 }}>+</button>
+                </p>
+                <div style={{ marginTop: 12 }}>
+                  <textarea rows={2} value={form.description} onChange={e => setField('description', e.target.value)}
+                    placeholder="Description (optionnel)" style={{ fontSize: 14 }} />
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8, fontSize: 14 }}>
+                  <input value={form.lienInscription} onChange={e => setField('lienInscription', e.target.value)}
+                    placeholder="Lien inscription (https://…)" style={{ flex: 1, minWidth: 200, padding: '4px 8px', fontSize: 14 }} />
+                  <input value={form.lienConcours} onChange={e => setField('lienConcours', e.target.value)}
+                    placeholder="Lien concours (optionnel)" style={{ flex: 1, minWidth: 200, padding: '4px 8px', fontSize: 14 }} />
+                </div>
+              </div>
+            )}
+
+            {/* ── Mode formulaire classique ──────── */}
+            {(formMode === 'classique' || editingEvt) && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div><label>Date *</label><input type="date" value={form.date} onChange={e => setField('date', e.target.value)} /></div>
+                  <div><label>Type</label>
+                    <select value={form.type} onChange={e => setField('type', e.target.value)}>
+                      {EVT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div><label>Statut</label>
+                    <select value={form.status} onChange={e => setField('status', e.target.value)}>
+                      {Object.entries(EVT_STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div><label>Titre *</label><input value={form.title} onChange={e => setField('title', e.target.value)} placeholder="Titre de l\u2019événement" /></div>
+                  <div><label>Sous-titre</label><input value={form.sousTitre} onChange={e => setField('sousTitre', e.target.value)} placeholder="Optionnel" /></div>
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label>Description</label>
+                  <textarea rows={3} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="Description de l\u2019événement" />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div><label>Lieu / Adresse</label><input value={form.lieu} onChange={e => setField('lieu', e.target.value)} /></div>
+                  <div><label>Partenaire</label><input value={form.partenaire} onChange={e => setField('partenaire', e.target.value)} placeholder="Optionnel" /></div>
+                  <div><label>Lien d&rsquo;inscription</label><input value={form.lienInscription} onChange={e => setField('lienInscription', e.target.value)} placeholder="https://..." /></div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div>
+                    <label>Lien concours (optionnel)</label>
+                    <input value={form.lienConcours} onChange={e => setField('lienConcours', e.target.value)} placeholder="https://..." />
+                  </div>
+                  <div>
+                    <label>Nombre d'inscriptions</label>
+                    <input type="number" min="0" value={form.inscriptions} onChange={e => setField('inscriptions', parseInt(e.target.value) || 0)} placeholder="0" />
+                  </div>
+                </div>
+
+                {/* Intervenants */}
+                <div style={{ marginBottom: 16 }}>
+                  <label>Intervenants</label>
+                  {form.intervenants.map((inter, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                      <input value={inter.name} onChange={e => updateIntervenant(idx, 'name', e.target.value)} placeholder="Nom" style={{ flex: 1 }} />
+                      <input value={inter.titre} onChange={e => updateIntervenant(idx, 'titre', e.target.value)} placeholder="Titre / Fonction" style={{ flex: 1 }} />
+                      {form.intervenants.length > 1 && (
+                        <button className="btn btn-outline btn-sm" onClick={() => removeIntervenant(idx)} style={{ color: 'var(--terra)' }}>&times;</button>
+                      )}
+                    </div>
+                  ))}
+                  <button className="btn btn-outline btn-sm" onClick={addIntervenant}>+ Ajouter un intervenant</button>
+                </div>
+              </>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               <button className="btn btn-primary" onClick={saveEvent}>{editingEvt ? 'Enregistrer' : 'Ajouter'}</button>
               <button className="btn btn-outline" onClick={() => { setShowForm(false); setEditingEvt(null); }}>Annuler</button>
             </div>
@@ -278,6 +408,7 @@ export default function Evenements({ events, setEvents, loading, toast }) {
                     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8, fontSize: 13, color: 'var(--text-light)' }}>
                       {evt.lieu && <span>{evt.lieu}</span>}
                       {evt.partenaire && <span>Partenaire : {evt.partenaire}</span>}
+                      {evt.inscriptions > 0 && <span style={{ color: COLORS.sky }}>{evt.inscriptions} inscription{evt.inscriptions > 1 ? 's' : ''}</span>}
                     </div>
                     {evt.intervenants?.length > 0 && (
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
@@ -291,6 +422,7 @@ export default function Evenements({ events, setEvents, loading, toast }) {
                   {/* Actions */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center' }}>
                     <button className="btn btn-outline btn-sm" onClick={() => openEdit(evt)}>Modifier</button>
+                    <button className="btn btn-outline btn-sm" onClick={() => setPreviewEvt(evt)}>Prévisualiser</button>
                     <button
                       className="btn btn-green btn-sm"
                       onClick={() => publishEvent(evt)}
@@ -309,12 +441,70 @@ export default function Evenements({ events, setEvents, loading, toast }) {
 
       {/* Modal suppression */}
       {confirmDelete && (
-        <Modal title="Supprimer l’événement" onClose={() => setConfirmDelete(null)}>
+        <Modal title="Supprimer l'événement" onClose={() => setConfirmDelete(null)}>
           <p style={{ marginBottom: 8 }}>Voulez-vous vraiment supprimer <strong>{confirmDelete.title}</strong> ?</p>
           <p style={{ color: 'var(--text-light)', fontSize: 13 }}>Cette action est irréversible.</p>
           <div className="modal-footer">
             <button className="btn btn-outline" onClick={() => setConfirmDelete(null)}>Annuler</button>
             <button className="btn btn-terra" onClick={() => deleteEvent(confirmDelete.id)}>Supprimer</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal prévisualisation */}
+      {previewEvt && (
+        <Modal title="Prévisualisation" onClose={() => setPreviewEvt(null)} size="lg">
+          <div style={{ padding: 24, background: 'var(--cream)', borderRadius: 8 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+              <span className="badge badge-navy">{previewEvt.type || 'Événement'}</span>
+              <span className={`badge ${EVT_STATUSES[previewEvt.status]?.badgeClass || 'badge-gray'}`}>
+                {EVT_STATUSES[previewEvt.status]?.label || previewEvt.status}
+              </span>
+            </div>
+            <time style={{ fontSize: 14, color: COLORS.sky, fontWeight: 600 }}>
+              {formatDateFr(previewEvt.date)}
+            </time>
+            <h2 style={{ fontSize: 24, margin: '8px 0 4px', fontFamily: "'Cormorant Garamond', serif", color: COLORS.navy }}>
+              {previewEvt.title}
+            </h2>
+            {previewEvt.sousTitre && (
+              <p style={{ fontSize: 15, color: COLORS.textLight, marginBottom: 8 }}>{previewEvt.sousTitre}</p>
+            )}
+            {previewEvt.lieu && (
+              <p style={{ fontSize: 14, marginBottom: 8 }}>{previewEvt.lieu}</p>
+            )}
+            {previewEvt.partenaire && (
+              <p style={{ fontSize: 14, marginBottom: 8 }}>En partenariat avec <strong>{previewEvt.partenaire}</strong></p>
+            )}
+            {previewEvt.inscriptions > 0 && (
+              <p style={{ fontSize: 14, marginBottom: 8, color: COLORS.sky }}>{previewEvt.inscriptions} inscription{previewEvt.inscriptions > 1 ? 's' : ''}</p>
+            )}
+            {previewEvt.description && (
+              <p style={{ fontSize: 14, lineHeight: 1.7, marginTop: 12 }}>{previewEvt.description}</p>
+            )}
+            {previewEvt.intervenants?.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Intervenants</p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {previewEvt.intervenants.map((inter, i) => (
+                    <span key={i} className="pill">{inter.name}{inter.titre ? ` — ${inter.titre}` : ''}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {previewEvt.lienInscription && (
+              <div style={{ marginTop: 16 }}>
+                <a href={previewEvt.lienInscription} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                  S'inscrire
+                </a>
+              </div>
+            )}
+          </div>
+          <div className="modal-footer">
+            <button className="btn btn-outline" onClick={() => setPreviewEvt(null)}>Fermer</button>
+            <button className="btn btn-green" onClick={() => { setPreviewEvt(null); publishEvent(previewEvt); }}>
+              Publier sur le site
+            </button>
           </div>
         </Modal>
       )}

@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import StatsCard from '../components/shared/StatsCard';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
 import { COLORS } from '../utils/constants';
+import { triggerRebuild, hasDeployHook } from '../services/deploy';
 
 export default function Dashboard({
   subscribers = [],
@@ -11,9 +12,11 @@ export default function Dashboard({
   events = [],
   presse = [],
   sollicitations = [],
+  campaigns = [],
   activity = [],
   loading,
   onTabChange,
+  toast,
   notionArticles = [],
   notionCounts = {},
 }) {
@@ -41,8 +44,14 @@ export default function Dashboard({
   }, [events]);
 
   const nlStats = useMemo(() => {
-    return { total: subscribers.length };
-  }, [subscribers]);
+    const total = subscribers.length;
+    // Dernier taux d'ouverture depuis les campagnes
+    const sentCampaigns = (campaigns || []).filter(c => c.status === 'sent' && c.openRate != null);
+    const lastOpenRate = sentCampaigns.length > 0
+      ? sentCampaigns[sentCampaigns.length - 1].openRate
+      : null;
+    return { total, lastOpenRate };
+  }, [subscribers, campaigns]);
 
   const presseStats = useMemo(() => {
     const total = presse.length;
@@ -52,6 +61,23 @@ export default function Dashboard({
 
   const nextEvent = evtStats.next;
   const newSollCount = sollicitations.filter(s => s.status === 'new').length;
+
+  const [rebuilding, setRebuilding] = useState(false);
+
+  const handleRebuild = async () => {
+    if (!hasDeployHook()) {
+      toast?.('Deploy hook non configuré — allez dans Config', 'error');
+      return;
+    }
+    setRebuilding(true);
+    try {
+      await triggerRebuild();
+      toast?.('Rebuild du site déclenché avec succès');
+    } catch (e) {
+      toast?.(e.message || 'Erreur lors du rebuild', 'error');
+    }
+    setRebuilding(false);
+  };
 
   if (loading) {
     return (
@@ -88,14 +114,14 @@ export default function Dashboard({
           <StatsCard
             label="Événements"
             value={`${evtStats.upcomingCount} à venir`}
-            sub={nextEvent ? formatDateFr(nextEvent.date) : 'Aucun prévu'}
+            sub={nextEvent ? `${formatDateFr(nextEvent.date)} — ${nextEvent.title || nextEvent.titre || ''}` : 'Aucun prévu'}
             accentColor={COLORS.sky}
             onClick={() => onTabChange('evenements')}
           />
           <StatsCard
             label="Newsletter"
             value={nlStats.total}
-            sub="abonnés"
+            sub={nlStats.lastOpenRate != null ? `Dernier taux : ${nlStats.lastOpenRate}\u00a0%` : 'abonnés'}
             accentColor={COLORS.navy}
             onClick={() => onTabChange('newsletter')}
           />
@@ -119,11 +145,13 @@ export default function Dashboard({
         <div className="card mb-16 fade-in" style={{ padding: '14px 20px' }}>
           <div className="flex-wrap" style={{ gap: 8, alignItems: 'center' }}>
             <span style={{ fontSize: 14, fontWeight: 600, color: COLORS.navy, marginRight: 8 }}>Actions rapides</span>
-            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('articles')}>+ Article</button>
-            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('evenements')}>+ Événement</button>
-            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('presse')}>+ Presse</button>
-            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('newsletter')}>Newsletter</button>
-            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('auteurs')}>+ Auteur</button>
+            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('articles')}>+ Nouveau article</button>
+            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('evenements')}>+ Nouvel événement</button>
+            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('presse')}>+ Retombée presse</button>
+            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('newsletter')}>Envoyer newsletter</button>
+            <button className="btn btn-outline btn-sm" onClick={handleRebuild} disabled={rebuilding}>
+              {rebuilding ? 'Rebuild…' : 'Rebuild site'}
+            </button>
             {newSollCount > 0 && (
               <button className="btn btn-sky btn-sm" onClick={() => onTabChange('sollicitations')}>
                 {newSollCount} sollicitation{newSollCount > 1 ? 's' : ''} en attente

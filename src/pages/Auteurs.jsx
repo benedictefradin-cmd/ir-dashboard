@@ -5,13 +5,13 @@ import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
 import { COLORS } from '../utils/constants';
 import useDebounce from '../hooks/useDebounce';
-import { hasGitHub, githubUploadImage } from '../services/github';
+import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
 
 const emptyForm = { firstName: '', lastName: '', role: '', photo: '', bio: '', email: '' };
 
 const avatarColors = [COLORS.navy, COLORS.sky, COLORS.terra, COLORS.ochre, COLORS.green];
 
-export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast }) {
+export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast, saveToSite }) {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -145,42 +145,51 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
       return;
     }
 
+    const auteurData = {
+      id: editId || slug,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      name: `${form.firstName} ${form.lastName}`,
+      role: form.role,
+      titre: form.role,
+      photo: photoUrl,
+      bio: form.bio,
+      email: form.email,
+      publications: editId ? (auteurs.find(a => a.id === editId)?.publications || 0) : 0,
+    };
+
+    let updatedList;
     if (editId) {
-      setAuteurs(prev => prev.map(a => a.id === editId ? {
-        ...a,
-        firstName: form.firstName,
-        lastName: form.lastName,
-        name: `${form.firstName} ${form.lastName}`,
-        role: form.role,
-        titre: form.role,
-        photo: photoUrl,
-        bio: form.bio,
-        email: form.email,
-      } : a));
+      updatedList = auteurs.map(a => a.id === editId ? { ...a, ...auteurData } : a);
+      setAuteurs(updatedList);
       toast('Auteur mis à jour');
     } else {
-      setAuteurs(prev => [...prev, {
-        id: slug,
-        firstName: form.firstName,
-        lastName: form.lastName,
-        name: `${form.firstName} ${form.lastName}`,
-        role: form.role,
-        titre: form.role,
-        photo: photoUrl,
-        bio: form.bio,
-        email: form.email,
-        publications: 0,
-      }]);
+      updatedList = [...auteurs, auteurData];
+      setAuteurs(updatedList);
       toast('Auteur ajouté');
     }
     setModalOpen(false);
+
+    // Persister dans authors.json via GitHub
+    if (hasGitHub()) {
+      try {
+        await saveAuthorsToGitHub(updatedList);
+        toast('authors.json mis à jour sur GitHub');
+      } catch (err) {
+        toast(`Erreur sync GitHub : ${err.message}`, 'error');
+      }
+    }
   };
 
-  const handleDelete = (auteur, e) => {
+  const handleDelete = async (auteur, e) => {
     e.stopPropagation();
     if (!window.confirm(`Supprimer ${getDisplayName(auteur)} ?`)) return;
-    setAuteurs(prev => prev.filter(a => a.id !== auteur.id));
+    const updatedList = auteurs.filter(a => a.id !== auteur.id);
+    setAuteurs(updatedList);
     toast('Auteur supprimé');
+    if (hasGitHub()) {
+      try { await saveAuthorsToGitHub(updatedList); } catch { /* silent */ }
+    }
   };
 
   if (loading) {
@@ -203,6 +212,11 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
         </div>
         <div className="flex-center gap-8">
           <ServiceBadge service="notion" />
+          {saveToSite && hasGitHub() && (
+            <button className="btn btn-green" onClick={() => saveToSite('auteurs', auteurs.map(({ id, firstName, lastName, role, bio, photo, publications }) => ({ id, firstName, lastName, role, bio, photo: photo || '', publications: publications || 0 })))}>
+              Publier tout sur le site
+            </button>
+          )}
           <button className="btn btn-primary" onClick={openAdd}>+ Ajouter un auteur</button>
         </div>
       </div>
@@ -218,7 +232,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
             <p>Aucun auteur trouvé.</p>
           </div>
         ) : (
-          <div className="grid grid-3">
+          <div className="grid grid-3 grid-mobile-2">
             {filtered.map((auteur, i) => {
               const pubCount = getPublicationCount(auteur);
               return (

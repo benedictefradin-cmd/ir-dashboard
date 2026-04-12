@@ -153,8 +153,29 @@ export default function Newsletter({ subscribers, setSubscribers, campaigns, loa
           <StatsCard label="Total abonnés" value={stats.total} accentColor={COLORS.sky} />
           <StatsCard label="Nouveaux ce mois" value={stats.thisMo} accentColor={COLORS.green} />
           <StatsCard label="Validés" value={stats.added} accentColor={COLORS.navy} />
-          <StatsCard label="En attente" value={stats.pending} accentColor={COLORS.ochre} />
+          <StatsCard
+            label="En attente"
+            value={stats.pending}
+            accentColor={COLORS.ochre}
+            onClick={() => { setSubTab('contacts'); setStatusFilter('pending'); }}
+          />
         </div>
+
+        {/* Bouton nouvelles inscriptions */}
+        {stats.pending > 0 && (
+          <div className="alert-banner alert-banner-amber mb-16 fade-in">
+            <span className="alert-banner-icon"></span>
+            <div style={{ flex: 1 }}>
+              <strong>{stats.pending} nouvelle{stats.pending > 1 ? 's' : ''} inscription{stats.pending > 1 ? 's' : ''}</strong> en attente de validation
+            </div>
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={() => { setSubTab('contacts'); setStatusFilter('pending'); }}
+            >
+              Voir les nouvelles inscriptions
+            </button>
+          </div>
+        )}
 
         {/* Sous-onglets */}
         <div className="flex-wrap mb-16">

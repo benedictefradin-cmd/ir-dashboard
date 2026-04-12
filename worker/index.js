@@ -5,7 +5,6 @@
  * Le front n'envoie jamais de credentials.
  *
  * Secrets requis :
- *   HELLOASSO_CLIENT_ID, HELLOASSO_CLIENT_SECRET, HELLOASSO_ORG_SLUG
  *   BREVO_API_KEY
  *   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_CHANNEL_ID
  *
@@ -32,85 +31,6 @@ export default {
     const path = url.pathname;
 
     try {
-      // ═══════════════════════════════════════════
-      // HELLOASSO
-      // ═══════════════════════════════════════════
-
-      if (path.startsWith('/api/helloasso/')) {
-        const clientId = env.HELLOASSO_CLIENT_ID;
-        const clientSecret = env.HELLOASSO_CLIENT_SECRET;
-        const orgSlug = env.HELLOASSO_ORG_SLUG || 'institut-rousseau';
-
-        if (!clientId || !clientSecret) {
-          return json({ error: 'HelloAsso non configuré. Ajoutez HELLOASSO_CLIENT_ID et HELLOASSO_CLIENT_SECRET en secrets.' }, 503);
-        }
-
-        // OAuth token
-        const tokenResp = await fetch('https://api.helloasso.com/oauth2/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}`,
-        });
-        if (!tokenResp.ok) {
-          return json({ error: 'HelloAsso : authentification échouée', status: tokenResp.status }, 401);
-        }
-        const { access_token } = await tokenResp.json();
-        const headers = { Authorization: `Bearer ${access_token}` };
-
-        // ─── /api/helloasso/adhesions ───
-        if (path === '/api/helloasso/adhesions') {
-          const pageIndex = url.searchParams.get('pageIndex') || 1;
-          const pageSize = url.searchParams.get('pageSize') || 50;
-          const resp = await fetch(
-            `https://api.helloasso.com/v5/organizations/${orgSlug}/forms/Membership/items?pageIndex=${pageIndex}&pageSize=${pageSize}&withDetails=true`,
-            { headers }
-          );
-          if (!resp.ok) return json({ error: `HelloAsso adhesions : ${resp.status}` }, resp.status);
-          const data = await resp.json();
-          return json(normalizeHelloAssoItems(data, 'Adhésion'));
-        }
-
-        // ─── /api/helloasso/dons ───
-        if (path === '/api/helloasso/dons') {
-          const pageIndex = url.searchParams.get('pageIndex') || 1;
-          const pageSize = url.searchParams.get('pageSize') || 50;
-          const resp = await fetch(
-            `https://api.helloasso.com/v5/organizations/${orgSlug}/forms/Donation/items?pageIndex=${pageIndex}&pageSize=${pageSize}&withDetails=true`,
-            { headers }
-          );
-          if (!resp.ok) return json({ error: `HelloAsso dons : ${resp.status}` }, resp.status);
-          const data = await resp.json();
-          return json(normalizeHelloAssoItems(data, 'Don'));
-        }
-
-        // ─── /api/helloasso/members ───
-        if (path === '/api/helloasso/members') {
-          const pageIndex = url.searchParams.get('pageIndex') || 1;
-          const pageSize = url.searchParams.get('pageSize') || 50;
-          const resp = await fetch(
-            `https://api.helloasso.com/v5/organizations/${orgSlug}/members?pageIndex=${pageIndex}&pageSize=${pageSize}`,
-            { headers }
-          );
-          if (!resp.ok) return json({ error: `HelloAsso members : ${resp.status}` }, resp.status);
-          const data = await resp.json();
-          return json(normalizeHelloAssoItems(data, 'Adhésion'));
-        }
-
-        // ─── /api/helloasso/payments ───
-        if (path === '/api/helloasso/payments') {
-          const pageIndex = url.searchParams.get('pageIndex') || 1;
-          const pageSize = url.searchParams.get('pageSize') || 50;
-          const resp = await fetch(
-            `https://api.helloasso.com/v5/organizations/${orgSlug}/payments?pageIndex=${pageIndex}&pageSize=${pageSize}`,
-            { headers }
-          );
-          if (!resp.ok) return json({ error: `HelloAsso payments : ${resp.status}` }, resp.status);
-          const data = await resp.json();
-          return json(normalizeHelloAssoPayments(data));
-        }
-
-        return json({ error: 'Route HelloAsso inconnue' }, 404);
-      }
 
       // ═══════════════════════════════════════════
       // BREVO
@@ -705,7 +625,7 @@ export default {
       }
 
       // ═══════════════════════════════════════════
-      // GITHUB PUBLISH
+      // GITHUB — Site data & publish
       // ═══════════════════════════════════════════
 
       if (path.startsWith('/api/github/')) {
@@ -722,6 +642,66 @@ export default {
           'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         };
+
+        // ─── GET /api/github/data/:file ─── (lire un fichier JSON du site)
+        const dataMatch = path.match(/^\/api\/github\/data\/(.+)$/);
+        if (dataMatch && request.method === 'GET') {
+          if (!owner || !repo) return json({ error: 'Owner ou repo GitHub manquant.' }, 400);
+          const fileName = decodeURIComponent(dataMatch[1]);
+          const allowed = ['publications.json', 'events.json', 'presse.json', 'auteurs.json'];
+          if (!allowed.includes(fileName)) return json({ error: 'Fichier non autorisé.' }, 403);
+
+          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/data/${fileName}`;
+          const resp = await fetch(apiUrl, { headers: githubHeaders });
+          if (!resp.ok) return json({ error: `GitHub : ${resp.status}` }, resp.status);
+          const file = await resp.json();
+          const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+          return json({ data: JSON.parse(content), sha: file.sha });
+        }
+
+        // ─── PUT /api/github/data/:file ─── (écrire un fichier JSON du site)
+        if (dataMatch && request.method === 'PUT') {
+          if (!owner || !repo) return json({ error: 'Owner ou repo GitHub manquant.' }, 400);
+          const fileName = decodeURIComponent(dataMatch[1]);
+          const allowed = ['publications.json', 'events.json', 'presse.json', 'auteurs.json'];
+          if (!allowed.includes(fileName)) return json({ error: 'Fichier non autorisé.' }, 403);
+
+          const body = await request.json();
+          if (!body.data) return json({ error: 'Données manquantes (champ "data" requis).' }, 400);
+
+          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/data/${fileName}`;
+
+          // Récupérer le SHA actuel
+          let currentSha = body.sha || null;
+          if (!currentSha) {
+            const checkResp = await fetch(apiUrl, { headers: githubHeaders });
+            if (checkResp.ok) {
+              const existing = await checkResp.json();
+              currentSha = existing.sha;
+            }
+          }
+
+          const content = btoa(unescape(encodeURIComponent(JSON.stringify(body.data, null, 2))));
+          const putBody = {
+            message: body.message || `Mise à jour ${fileName} depuis le back-office`,
+            content,
+            branch: 'main',
+          };
+          if (currentSha) putBody.sha = currentSha;
+
+          const putResp = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: githubHeaders,
+            body: JSON.stringify(putBody),
+          });
+
+          if (!putResp.ok) {
+            const err = await putResp.json().catch(() => ({}));
+            return json({ error: err.message || `GitHub : ${putResp.status}` }, putResp.status);
+          }
+          const result = await putResp.json();
+          return json({ success: true, sha: result.content?.sha });
+        }
 
         // ─── POST /api/github/publish ───
         if (path === '/api/github/publish' && request.method === 'POST') {
@@ -800,9 +780,9 @@ export default {
           status: 'ok',
           timestamp: new Date().toISOString(),
           services: {
-            helloasso: !!(env.HELLOASSO_CLIENT_ID && env.HELLOASSO_CLIENT_SECRET),
             brevo: !!env.BREVO_API_KEY,
             telegram: !!env.TELEGRAM_BOT_TOKEN,
+            github: true,
           },
         });
       }
@@ -810,30 +790,6 @@ export default {
       // ═══════════════════════════════════════════
       // LEGACY ROUTES (compatibilité avec l'ancien front)
       // ═══════════════════════════════════════════
-
-      if (path === '/helloasso/members' || path === '/helloasso/donations') {
-        const body = await request.json();
-        const clientId = body.clientId || env.HELLOASSO_CLIENT_ID;
-        const clientSecret = body.clientSecret || env.HELLOASSO_CLIENT_SECRET;
-        const orgSlug = body.orgSlug || env.HELLOASSO_ORG_SLUG || 'institut-rousseau';
-
-        const tokenResp = await fetch('https://api.helloasso.com/oauth2/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}`,
-        });
-        if (!tokenResp.ok) return json({ error: 'HelloAsso auth failed' }, 401);
-        const { access_token } = await tokenResp.json();
-
-        const endpoint = path.includes('donations') ? 'payments' : 'members';
-        const dataResp = await fetch(
-          `https://api.helloasso.com/v5/organizations/${orgSlug}/${endpoint}?pageSize=100`,
-          { headers: { Authorization: `Bearer ${access_token}` } }
-        );
-        if (!dataResp.ok) return json({ error: `HelloAsso ${endpoint} failed` }, dataResp.status);
-        const data = await dataResp.json();
-        return json(normalizeHelloAssoPayments(data));
-      }
 
       if (path === '/brevo/send') {
         const body = await request.json();
@@ -868,51 +824,6 @@ function json(data, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
-}
-
-function normalizeHelloAssoItems(apiResponse, type) {
-  const items = apiResponse.data || apiResponse.items || [];
-  const pagination = apiResponse.pagination || {};
-  return {
-    items: items.map(item => {
-      const payer = item.payer || item.user || {};
-      return {
-        id: `ha-${item.id}`,
-        name: `${payer.firstName || ''} ${payer.lastName || ''}`.trim() || 'Anonyme',
-        firstName: payer.firstName || '',
-        lastName: payer.lastName || '',
-        email: (payer.email || '').toLowerCase(),
-        phone: payer.phone || '',
-        date: item.order?.date?.slice(0, 10) || item.date?.slice(0, 10) || '',
-        amount: item.amount ? item.amount / 100 : item.initialAmount ? item.initialAmount / 100 : 0,
-        type,
-        status: item.state === 'Processed' || item.state === 'Authorized' ? 'actif' : 'en_attente',
-        source: 'HelloAsso',
-        helloassoId: String(item.id),
-        formName: item.name || '',
-      };
-    }).filter(c => c.email),
-    pagination: {
-      totalCount: pagination.totalCount || items.length,
-      pageIndex: pagination.pageIndex || 1,
-      pageSize: pagination.pageSize || 50,
-      totalPages: pagination.totalPages || 1,
-    },
-  };
-}
-
-function normalizeHelloAssoPayments(apiResponse) {
-  const items = apiResponse.data || [];
-  return items.map(p => ({
-    id: `ha-${p.id}`,
-    name: `${p.payer?.firstName || ''} ${p.payer?.lastName || ''}`.trim() || 'Anonyme',
-    email: (p.payer?.email || '').toLowerCase(),
-    amount: p.amount ? p.amount / 100 : 0,
-    date: p.date?.slice(0, 10) || '',
-    type: p.paymentType === 'Donation' ? 'Don' : 'Adhésion',
-    status: p.state === 'Authorized' ? 'actif' : 'en_attente',
-    source: 'HelloAsso',
-  })).filter(c => c.email);
 }
 
 // ═══ Notion property extractors ══════════════════════

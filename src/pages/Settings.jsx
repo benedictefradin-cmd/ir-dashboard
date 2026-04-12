@@ -23,6 +23,9 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
   const [githubOwner, setGithubOwner] = useState(() => loadLocal('ir_github_owner', ''));
   const [githubSiteRepo, setGithubSiteRepo] = useState(() => loadLocal('ir_github_site_repo', ''));
 
+  // ─── Vercel deploy hook ───────────────────────
+  const [deployHook, setDeployHook] = useState(() => loadLocal(LS_KEYS.vercelDeployHook, ''));
+
   // ─── Opérateur ──────────────────────────────
   const [operator, setOperator] = useState(() => loadLocal(LS_KEYS.operator, ''));
 
@@ -58,6 +61,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
     saveLocal('ir_github_token', githubToken);
     saveLocal('ir_github_owner', githubOwner);
     saveLocal('ir_github_site_repo', githubSiteRepo);
+    saveLocal(LS_KEYS.vercelDeployHook, deployHook);
     toast('Configuration sauvegardée');
     if (onRefresh) onRefresh();
   };
@@ -448,6 +452,26 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
             >
               {testing.github === 'loading' ? 'Test…' : 'Tester la connexion GitHub'}
             </button>
+          </div>
+
+          {/* Vercel deploy hook */}
+          <div className="card">
+            <h3 style={{ fontSize: 16, marginBottom: 16 }}>
+              Vercel Deploy Hook
+              {statusIcon(deployHook ? 'ok' : '')}
+            </h3>
+            <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 16 }}>
+              Configurez l'URL du deploy hook Vercel pour permettre le rebuild du site depuis le dashboard.
+              Créez-le depuis Vercel &rarr; Settings &rarr; Git &rarr; Deploy Hooks.
+            </p>
+            <div style={{ marginBottom: 12 }}>
+              <label>URL du deploy hook</label>
+              <input
+                value={deployHook}
+                onChange={e => setDeployHook(e.target.value)}
+                placeholder="https://api.vercel.com/v1/integrations/deploy/prj_..."
+              />
+            </div>
           </div>
         </div>
 

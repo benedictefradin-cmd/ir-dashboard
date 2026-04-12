@@ -8,8 +8,8 @@ Dashboard de gestion du site [institut-rousseau-kb9p.vercel.app](https://institu
 Frontend (React/Vite)          Backend (Cloudflare Worker)
    GitHub Pages         ←→     Proxy API gratuit
        ↓                           ↓
-   - CRM contacts              - HelloAsso OAuth2
-   - Articles Notion            - Brevo SMTP
+   - CRM contacts              - Brevo SMTP
+   - Articles Notion            - Notion API
    - Commits GitHub             - Notion API
    - Link checker               (100K req/jour gratuit)
    - Campagnes email/TG
@@ -21,7 +21,7 @@ Frontend (React/Vite)          Backend (Cloudflare Worker)
 
 ### 1. Cloudflare Worker (backend API)
 
-Le Worker est nécessaire pour HelloAsso, Brevo et Notion (CORS bloqué depuis le navigateur).
+Le Worker est nécessaire pour Brevo et Notion (CORS bloqué depuis le navigateur).
 
 ```bash
 # Installer Wrangler
@@ -69,7 +69,6 @@ Tout se configure dans l'onglet **Config** du dashboard :
 
 | Service | Où trouver les identifiants |
 |---------|---------------------------|
-| HelloAsso | [Mon compte → API](https://admin.helloasso.com/compte/api) |
 | Brevo | [Paramètres → Clés API](https://app.brevo.com/settings/keys/api) |
 | Telegram | Créer un bot via [@BotFather](https://t.me/BotFather) |
 | Notion | [My integrations](https://www.notion.so/my-integrations) |
@@ -112,7 +111,6 @@ VITE_WORKER_URL=https://ir-dashboard-api.xxx.workers.dev
 ## Fonctionnalités
 
 - **CRM** : contacts unifiés avec tags (Membre, Donateur, Newsletter, Presse, Auteur, Événement)
-- **HelloAsso** : sync automatique des adhérents et donateurs
 - **Notion** : sync des articles depuis la base de données
 - **Campagnes** : envoi email (Brevo) et Telegram par segment
 - **Automations** : workflows déclenchés par événements (bienvenue, relance, alertes)

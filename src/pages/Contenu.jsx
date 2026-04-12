@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { THEMATIQUES } from '../utils/constants';
+import { triggerRebuild, hasDeployHook } from '../services/deploy';
 
 const TABS = [
   { id: 'projet', label: 'Le Projet' },
@@ -83,8 +84,17 @@ export default function Contenu({ contenu, setContenu, toast }) {
 
   const renderProjet = () => (
     <>
-      {renderTextSection('projet', 'Présentation du projet')}
-      <button className="btn btn-primary" onClick={() => handleSave('projet')}>Sauvegarder</button>
+      {renderTextSection('projet', 'Texte fondateur', 'presentation')}
+      {renderTextSection('projet', '4 piliers (Écologie, Démocratie, Social, Économie)', 'piliers')}
+      {renderTextSection('projet', '3 convictions (Raison républicaine, De l\'idéal à l\'action, Indépendance absolue)', 'convictions')}
+      {renderTextSection('projet', 'Timeline historique', 'timeline')}
+      <div className="flex-wrap gap-8">
+        <button className="btn btn-primary" onClick={() => handleSave('projet')}>Sauvegarder</button>
+        <button className="btn btn-outline" onClick={async () => {
+          if (!hasDeployHook()) { toast('Deploy hook non configuré — allez dans Config', 'error'); return; }
+          try { await triggerRebuild(); toast('Rebuild déclenché'); } catch (e) { toast(e.message, 'error'); }
+        }}>Rebuild site</button>
+      </div>
     </>
   );
 
@@ -123,16 +133,28 @@ export default function Contenu({ contenu, setContenu, toast }) {
           <input value={getValue('roadmap', 'pdf_synthese')} onChange={(e) => handleChange('roadmap', 'pdf_synthese', e.target.value)} placeholder="/documents/road-to-net-zero-synthese.pdf" />
         </div>
       </div>
-      <button className="btn btn-primary" onClick={() => handleSave('roadmap')}>Sauvegarder</button>
+      <div className="flex-wrap gap-8">
+        <button className="btn btn-primary" onClick={() => handleSave('roadmap')}>Sauvegarder</button>
+        <button className="btn btn-outline" onClick={async () => {
+          if (!hasDeployHook()) { toast('Deploy hook non configuré — allez dans Config', 'error'); return; }
+          try { await triggerRebuild(); toast('Rebuild déclenché'); } catch (e) { toast(e.message, 'error'); }
+        }}>Rebuild site</button>
+      </div>
     </>
   );
 
   const renderThematiques = () => (
     <>
       {THEMATIQUES.map((theme) => (
-        renderTextSection('thematiques', theme, theme.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''))
+        renderTextSection('thematiques', theme, theme.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))
       ))}
-      <button className="btn btn-primary" onClick={() => handleSave('thématiques')}>Sauvegarder</button>
+      <div className="flex-wrap gap-8">
+        <button className="btn btn-primary" onClick={() => handleSave('thématiques')}>Sauvegarder</button>
+        <button className="btn btn-outline" onClick={async () => {
+          if (!hasDeployHook()) { toast('Deploy hook non configuré — allez dans Config', 'error'); return; }
+          try { await triggerRebuild(); toast('Rebuild déclenché'); } catch (e) { toast(e.message, 'error'); }
+        }}>Rebuild site</button>
+      </div>
     </>
   );
 

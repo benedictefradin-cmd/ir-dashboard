@@ -710,6 +710,7 @@ label {
   .page-body { padding: 16px 16px 32px; }
   .page-header h1 { font-size: 22px; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .grid-3.grid-mobile-2 { grid-template-columns: repeat(2, 1fr); }
 
   .mobile-header {
     display: flex;

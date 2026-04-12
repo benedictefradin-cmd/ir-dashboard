@@ -3,89 +3,197 @@
     "id": "nicolas-dufrene",
     "firstName": "Nicolas",
     "lastName": "Dufrêne",
-    "role": "Directeur de l'Institut Rousseau",
-    "bio": "Haut fonctionnaire, spécialiste des questions monétaires et budgétaires.",
-    "photo": "",
-    "publications": 12
-  },
-  {
-    "id": "chloe-ridel",
-    "firstName": "Chloé",
-    "lastName": "Ridel",
-    "role": "Présidente de l'Institut Rousseau",
-    "bio": "Haute fonctionnaire, autrice de 'D'une guerre à l'autre'.",
-    "photo": "",
-    "publications": 8
-  },
-  {
-    "id": "marine-yzquierdo",
-    "firstName": "Marine",
-    "lastName": "Yzquierdo",
-    "role": "Spécialiste travail et environnement",
-    "bio": "Chercheuse spécialisée dans les liens entre travail et transition écologique.",
-    "photo": "",
-    "publications": 3
-  },
-  {
-    "id": "magali-lafourcade",
-    "firstName": "Magali",
-    "lastName": "Lafourcade",
-    "role": "Secrétaire générale de la CNCDH",
-    "bio": "Magistrate, secrétaire générale de la Commission nationale consultative des droits de l'homme.",
-    "photo": "",
-    "publications": 5
-  },
-  {
-    "id": "pierre-micheletti",
-    "firstName": "Pierre",
-    "lastName": "Micheletti",
-    "role": "Médecin, ancien président ACF",
-    "bio": "Médecin et ancien président d'Action contre la faim, spécialiste de l'aide humanitaire.",
-    "photo": "",
-    "publications": 2
-  },
-  {
-    "id": "robert-bell",
-    "firstName": "Robert",
-    "lastName": "Bell",
-    "role": "Professeur, spécialiste majors pétrolières",
-    "bio": "Professeur, spécialiste des majors pétrolières et de la transition énergétique.",
-    "photo": "",
-    "publications": 4
-  },
-  {
-    "id": "gael-giraud",
-    "firstName": "Gaël",
-    "lastName": "Giraud",
-    "role": "Économiste",
-    "bio": "Économiste, directeur de recherche au CNRS, ancien chef économiste de l'AFD.",
-    "photo": "",
-    "publications": 6
+    "role": "Président-directeur, économiste, haut fonctionnaire",
+    "bio": "Directeur général de l'Institut Rousseau, haut fonctionnaire et économiste spécialiste des questions monétaires et de dette publique.",
+    "photo": "assets/images/equipe/nicolas-dufrene.png",
+    "publications": 15
   },
   {
     "id": "beverley-toudic",
     "firstName": "Beverley",
     "lastName": "Toudic",
-    "role": "Directrice adjointe",
-    "bio": "Directrice adjointe de l'Institut Rousseau.",
+    "role": "Présidente adjointe, chercheuse en droit constitutionnel",
+    "bio": "Directrice adjointe de l'Institut Rousseau, chercheuse en droit constitutionnel.",
+    "photo": "assets/images/equipe/beverley-toudic.png",
+    "publications": 5
+  },
+  {
+    "id": "marine-yzquierdo",
+    "firstName": "Marine",
+    "lastName": "Yzquierdo",
+    "role": "Avocate en droit de l'environnement",
+    "bio": "Avocate spécialiste du droit de l'environnement, contributrice régulière aux travaux de l'Institut.",
+    "photo": "assets/images/auteurs/marine-yzquierdo.png",
+    "publications": 3
+  },
+  {
+    "id": "chloe-ridel",
+    "firstName": "Chloé",
+    "lastName": "Ridel",
+    "role": "Haut fonctionnaire, présidente de Mieux Voter",
+    "bio": "Haut fonctionnaire et présidente de l'association Mieux Voter, spécialiste des questions démocratiques.",
+    "photo": "assets/images/equipe/chloe-ridel.jpg",
+    "publications": 4
+  },
+  {
+    "id": "guillaume-kerlero-de-rosbo",
+    "firstName": "Guillaume",
+    "lastName": "Kerlero de Rosbo",
+    "role": "Directeur des études écologiques, ingénieur AgroParisTech/Mines",
+    "bio": "Directeur des études écologiques de l'Institut Rousseau, ingénieur AgroParisTech et Mines de Paris, coordinateur du rapport Road to Net Zero.",
+    "photo": "assets/images/equipe/guillaume-kerlero-de-rosbo.png",
+    "publications": 8
+  },
+  {
+    "id": "gael-giraud",
+    "firstName": "Gaël",
+    "lastName": "Giraud",
+    "role": "Économiste, directeur de recherche CNRS, Georgetown University",
+    "bio": "Économiste, directeur de recherche au CNRS et professeur à Georgetown University.",
     "photo": "",
     "publications": 3
   },
   {
-    "id": "simon-pujau",
-    "firstName": "Simon",
-    "lastName": "Pujau",
-    "role": "Chercheur en économie",
-    "bio": "Chercheur spécialisé en finance verte et obligations vertes européennes.",
+    "id": "robert-bell",
+    "firstName": "Robert",
+    "lastName": "Bell",
+    "role": "Professor of Management, Brooklyn College (CUNY)",
+    "bio": "Professeur de management à Brooklyn College (City University of New York), spécialiste des majors pétrolières.",
+    "photo": "assets/images/auteurs/robert-bell.png",
+    "publications": 5
+  },
+  {
+    "id": "ophelie-coelho",
+    "firstName": "Ophélie",
+    "lastName": "Coelho",
+    "role": "Chercheuse, géopolitique du numérique",
+    "bio": "Chercheuse spécialiste de la géopolitique du numérique et de la souveraineté technologique.",
     "photo": "",
-    "publications": 2
+    "publications": 3
   },
   {
     "id": "arthur-boutiab",
     "firstName": "Arthur",
     "lastName": "Boutiab",
-    "role": "Chercheur en économie circulaire",
-    "bio": "Chercheur spécialisé en économie circulaire et transition écologique.",
+    "role": "Chercheur",
+    "bio": "Chercheur à l'Institut Rousseau, spécialiste de l'économie circulaire.",
+    "photo": "",
+    "publications": 2
+  },
+  {
+    "id": "simon-pujau",
+    "firstName": "Simon",
+    "lastName": "Pujau",
+    "role": "Chercheur",
+    "bio": "Chercheur à l'Institut Rousseau, travaux sur la transition écologique et les obligations vertes.",
+    "photo": "",
+    "publications": 3
+  },
+  {
+    "id": "pierre-micheletti",
+    "firstName": "Pierre",
+    "lastName": "Micheletti",
+    "role": "Médecin, ancien président de Médecins du Monde",
+    "bio": "Médecin et ancien président de Médecins du Monde, spécialiste de l'aide humanitaire internationale.",
+    "photo": "assets/images/auteurs/pierre-micheletti.png",
+    "publications": 4
+  },
+  {
+    "id": "paul-montjotin",
+    "firstName": "Paul",
+    "lastName": "Montjotin",
+    "role": "Enseignant, spécialiste des questions sociales",
+    "bio": "Enseignant et chercheur spécialiste des questions sociales et du temps de travail.",
+    "photo": "assets/images/auteurs/paul-montjotin.png",
+    "publications": 2
+  },
+  {
+    "id": "anais-voy-gillis",
+    "firstName": "Anaïs",
+    "lastName": "Voy-Gillis",
+    "role": "Docteure en géographie, spécialiste réindustrialisation",
+    "bio": "Docteure en géographie, spécialiste des questions de réindustrialisation et de souveraineté industrielle.",
+    "photo": "assets/images/equipe/anais-voy-gillis.jpg",
+    "publications": 2
+  },
+  {
+    "id": "pierre-gilbert",
+    "firstName": "Pierre",
+    "lastName": "Gilbert",
+    "role": "Consultant en prospective climatique, auteur",
+    "bio": "Consultant en prospective climatique et auteur, spécialiste des questions de capture et stockage du CO2.",
+    "photo": "assets/images/equipe/pierre-gilbert.jpg",
+    "publications": 2
+  },
+  {
+    "id": "nathan-sperber",
+    "firstName": "Nathan",
+    "lastName": "Sperber",
+    "role": "Post-doctorant, Université Fudan (Shanghai)",
+    "bio": "Post-doctorant à l'Université Fudan de Shanghai, chercheur en économie politique.",
+    "photo": "assets/images/equipe/nathan-sperber.jpg",
+    "publications": 1
+  },
+  {
+    "id": "ano-kuhanathan",
+    "firstName": "Ano",
+    "lastName": "Kuhanathan",
+    "role": "Économiste, doctorat Paris-Dauphine, NEOMA",
+    "bio": "Économiste, docteur de l'Université Paris-Dauphine et enseignant à NEOMA Business School.",
+    "photo": "assets/images/equipe/ano-kuhanathan.jpg",
+    "publications": 3
+  },
+  {
+    "id": "thibaud-voita",
+    "firstName": "Thibaud",
+    "lastName": "Voïta",
+    "role": "Chercheur énergie et climat",
+    "bio": "Chercheur spécialiste des questions énergétiques et climatiques.",
+    "photo": "",
+    "publications": 2
+  },
+  {
+    "id": "augustin-rogy",
+    "firstName": "Augustin",
+    "lastName": "Rogy",
+    "role": "Chercheur",
+    "bio": "Chercheur à l'Institut Rousseau.",
+    "photo": "",
+    "publications": 1
+  },
+  {
+    "id": "emilie-fabre",
+    "firstName": "Émilie",
+    "lastName": "Fabre",
+    "role": "Chercheuse",
+    "bio": "Chercheuse à l'Institut Rousseau.",
+    "photo": "",
+    "publications": 1
+  },
+  {
+    "id": "matthieu-caron",
+    "firstName": "Matthieu",
+    "lastName": "Caron",
+    "role": "Juriste, maître de conférences",
+    "bio": "Juriste et maître de conférences, spécialiste du droit constitutionnel.",
+    "photo": "",
+    "publications": 1
+  },
+  {
+    "id": "alain-grandjean",
+    "firstName": "Alain",
+    "lastName": "Grandjean",
+    "role": "Économiste",
+    "bio": "Économiste, co-fondateur de Carbone 4.",
+    "photo": "",
+    "publications": 1
+  },
+  {
+    "id": "julien-lefournier",
+    "firstName": "Julien",
+    "lastName": "Lefournier",
+    "role": "Financier",
+    "bio": "Financier, spécialiste des marchés et de la finance verte.",
     "photo": "",
     "publications": 1
   },
@@ -93,8 +201,26 @@
     "id": "lea-falco",
     "firstName": "Léa",
     "lastName": "Falco",
-    "role": "Chercheuse en écologie",
-    "bio": "Chercheuse spécialisée en politiques environnementales.",
+    "role": "Chercheuse",
+    "bio": "Chercheuse et activiste pour la transition écologique.",
+    "photo": "",
+    "publications": 1
+  },
+  {
+    "id": "jordan-allouche",
+    "firstName": "Jordan",
+    "lastName": "Allouche",
+    "role": "Chercheur",
+    "bio": "Chercheur à l'Institut Rousseau.",
+    "photo": "",
+    "publications": 1
+  },
+  {
+    "id": "frantz-gault",
+    "firstName": "Frantz",
+    "lastName": "Gault",
+    "role": "Chercheur",
+    "bio": "Chercheur à l'Institut Rousseau.",
     "photo": "",
     "publications": 1
   }

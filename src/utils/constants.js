@@ -143,6 +143,7 @@ export const LS_KEYS = {
   telegramChatId: 'tg-chat-id',
   telegramChannelId: 'tg-channel-id',
   sidebarCollapsed: 'sidebar-collapsed',
+  vercelDeployHook: 'vercel-deploy-hook',
 };
 
 // ─── Config par défaut ──────────────────────────────
