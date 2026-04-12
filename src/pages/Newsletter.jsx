@@ -112,7 +112,8 @@ export default function Newsletter({ subscribers, setSubscribers, campaigns, loa
       return <span className={`badge ${cls}`}>{lbl}</span>;
     }},
     { key: 'recipients', label: 'Destinataires' },
-    { key: 'openRate', label: 'Taux ouverture', render: (v) => v != null ? `${v}\u00a0%` : '\u2014' },
+    { key: 'openRate', label: 'Ouverture', render: (v) => v != null ? `${v}\u00a0%` : '\u2014' },
+    { key: 'clickRate', label: 'Clics', render: (v) => v != null ? `${v}\u00a0%` : '\u2014' },
     { key: 'date', label: 'Date', render: (v) => formatDateFr(v) },
   ];
 

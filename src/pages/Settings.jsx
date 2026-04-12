@@ -133,8 +133,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
         prenom: ['prenom', 'first_name', 'firstname'],
         email: ['email', 'e-mail', 'mail', 'courriel', 'adresse email'],
         telephone: ['telephone', 'tel', 'phone', 'mobile', 'numero'],
-        date: ['date', 'date_adhesion', 'date_inscription', 'created', 'date adhesion', 'date inscription'],
-        montant: ['montant', 'amount', 'prix', 'price', 'somme'],
+        date: ['date', 'date_inscription', 'created', 'date inscription'],
         statut: ['statut', 'status', 'etat'],
         source: ['source', 'origine', 'origin', 'provenance'],
       };
