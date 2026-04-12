@@ -225,7 +225,7 @@ export default function App() {
       case 'newsletter':
         return <Newsletter subscribers={subscribers} setSubscribers={setSubscribers} campaigns={campaigns} loading={loading} connected={services.brevo} onRefresh={loadData} toast={toast} />;
       case 'messagerie':
-        return <Messagerie subscribers={subscribers} services={services} toast={toast} />;
+        return <Messagerie subscribers={subscribers} presse={presse} auteurs={auteurs} events={events} services={services} toast={toast} />;
       case 'contenu':
         return <Contenu contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
       case 'sollicitations':

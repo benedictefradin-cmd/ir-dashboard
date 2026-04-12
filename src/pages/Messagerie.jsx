@@ -1,27 +1,56 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { EMAIL_TEMPLATES, COLORS } from '../utils/constants';
 import { sendBulkEmail } from '../services/brevo';
 import { sendMessage, sendChannelMessage } from '../services/telegram';
 
-const SEGMENTS = [
-  { key: 'all_subscribers', label: 'Abonnés newsletter' },
-  { key: 'all', label: 'Tous les contacts' },
-  { key: 'presse', label: 'Contacts presse' },
-  { key: 'auteurs', label: 'Auteurs' },
-  { key: 'evenement', label: 'Inscrits événements' },
-];
-
-export default function Messagerie({ subscribers = [], services, toast }) {
+export default function Messagerie({ subscribers = [], presse = [], auteurs = [], events = [], services, toast }) {
   const [channel, setChannel] = useState('email');
   const [templateKey, setTemplateKey] = useState('');
-  const [recipients, setRecipients] = useState('all_subscribers');
+  const [selectedSegments, setSelectedSegments] = useState(['all_subscribers']);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [history, setHistory] = useState([]);
+
+  // Compter les destinataires par segment
+  const activeSubscribers = useMemo(
+    () => subscribers.filter(s => s.status === 'added' || s.status === 'abonné'),
+    [subscribers]
+  );
+
+  const presseContacts = useMemo(
+    () => presse.filter(p => p.email),
+    [presse]
+  );
+
+  const auteursContacts = useMemo(
+    () => auteurs.filter(a => a.email),
+    [auteurs]
+  );
+
+  const eventInscrits = useMemo(
+    () => events.flatMap(e => (e.inscrits || []).filter(i => i.email)),
+    [events]
+  );
+
+  const segments = [
+    { key: 'all_subscribers', label: 'Abonnés newsletter', count: activeSubscribers.length, icon: '📬' },
+    { key: 'all', label: 'Tous les contacts', count: subscribers.length, icon: '👥' },
+    { key: 'presse', label: 'Contacts presse', count: presseContacts.length, icon: '📰' },
+    { key: 'auteurs', label: 'Auteurs', count: auteursContacts.length, icon: '✍️' },
+    { key: 'evenement', label: 'Inscrits événements', count: eventInscrits.length, icon: '🎤' },
+  ];
+
+  const toggleSegment = (key) => {
+    setSelectedSegments(prev =>
+      prev.includes(key)
+        ? prev.filter(k => k !== key)
+        : [...prev, key]
+    );
+  };
 
   const loadTemplate = (key) => {
     setTemplateKey(key);
@@ -32,23 +61,31 @@ export default function Messagerie({ subscribers = [], services, toast }) {
     }
   };
 
-  const getRecipientList = () => {
-    const active = subscribers.filter(s => s.status === 'added' || s.status === 'abonné');
-    if (recipients === 'all_subscribers' || recipients === 'all') return active;
-    return [];
-  };
+  const recipientList = useMemo(() => {
+    const map = new Map();
+    const addContacts = (list) => list.forEach(c => { if (c.email) map.set(c.email, c); });
+    selectedSegments.forEach(seg => {
+      if (seg === 'all_subscribers') addContacts(activeSubscribers);
+      else if (seg === 'all') addContacts(subscribers);
+      else if (seg === 'presse') addContacts(presseContacts);
+      else if (seg === 'auteurs') addContacts(auteursContacts);
+      else if (seg === 'evenement') addContacts(eventInscrits);
+    });
+    return [...map.values()];
+  }, [selectedSegments, activeSubscribers, subscribers, presseContacts, auteursContacts, eventInscrits]);
 
-  const getRecipientCount = () => getRecipientList().length;
+  const recipientCount = recipientList.length;
 
   const handleSend = async () => {
     if (!body.trim()) return toast('Le message est vide', 'error');
-    if (channel === 'email' && !subject.trim()) return toast('L’objet est requis', 'error');
+    if (channel === 'email' && !subject.trim()) return toast('L\'objet est requis', 'error');
+    if (channel === 'email' && recipientCount === 0) return toast('Aucun destinataire sélectionné', 'error');
 
     setSending(true);
     try {
       if (channel === 'email') {
         if (services?.brevo) {
-          const recipientEmails = getRecipientList().map(r => r.email);
+          const recipientEmails = recipientList.map(r => r.email);
           const htmlContent = body.replace(/\n/g, '<br>');
           await sendBulkEmail({
             recipients: recipientEmails,
@@ -59,7 +96,7 @@ export default function Messagerie({ subscribers = [], services, toast }) {
           toast(`Email envoyé à ${recipientEmails.length} destinataire${recipientEmails.length > 1 ? 's' : ''}`);
         } else {
           await new Promise(r => setTimeout(r, 1500));
-          toast(`Email envoyé à ${getRecipientCount()} destinataire${getRecipientCount() > 1 ? 's' : ''} (simulation)`);
+          toast(`Email envoyé à ${recipientCount} destinataire${recipientCount > 1 ? 's' : ''} (simulation)`);
         }
       } else if (channel === 'telegram-channel') {
         if (services?.telegram) {
@@ -79,13 +116,12 @@ export default function Messagerie({ subscribers = [], services, toast }) {
         }
       }
 
-      // Ajouter à l'historique
       setHistory(prev => [{
         id: Date.now(),
         channel,
         subject: channel === 'email' ? subject : '',
         body: body.slice(0, 100),
-        recipients: channel === 'email' ? getRecipientCount() : 1,
+        recipients: channel === 'email' ? recipientCount : 1,
         date: new Date().toISOString(),
         status: 'sent',
       }, ...prev]);
@@ -94,7 +130,7 @@ export default function Messagerie({ subscribers = [], services, toast }) {
       setBody('');
       setTemplateKey('');
     } catch (err) {
-      toast(`Erreur d’envoi : ${err.message}`, 'error');
+      toast(`Erreur d'envoi : ${err.message}`, 'error');
     } finally {
       setSending(false);
     }
@@ -113,138 +149,156 @@ export default function Messagerie({ subscribers = [], services, toast }) {
       </div>
 
       <div className="page-body">
-        {/* Canal */}
-        <div className="card mb-24">
-          <h3 style={{ fontSize: 15, marginBottom: 14 }}>Canal d&rsquo;envoi</h3>
-          <div className="flex-wrap gap-8">
-            {[
-              ['email', '✉️ Email (Brevo)', COLORS.sky, services?.brevo],
-              ['telegram-channel', '📢 Canal Telegram', COLORS.green, services?.telegram],
-              ['telegram-private', '🔔 Notification privée', COLORS.ochre, services?.telegram],
-            ].map(([key, label, color, connected]) => (
-              <button
-                key={key}
-                className={`btn ${channel === key ? 'btn-primary' : 'btn-outline'}`}
-                style={channel === key ? { background: color } : {}}
-                onClick={() => setChannel(key)}
-              >
-                {label}
-                {connected && <span className="status-dot green" style={{ marginLeft: 6 }} />}
-              </button>
-            ))}
-          </div>
+        {/* Canal d'envoi */}
+        <div className="msg-channel-bar">
+          {[
+            ['email', 'Email (Brevo)', COLORS.sky, services?.brevo],
+            ['telegram-channel', 'Canal Telegram', COLORS.green, services?.telegram],
+            ['telegram-private', 'Notification privée', COLORS.ochre, services?.telegram],
+          ].map(([key, label, color, connected]) => (
+            <button
+              key={key}
+              className={`msg-channel-btn ${channel === key ? 'active' : ''}`}
+              style={channel === key ? { '--accent': color } : {}}
+              onClick={() => setChannel(key)}
+            >
+              <span className="msg-channel-icon">
+                {key === 'email' ? '✉️' : key === 'telegram-channel' ? '📢' : '🔔'}
+              </span>
+              <span>{label}</span>
+              {connected && <span className="msg-channel-dot" />}
+            </button>
+          ))}
         </div>
 
-        <div className="messagerie-grid">
-          {/* Panneau gauche */}
-          <div>
+        <div className="msg-layout">
+          {/* Panneau gauche — Destinataires & Templates */}
+          <aside className="msg-sidebar">
             {channel === 'email' && (
               <>
-                <div className="card mb-16">
-                  <h3 style={{ fontSize: 15, marginBottom: 12 }}>Destinataires</h3>
-                  {SEGMENTS.map(({ key, label }) => {
-                    const count = key === 'all_subscribers'
-                      ? subscribers.filter(s => s.status === 'added' || s.status === 'abonné').length
-                      : key === 'all' ? subscribers.length : null;
-                    return (
-                      <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer', textTransform: 'none', fontWeight: 400, fontSize: 14 }}>
-                        <input type="radio" name="recipients" value={key} checked={recipients === key} onChange={() => setRecipients(key)} />
-                        {label}{count != null ? ` (${count})` : ''}
-                      </label>
-                    );
-                  })}
+                {/* Destinataires */}
+                <div className="msg-panel">
+                  <div className="msg-panel-title">Destinataires</div>
+                  <div className="msg-segment-list">
+                    {segments.map(({ key, label, count, icon }) => (
+                      <div
+                        key={key}
+                        className={`msg-segment ${selectedSegments.includes(key) ? 'selected' : ''}`}
+                        onClick={() => toggleSegment(key)}
+                      >
+                        <span className="msg-segment-check">
+                          {selectedSegments.includes(key) ? '✓' : ''}
+                        </span>
+                        <span className="msg-segment-icon">{icon}</span>
+                        <span className="msg-segment-label">{label}</span>
+                        <span className="msg-segment-count">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {recipientCount > 0 && (
+                    <div className="msg-recipient-summary">
+                      {recipientCount} destinataire{recipientCount > 1 ? 's' : ''} sélectionné{recipientCount > 1 ? 's' : ''}
+                    </div>
+                  )}
                 </div>
 
-                <div className="card">
-                  <h3 style={{ fontSize: 15, marginBottom: 12 }}>Templates</h3>
-                  {Object.entries(EMAIL_TEMPLATES).map(([key, tpl]) => (
+                {/* Templates */}
+                <div className="msg-panel">
+                  <div className="msg-panel-title">Templates</div>
+                  <div className="msg-template-list">
                     <button
-                      key={key}
-                      className={`btn ${templateKey === key ? 'btn-sky' : 'btn-outline'} btn-sm`}
-                      style={{ width: '100%', marginBottom: 6, justifyContent: 'flex-start' }}
-                      onClick={() => loadTemplate(key)}
+                      className={`msg-template-btn ${!templateKey ? 'active' : ''}`}
+                      onClick={() => { setTemplateKey(''); setSubject(''); setBody(''); }}
                     >
-                      {tpl.name}
+                      Message libre
                     </button>
-                  ))}
-                  <button
-                    className={`btn ${!templateKey ? 'btn-sky' : 'btn-outline'} btn-sm`}
-                    style={{ width: '100%', justifyContent: 'flex-start' }}
-                    onClick={() => { setTemplateKey(''); setSubject(''); setBody(''); }}
-                  >
-                    Message libre
-                  </button>
+                    {Object.entries(EMAIL_TEMPLATES).map(([key, tpl]) => (
+                      <button
+                        key={key}
+                        className={`msg-template-btn ${templateKey === key ? 'active' : ''}`}
+                        onClick={() => loadTemplate(key)}
+                      >
+                        {tpl.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </>
             )}
 
             {channel !== 'email' && (
-              <div className="card">
-                <p style={{ fontSize: 14, color: 'var(--text-light)', lineHeight: 1.6 }}>
+              <div className="msg-panel">
+                <div className="msg-panel-title">
+                  {channel === 'telegram-channel' ? 'Canal public' : 'Notification admin'}
+                </div>
+                <p className="msg-panel-desc">
                   {channel === 'telegram-channel'
-                    ? 'Le message sera publié sur le canal public Telegram de l’Institut Rousseau.'
-                    : 'La notification sera envoyée au chat privé de l’admin configuré dans les paramètres.'}
+                    ? 'Le message sera publié sur le canal public Telegram de l\'Institut Rousseau.'
+                    : 'La notification sera envoyée au chat privé de l\'admin configuré dans les paramètres.'}
                 </p>
                 {!services?.telegram && (
-                  <p className="alert-banner alert-warning" style={{ marginTop: 12 }}>
+                  <div className="msg-panel-warning">
                     Telegram non connecté — les envois seront simulés
-                  </p>
+                  </div>
                 )}
               </div>
             )}
 
             {/* Historique */}
             {history.length > 0 && (
-              <div className="card" style={{ marginTop: 16 }}>
-                <h3 style={{ fontSize: 15, marginBottom: 12 }}>Historique récent</h3>
+              <div className="msg-panel">
+                <div className="msg-panel-title">Historique récent</div>
                 {history.slice(0, 5).map(h => (
-                  <div key={h.id} style={{ padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
-                    <span className={`badge ${h.channel === 'email' ? 'badge-sky' : 'badge-green'}`} style={{ marginRight: 8 }}>
+                  <div key={h.id} className="msg-history-item">
+                    <span className={`badge ${h.channel === 'email' ? 'badge-sky' : 'badge-green'}`}>
                       {h.channel === 'email' ? 'Email' : 'Telegram'}
                     </span>
-                    <span style={{ color: 'var(--text-light)' }}>
-                      {h.channel === 'email' ? `${h.recipients} dest.` : ''} {new Date(h.date).toLocaleString('fr-FR')}
+                    <span className="msg-history-meta">
+                      {h.channel === 'email' ? `${h.recipients} dest. · ` : ''}
+                      {new Date(h.date).toLocaleString('fr-FR')}
                     </span>
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </aside>
 
           {/* Éditeur */}
-          <div className="card">
-            <h3 style={{ fontSize: 15, marginBottom: 14 }}>
-              {channel === 'email' ? 'Composer l’email' : 'Composer le message'}
-            </h3>
+          <div className="msg-editor">
+            <div className="msg-editor-header">
+              {channel === 'email' ? 'Composer l\'email' : 'Composer le message'}
+            </div>
 
             {channel === 'email' && (
-              <div style={{ marginBottom: 12 }}>
-                <label>Objet</label>
-                <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Objet de l’email" />
+              <div className="msg-field">
+                <div className="msg-field-label">Objet</div>
+                <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Objet de l'email" />
               </div>
             )}
 
-            <div style={{ marginBottom: 16 }}>
-              <label>Message</label>
+            <div className="msg-field">
+              <div className="msg-field-label">Message</div>
               <textarea
-                rows={channel === 'email' ? 12 : 6}
+                rows={channel === 'email' ? 14 : 6}
                 value={body}
                 onChange={e => setBody(e.target.value)}
                 placeholder={channel === 'telegram-channel' ? 'Max 280 caractères recommandés + lien' : 'Votre message…'}
               />
               {channel === 'telegram-channel' && (
-                <p style={{ fontSize: 12, color: body.length > 280 ? 'var(--terra)' : 'var(--text-light)', marginTop: 4 }}>
-                  {body.length} / 280 caractères
-                </p>
+                <div className="msg-char-count" data-over={body.length > 280 ? 'true' : undefined}>
+                  {body.length} / 280
+                </div>
               )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="msg-editor-actions">
               <button className="btn btn-outline" onClick={() => setShowPreview(true)} disabled={!body.trim()}>
                 Prévisualiser
               </button>
               <button className="btn btn-primary btn-lg" onClick={handleSend} disabled={sending || !body.trim()}>
-                {sending ? 'Envoi en cours…' : `Envoyer${channel === 'email' ? ` à ${getRecipientCount()} contact${getRecipientCount() > 1 ? 's' : ''}` : ''}`}
+                {sending ? 'Envoi en cours…' : channel === 'email'
+                  ? `Envoyer à ${recipientCount} contact${recipientCount > 1 ? 's' : ''}`
+                  : 'Envoyer'}
               </button>
             </div>
           </div>
@@ -255,12 +309,12 @@ export default function Messagerie({ subscribers = [], services, toast }) {
           <Modal title="Prévisualisation" onClose={() => setShowPreview(false)}>
             {channel === 'email' ? (
               <>
-                <p style={{ fontWeight: 600, marginBottom: 8 }}>Objet : {subject}</p>
+                <p style={{ fontWeight: 600, marginBottom: 8 }}>Objet : {subject}</p>
                 <div style={{ padding: 20, background: '#f9f9f7', borderRadius: 8, whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.7 }}>
                   {body}
                 </div>
-                <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 8 }}>
-                  Sera envoyé à {getRecipientCount()} destinataire{getRecipientCount() > 1 ? 's' : ''}
+                <p style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 10 }}>
+                  Sera envoyé à {recipientCount} destinataire{recipientCount > 1 ? 's' : ''}
                   {!services?.brevo && ' (simulation — Brevo non connecté)'}
                 </p>
               </>
