@@ -127,7 +127,8 @@ export default function Equipe({ contenu, setContenu, toast, saveToSite }) {
     { key: 'nom', label: 'Nom', placeholder: 'Dupont' },
     { key: 'role', label: 'Rôle / Fonction', placeholder: 'Président' },
     { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Bio courte…' },
-    { key: 'photo', label: 'Photo (chemin)', placeholder: '/assets/images/equipe/jean-dupont.jpg' },
+    { key: 'photo', label: 'Photo (chemin)', placeholder: 'assets/images/equipe/jean-dupont.jpg' },
+    { key: 'linkedin', label: 'LinkedIn (URL)', placeholder: 'https://www.linkedin.com/in/…' },
   ];
 
   const renderCA = () => (
@@ -193,6 +194,8 @@ export default function Equipe({ contenu, setContenu, toast, saveToSite }) {
               { key: 'nom', label: 'Nom', placeholder: 'Durand' },
               { key: 'role', label: 'Titre / Affiliation', placeholder: 'Professeur, Université de…' },
               { key: 'description', label: 'Bio courte', type: 'textarea', placeholder: 'Spécialiste de…' },
+              { key: 'photo', label: 'Photo (chemin)', placeholder: 'assets/images/equipe/pierre-durand.jpg' },
+              { key: 'linkedin', label: 'LinkedIn (URL)', placeholder: 'https://www.linkedin.com/in/…' },
             ]} />
         </div>
       ))}
