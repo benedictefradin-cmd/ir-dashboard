@@ -9,9 +9,6 @@ import { formatDateFr, formatMoney } from '../utils/formatters';
 import { COLORS } from '../utils/constants';
 
 export default function Dons({ dons, setDons, services, loading, onRefresh, toast }) {
-  const [sortKey, setSortKey] = useState('date');
-  const [sortDir, setSortDir] = useState('desc');
-
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -24,11 +21,11 @@ export default function Dons({ dons, setDons, services, loading, onRefresh, toas
   }, [dons, currentMonth, currentYear]);
 
   const totalCeMois = useMemo(() => {
-    return donsCeMois.reduce((sum, d) => sum + (d.montant || 0), 0);
+    return donsCeMois.reduce((sum, d) => sum + (d.amount || 0), 0);
   }, [donsCeMois]);
 
   const nbDonateurs = useMemo(() => {
-    const noms = new Set(donsCeMois.map((d) => d.nom || d.email || 'anonyme'));
+    const noms = new Set(donsCeMois.map((d) => d.name || d.email || 'anonyme'));
     return noms.size;
   }, [donsCeMois]);
 
@@ -51,179 +48,108 @@ export default function Dons({ dons, setDons, services, loading, onRefresh, toas
       const d = new Date(currentYear, currentMonth - i, 1);
       const m = d.getMonth();
       const y = d.getFullYear();
-      const label = d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+      const label = d.toLocaleDateString('fr-FR', { month: 'short' });
       const total = dons
         .filter((don) => {
           const dd = new Date(don.date);
           return dd.getMonth() === m && dd.getFullYear() === y;
         })
-        .reduce((sum, don) => sum + (don.montant || 0), 0);
+        .reduce((sum, don) => sum + (don.amount || 0), 0);
       months.push({ mois: label, total });
     }
     return months;
   }, [dons, currentMonth, currentYear]);
 
   const sorted = useMemo(() => {
-    const copy = [...dons];
-    copy.sort((a, b) => {
-      let va = a[sortKey];
-      let vb = b[sortKey];
-      if (sortKey === 'date') {
-        va = new Date(va).getTime();
-        vb = new Date(vb).getTime();
-      }
-      if (sortKey === 'montant') {
-        va = Number(va) || 0;
-        vb = Number(vb) || 0;
-      }
-      if (va < vb) return sortDir === 'asc' ? -1 : 1;
-      if (va > vb) return sortDir === 'asc' ? 1 : -1;
-      return 0;
-    });
-    return copy;
-  }, [dons, sortKey, sortDir]);
-
-  const handleSort = (key) => {
-    if (sortKey === key) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDir('desc');
-    }
-  };
+    return [...dons].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [dons]);
 
   const columns = [
-    {
-      key: 'date',
-      label: 'Date',
-      sortable: true,
-      render: (row) => formatDateFr(row.date),
-    },
-    {
-      key: 'nom',
-      label: 'Nom',
-      sortable: true,
-      render: (row) => row.nom || 'Anonyme',
-    },
-    {
-      key: 'montant',
-      label: 'Montant',
-      sortable: true,
-      render: (row) => <strong>{formatMoney(row.montant)}</strong>,
-    },
-    {
-      key: 'type',
-      label: 'Type',
-      render: (row) => (
-        <span className={`badge ${row.type === 'recurrent' ? 'badge-sky' : 'badge-ochre'}`}>
-          {row.type === 'recurrent' ? 'Recurrent' : 'Ponctuel'}
-        </span>
-      ),
-    },
-    {
-      key: 'statut',
-      label: 'Statut',
-      render: (row) => (
-        <span className={`pill ${row.statut === 'confirme' ? 'pill-green' : 'pill-terra'}`}>
-          {row.statut || 'En attente'}
-        </span>
-      ),
-    },
+    { key: 'date', label: 'Date', render: (v) => formatDateFr(v) },
+    { key: 'name', label: 'Nom', render: (v) => <span style={{ fontWeight: 500 }}>{v || 'Anonyme'}</span> },
+    { key: 'amount', label: 'Montant', render: (v) => <strong>{formatMoney(v)}</strong> },
+    { key: 'type', label: 'Type', render: (v) => (
+      <span className={`badge ${v === 'recurrent' ? 'badge-sky' : 'badge-ochre'}`}>
+        {v === 'recurrent' ? 'Récurrent' : 'Ponctuel'}
+      </span>
+    )},
+    { key: 'status', label: 'Statut', render: (v) => (
+      <span className={`badge ${v === 'actif' ? 'badge-green' : 'badge-ochre'}`}>
+        {v === 'actif' ? 'Confirmé' : v || 'En attente'}
+      </span>
+    )},
   ];
 
-  const exportData = dons.map((d) => ({
+  const exportData = sorted.map((d) => ({
     Date: formatDateFr(d.date),
-    Nom: d.nom || 'Anonyme',
-    Montant: d.montant,
-    Type: d.type === 'recurrent' ? 'Recurrent' : 'Ponctuel',
-    Statut: d.statut || 'En attente',
+    Nom: d.name || 'Anonyme',
+    Montant: d.amount,
+    Type: d.type === 'recurrent' ? 'Récurrent' : 'Ponctuel',
+    Statut: d.status || 'En attente',
   }));
 
   if (loading) {
     return (
-      <div className="page">
-        <div className="page-header">
-          <h1>Dons</h1>
-          <ServiceBadge service="helloasso" />
-        </div>
+      <>
+        <div className="page-header"><h1>Dons</h1></div>
         <div className="page-body">
-          <div className="grid grid-4">
-            {[...Array(4)].map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
+          <div className="grid grid-4 mb-24">
+            {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
-          <SkeletonTable rows={5} />
+          <SkeletonTable />
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="page">
+    <>
       <div className="page-header">
         <div>
           <h1>Dons</h1>
-          <ServiceBadge service="helloasso" />
+          <p className="page-header-sub">Suivi des dons via HelloAsso</p>
         </div>
-        <div className="page-header-actions">
+        <div className="flex-center gap-8">
+          <ServiceBadge service="helloasso" />
           <ExportButton data={exportData} filename="dons-institut-rousseau" />
-          <button className="btn btn-secondary" onClick={onRefresh}>
-            Synchroniser HelloAsso
-          </button>
+          <button className="btn btn-outline" onClick={onRefresh}>Synchroniser HelloAsso</button>
         </div>
       </div>
 
       <div className="page-body">
-        <div className="grid grid-4">
-          <StatsCard
-            label="Total ce mois"
-            value={formatMoney(totalCeMois)}
-            color="var(--color-navy)"
-          />
-          <StatsCard
-            label="Donateurs"
-            value={nbDonateurs}
-            color="var(--color-sky)"
-          />
-          <StatsCard
-            label="Don moyen"
-            value={formatMoney(donMoyen)}
-            color="var(--color-terra)"
-          />
-          <StatsCard
-            label="Recurrents / Ponctuels"
-            value={`${recurrents} / ${ponctuels}`}
-            color="var(--color-ochre)"
-          />
+        {/* KPI */}
+        <div className="grid grid-4 mb-24">
+          <StatsCard label="Total ce mois" value={formatMoney(totalCeMois)} accentColor={COLORS.navy} />
+          <StatsCard label="Donateurs" value={nbDonateurs} accentColor={COLORS.sky} />
+          <StatsCard label="Don moyen" value={formatMoney(donMoyen)} accentColor={COLORS.terra} />
+          <StatsCard label="Récurrents / Ponctuels" value={`${recurrents} / ${ponctuels}`} accentColor={COLORS.ochre} />
         </div>
 
-        <div className="card chart-card">
-          <h2>Evolution des dons (6 derniers mois)</h2>
-          <ResponsiveContainer width="100%" height={300}>
+        {/* Graphique */}
+        <div className="card mb-24">
+          <h2 style={{ fontSize: 18, marginBottom: 16 }}>Évolution des dons (6 derniers mois)</h2>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border, #e0e0e0)" />
-              <XAxis dataKey="mois" tick={{ fontSize: 13 }} />
-              <YAxis tickFormatter={(v) => `${v} \u20ac`} tick={{ fontSize: 13 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke={COLORS.border} />
+              <XAxis dataKey="mois" tick={{ fontSize: 12, fill: COLORS.textLight }} />
+              <YAxis tickFormatter={(v) => `${v}\u00a0\u20ac`} tick={{ fontSize: 12, fill: COLORS.textLight }} />
               <Tooltip
+                contentStyle={{ borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 13 }}
                 formatter={(value) => [`${formatMoney(value)}`, 'Total']}
-                labelStyle={{ fontWeight: 600 }}
               />
-              <Bar dataKey="total" fill={COLORS.navy} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="total" fill={COLORS.terra} radius={[4, 4, 0, 0]} maxBarSize={48} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="card table-card">
-          <h2>Historique des dons</h2>
-          <DataTable
-            columns={columns}
-            data={sorted}
-            sortKey={sortKey}
-            sortDir={sortDir}
-            onSort={handleSort}
-          />
-        </div>
+        {/* Tableau */}
+        <DataTable
+          columns={columns}
+          data={sorted}
+          pageSize={20}
+          emptyMessage="Aucun don enregistré. Configurez HelloAsso dans les paramètres."
+        />
       </div>
-    </div>
+    </>
   );
 }

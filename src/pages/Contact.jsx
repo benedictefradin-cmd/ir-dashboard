@@ -11,20 +11,17 @@ import useDebounce from '../hooks/useDebounce';
 
 export default function Contact({ contacts, setContacts, loading, toast }) {
   const [search, setSearch] = useState('');
-  const [filterSujet, setFilterSujet] = useState('');
-  const [filterStatut, setFilterStatut] = useState('');
+  const [filterSujet, setFilterSujet] = useState('all');
+  const [filterStatut, setFilterStatut] = useState('all');
   const [selectedContact, setSelectedContact] = useState(null);
-  const [sortKey, setSortKey] = useState('date');
-  const [sortDir, setSortDir] = useState('desc');
-
   const debouncedSearch = useDebounce(search, 300);
 
   const stats = useMemo(() => {
     const total = contacts.length;
-    const nouveau = contacts.filter((c) => c.statut === 'nouveau').length;
-    const lu = contacts.filter((c) => c.statut === 'lu').length;
-    const traite = contacts.filter((c) => c.statut === 'traite').length;
-    const aSuivre = contacts.filter((c) => c.statut === 'a_suivre').length;
+    const nouveau = contacts.filter((c) => c.status === 'nouveau').length;
+    const lu = contacts.filter((c) => c.status === 'lu').length;
+    const traite = contacts.filter((c) => c.status === 'traite').length;
+    const aSuivre = contacts.filter((c) => c.status === 'a_suivre').length;
     return { total, nouveau, lu, traite, aSuivre };
   }, [contacts]);
 
@@ -41,300 +38,139 @@ export default function Contact({ contacts, setContacts, loading, toast }) {
       );
     }
 
-    if (filterSujet) {
+    if (filterSujet !== 'all') {
       result = result.filter((c) => c.sujet === filterSujet);
     }
 
-    if (filterStatut) {
-      result = result.filter((c) => c.statut === filterStatut);
+    if (filterStatut !== 'all') {
+      result = result.filter((c) => c.status === filterStatut);
     }
 
-    result.sort((a, b) => {
-      let va = a[sortKey];
-      let vb = b[sortKey];
-      if (sortKey === 'date') {
-        va = new Date(va).getTime();
-        vb = new Date(vb).getTime();
-      }
-      if (va < vb) return sortDir === 'asc' ? -1 : 1;
-      if (va > vb) return sortDir === 'asc' ? 1 : -1;
-      return 0;
-    });
+    result.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     return result;
-  }, [contacts, debouncedSearch, filterSujet, filterStatut, sortKey, sortDir]);
+  }, [contacts, debouncedSearch, filterSujet, filterStatut]);
 
-  const handleSort = (key) => {
-    if (sortKey === key) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDir('desc');
+  const updateStatus = (contact, newStatus) => {
+    setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, status: newStatus } : c));
+    if (selectedContact && selectedContact.id === contact.id) {
+      setSelectedContact({ ...selectedContact, status: newStatus });
     }
+    const labels = { lu: 'Lu', traite: 'Traité', a_suivre: 'À suivre', nouveau: 'Nouveau' };
+    toast(`Statut mis à jour : ${labels[newStatus] || newStatus}`);
   };
 
-  const updateStatus = (index, newStatut) => {
-    const updated = [...contacts];
-    const realIndex = contacts.indexOf(
-      selectedContact || filtered[index]
-    );
-    if (realIndex === -1) return;
-
-    updated[realIndex] = { ...updated[realIndex], statut: newStatut };
-    setContacts(updated);
-
-    if (selectedContact) {
-      setSelectedContact({ ...selectedContact, statut: newStatut });
-    }
-
-    const labels = { lu: 'Lu', traite: 'Traite', a_suivre: 'A suivre' };
-    toast && toast(`Statut mis a jour : ${labels[newStatut] || newStatut}`, 'success');
+  const getStatusBadge = (status) => {
+    const cfg = CONTACT_STATUSES[status];
+    if (!cfg) return <span className="badge badge-gray">{status}</span>;
+    return <span className={`badge ${cfg.badgeClass}`}>{cfg.label}</span>;
   };
 
   const getSubjectLabel = (sujet) => {
-    if (!CONTACT_SUBJECTS) return sujet || 'General';
-    const found = CONTACT_SUBJECTS.find((s) => s.id === sujet || s.value === sujet);
-    return found ? found.label : sujet || 'General';
+    const found = CONTACT_SUBJECTS.find((s) => s.key === sujet);
+    return found ? found.label : sujet || 'Général';
   };
-
-  const getStatusLabel = (statut) => {
-    const map = {
-      nouveau: 'Nouveau',
-      lu: 'Lu',
-      traite: 'Traite',
-      a_suivre: 'A suivre',
-    };
-    return map[statut] || statut || 'Nouveau';
-  };
-
-  const getStatusColor = (statut) => {
-    const map = {
-      nouveau: 'badge-sky',
-      lu: 'badge-ochre',
-      traite: 'badge-green',
-      a_suivre: 'badge-terra',
-    };
-    return map[statut] || 'badge-sky';
-  };
-
-  const getSubjectColor = (sujet) => {
-    const map = {
-      general: 'pill-navy',
-      evenement: 'pill-ochre',
-      presse: 'pill-sky',
-      partenariat: 'pill-green',
-    };
-    return map[sujet] || 'pill-navy';
-  };
-
-  const subjects = CONTACT_SUBJECTS || [
-    { id: 'general', label: 'General' },
-    { id: 'evenement', label: 'Evenement' },
-    { id: 'presse', label: 'Presse' },
-    { id: 'partenariat', label: 'Partenariat' },
-  ];
-
-  const statuses = CONTACT_STATUSES || [
-    { id: 'nouveau', label: 'Nouveau' },
-    { id: 'lu', label: 'Lu' },
-    { id: 'traite', label: 'Traite' },
-    { id: 'a_suivre', label: 'A suivre' },
-  ];
 
   const columns = [
-    {
-      key: 'date',
-      label: 'Date',
-      sortable: true,
-      render: (row) => formatDateFr(row.date),
-    },
-    {
-      key: 'nom',
-      label: 'Nom',
-      sortable: true,
-      render: (row) => row.nom || 'Anonyme',
-    },
-    {
-      key: 'email',
-      label: 'Email',
-      render: (row) => row.email || '-',
-    },
-    {
-      key: 'sujet',
-      label: 'Sujet',
-      render: (row) => (
-        <span className={`pill ${getSubjectColor(row.sujet)}`}>
-          {getSubjectLabel(row.sujet)}
-        </span>
-      ),
-    },
-    {
-      key: 'message',
-      label: 'Message',
-      render: (row) => truncate(row.message, 80),
-    },
-    {
-      key: 'statut',
-      label: 'Statut',
-      render: (row) => (
-        <span className={`badge ${getStatusColor(row.statut)}`}>
-          {getStatusLabel(row.statut)}
-        </span>
-      ),
-    },
+    { key: 'date', label: 'Date', render: (v) => formatDateFr(v) },
+    { key: 'nom', label: 'Nom', render: (v) => <span style={{ fontWeight: 500 }}>{v || 'Anonyme'}</span> },
+    { key: 'email', label: 'Email', render: (v) => <span style={{ color: 'var(--text-light)', fontSize: 13 }}>{v || '—'}</span> },
+    { key: 'sujet', label: 'Sujet', render: (v) => <span className="badge badge-navy">{getSubjectLabel(v)}</span> },
+    { key: 'message', label: 'Message', render: (v) => <span style={{ fontSize: 13, color: 'var(--text-light)' }}>{truncate(v, 60)}</span> },
+    { key: 'status', label: 'Statut', render: (v) => getStatusBadge(v) },
+    { key: 'actions', label: '', render: (_, row) => (
+      <div className="flex-center gap-8" style={{ flexWrap: 'nowrap' }}>
+        {row.status === 'nouveau' && (
+          <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); updateStatus(row, 'lu'); }}>Marquer lu</button>
+        )}
+        {(row.status === 'nouveau' || row.status === 'lu' || row.status === 'a_suivre') && (
+          <button className="btn btn-green btn-sm" onClick={(e) => { e.stopPropagation(); updateStatus(row, 'traite'); }}>Traiter</button>
+        )}
+      </div>
+    )},
   ];
 
   if (loading) {
     return (
-      <div className="page">
-        <div className="page-header">
-          <h1>Messages de contact</h1>
-          <ServiceBadge service="cloudflare" />
-        </div>
-        <div className="page-body">
-          <div className="grid grid-5">
-            {[...Array(5)].map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-          <SkeletonTable rows={5} />
-        </div>
-      </div>
+      <>
+        <div className="page-header"><h1>Contact</h1></div>
+        <div className="page-body"><SkeletonCard count={4} /><SkeletonTable /></div>
+      </>
     );
   }
 
   return (
-    <div className="page">
+    <>
       <div className="page-header">
         <div>
           <h1>Messages de contact</h1>
+          <p className="page-header-sub">{stats.total} message(s) — {stats.nouveau} nouveau(x)</p>
+        </div>
+        <div className="flex-center gap-8">
           <ServiceBadge service="cloudflare" />
         </div>
       </div>
 
       <div className="page-body">
-        <div className="grid grid-5">
-          <StatsCard label="Total" value={stats.total} color="var(--color-navy)" />
-          <StatsCard label="Nouveau" value={stats.nouveau} color="var(--color-sky)" />
-          <StatsCard label="Lu" value={stats.lu} color="var(--color-ochre)" />
-          <StatsCard label="Traite" value={stats.traite} color="var(--color-green)" />
-          <StatsCard label="A suivre" value={stats.aSuivre} color="var(--color-terra)" />
+        {/* Stats */}
+        <div className="grid grid-4 mb-24">
+          <StatsCard label="Total" value={stats.total} accentColor={COLORS.navy} />
+          <StatsCard label="Nouveaux" value={stats.nouveau} accentColor={COLORS.sky} />
+          <StatsCard label="Traités" value={stats.traite} accentColor={COLORS.green} />
+          <StatsCard label="À suivre" value={stats.aSuivre} accentColor={COLORS.terra} />
         </div>
 
-        <div className="filters-bar">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Rechercher par nom, email, message..."
-          />
-          <select
-            className="filter-select"
-            value={filterSujet}
-            onChange={(e) => setFilterSujet(e.target.value)}
-          >
-            <option value="">Tous les sujets</option>
-            {subjects.map((s) => (
-              <option key={s.id || s.value} value={s.id || s.value}>
-                {s.label}
-              </option>
+        {/* Filtres */}
+        <div className="flex-wrap mb-16">
+          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher par nom, email, message…" />
+          <div>
+            <span className={`pill${filterSujet === 'all' ? ' active' : ''}`} onClick={() => setFilterSujet('all')}>Tous sujets</span>
+            {CONTACT_SUBJECTS.map(s => (
+              <span key={s.key} className={`pill${filterSujet === s.key ? ' active' : ''}`} onClick={() => setFilterSujet(s.key)}>{s.label}</span>
             ))}
-          </select>
-          <select
-            className="filter-select"
-            value={filterStatut}
-            onChange={(e) => setFilterStatut(e.target.value)}
-          >
-            <option value="">Tous les statuts</option>
-            {statuses.map((s) => (
-              <option key={s.id || s.value} value={s.id || s.value}>
-                {s.label}
-              </option>
+          </div>
+          <div>
+            {[['all', 'Tous statuts'], ['nouveau', 'Nouveaux'], ['lu', 'Lus'], ['traite', 'Traités'], ['a_suivre', 'À suivre']].map(([k, l]) => (
+              <span key={k} className={`pill${filterStatut === k ? ' active' : ''}`} onClick={() => setFilterStatut(k)}>{l}</span>
             ))}
-          </select>
+          </div>
         </div>
 
-        <div className="card table-card">
-          <h2>Messages ({filtered.length})</h2>
-          <DataTable
-            columns={columns}
-            data={filtered}
-            sortKey={sortKey}
-            sortDir={sortDir}
-            onSort={handleSort}
-            onRowClick={(row) => setSelectedContact(row)}
-          />
-        </div>
+        <DataTable
+          columns={columns}
+          data={filtered}
+          pageSize={20}
+          onRowClick={setSelectedContact}
+          emptyMessage="Aucun message de contact"
+        />
       </div>
 
+      {/* Détail modal */}
       {selectedContact && (
-        <Modal
-          onClose={() => setSelectedContact(null)}
-          title="Detail du message"
-        >
-          <div className="contact-detail">
-            <div className="contact-detail-meta">
-              <p>
-                <strong>Date :</strong> {formatDateFr(selectedContact.date)}
-              </p>
-              <p>
-                <strong>Nom :</strong> {selectedContact.nom || 'Anonyme'}
-              </p>
-              <p>
-                <strong>Email :</strong>{' '}
-                {selectedContact.email ? (
-                  <a href={`mailto:${selectedContact.email}`}>{selectedContact.email}</a>
-                ) : (
-                  '-'
-                )}
-              </p>
-              <p>
-                <strong>Sujet :</strong>{' '}
-                <span className={`pill ${getSubjectColor(selectedContact.sujet)}`}>
-                  {getSubjectLabel(selectedContact.sujet)}
-                </span>
-              </p>
-              <p>
-                <strong>Statut :</strong>{' '}
-                <span className={`badge ${getStatusColor(selectedContact.statut)}`}>
-                  {getStatusLabel(selectedContact.statut)}
-                </span>
-              </p>
-            </div>
+        <Modal title="Détail du message" onClose={() => setSelectedContact(null)} size="lg">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+            <div><label>Date</label><p style={{ fontSize: 15 }}>{formatDateFr(selectedContact.date)}</p></div>
+            <div><label>Nom</label><p style={{ fontSize: 15, fontWeight: 500 }}>{selectedContact.nom || 'Anonyme'}</p></div>
+            <div><label>Email</label><p style={{ fontSize: 15 }}>{selectedContact.email ? <a href={`mailto:${selectedContact.email}`}>{selectedContact.email}</a> : '—'}</p></div>
+            <div><label>Sujet</label><p>{getSubjectLabel(selectedContact.sujet)}</p></div>
+            <div><label>Statut</label><p>{getStatusBadge(selectedContact.status)}</p></div>
+          </div>
 
-            <div className="contact-detail-message">
-              <h3>Message</h3>
-              <p>{selectedContact.message}</p>
+          <div style={{ marginBottom: 20 }}>
+            <label>Message</label>
+            <div style={{ padding: 16, background: 'var(--cream)', borderRadius: 8, fontSize: 14, lineHeight: 1.7, marginTop: 6 }}>
+              {selectedContact.message}
             </div>
+          </div>
 
-            <div className="contact-detail-actions">
-              <h3>Changer le statut</h3>
-              <div className="btn-group">
-                <button
-                  className="btn btn-sm btn-ochre"
-                  onClick={() => updateStatus(null, 'lu')}
-                  disabled={selectedContact.statut === 'lu'}
-                >
-                  Lu
-                </button>
-                <button
-                  className="btn btn-sm btn-green"
-                  onClick={() => updateStatus(null, 'traite')}
-                  disabled={selectedContact.statut === 'traite'}
-                >
-                  Traite
-                </button>
-                <button
-                  className="btn btn-sm btn-terra"
-                  onClick={() => updateStatus(null, 'a_suivre')}
-                  disabled={selectedContact.statut === 'a_suivre'}
-                >
-                  A suivre
-                </button>
-              </div>
-            </div>
+          <div className="modal-footer">
+            <button className="btn btn-outline" onClick={() => updateStatus(selectedContact, 'lu')} disabled={selectedContact.status === 'lu'}>Lu</button>
+            <button className="btn btn-green" onClick={() => updateStatus(selectedContact, 'traite')} disabled={selectedContact.status === 'traite'}>Traité</button>
+            <button className="btn btn-terra" onClick={() => updateStatus(selectedContact, 'a_suivre')} disabled={selectedContact.status === 'a_suivre'}>À suivre</button>
+            <button className="btn btn-primary" onClick={() => setSelectedContact(null)}>Fermer</button>
           </div>
         </Modal>
       )}
-    </div>
+    </>
   );
 }

@@ -6,188 +6,159 @@ import { SkeletonCard } from '../components/shared/SkeletonLoader';
 import { COLORS } from '../utils/constants';
 import useDebounce from '../hooks/useDebounce';
 
-const emptyAuteur = { nom: '', titre: '', photo: '', bio: '' };
+const emptyForm = { name: '', titre: '', photo: '', bio: '' };
+
+const avatarColors = [COLORS.navy, COLORS.sky, COLORS.terra, COLORS.ochre, COLORS.green];
 
 export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast }) {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
-  const [form, setForm] = useState(emptyAuteur);
+  const [form, setForm] = useState({ ...emptyForm });
+  const debouncedSearch = useDebounce(search, 150);
 
-  const debouncedSearch = useDebounce(search, 300);
+  // Recherche insensible aux accents
+  const normalize = (str) =>
+    (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const filtered = useMemo(() => {
     if (!debouncedSearch) return auteurs;
-    const q = debouncedSearch.toLowerCase();
+    const q = normalize(debouncedSearch);
     return auteurs.filter(
-      (a) => a.nom.toLowerCase().includes(q) || (a.titre && a.titre.toLowerCase().includes(q))
+      (a) => normalize(a.name).includes(q) || normalize(a.titre).includes(q)
     );
   }, [auteurs, debouncedSearch]);
 
   const getPublicationCount = (authorName) => {
-    if (!articles || !articles.length) return 0;
+    if (!articles || !articles.length || !authorName) return 0;
     return articles.filter(
-      (art) => art.auteur && art.auteur.toLowerCase() === authorName.toLowerCase()
+      (art) => art.author && art.author.toLowerCase() === authorName.toLowerCase()
     ).length;
   };
 
-  const getInitial = (nom) => {
-    if (!nom) return '?';
-    return nom.charAt(0).toUpperCase();
+  const getInitial = (name) => {
+    if (!name) return '?';
+    return name.charAt(0).toUpperCase();
   };
-
-  const avatarColors = [
-    COLORS.navy,
-    COLORS.sky,
-    COLORS.terra,
-    COLORS.ochre,
-    COLORS.green,
-  ];
 
   const getAvatarColor = (index) => avatarColors[index % avatarColors.length];
 
   const openAdd = () => {
     setEditIndex(null);
-    setForm(emptyAuteur);
+    setForm({ ...emptyForm });
     setModalOpen(true);
   };
 
   const openEdit = (auteur, index) => {
     setEditIndex(index);
-    setForm({ ...auteur });
+    setForm({ name: auteur.name || '', titre: auteur.titre || '', photo: auteur.photo || '', bio: auteur.bio || '' });
     setModalOpen(true);
-  };
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.nom.trim()) {
-      toast && toast('Le nom est requis.', 'error');
+    if (!form.name.trim()) {
+      toast('Le nom est requis', 'error');
       return;
     }
 
-    const updated = [...auteurs];
     if (editIndex !== null) {
-      updated[editIndex] = { ...form };
-      toast && toast('Auteur mis a jour.', 'success');
+      setAuteurs(prev => prev.map((a, i) => i === editIndex ? { ...a, ...form } : a));
+      toast('Auteur mis à jour');
     } else {
-      updated.push({ ...form });
-      toast && toast('Auteur ajoute.', 'success');
+      setAuteurs(prev => [...prev, { id: Date.now(), ...form, publications: 0 }]);
+      toast('Auteur ajouté');
     }
-    setAuteurs(updated);
     setModalOpen(false);
   };
 
-  const handleDelete = (index) => {
+  const handleDelete = (index, e) => {
+    e.stopPropagation();
     if (!window.confirm('Supprimer cet auteur ?')) return;
-    const updated = auteurs.filter((_, i) => i !== index);
-    setAuteurs(updated);
-    toast && toast('Auteur supprime.', 'success');
+    setAuteurs(prev => prev.filter((_, i) => i !== index));
+    toast('Auteur supprimé');
   };
 
   if (loading) {
     return (
-      <div className="page">
-        <div className="page-header">
-          <h1>Auteurs</h1>
-          <ServiceBadge service="notion" />
-        </div>
+      <>
+        <div className="page-header"><h1>Auteurs</h1></div>
         <div className="page-body">
-          <div className="grid grid-3">
-            {[...Array(6)].map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
+          <div className="grid grid-3">{[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}</div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="page">
+    <>
       <div className="page-header">
         <div>
           <h1>Auteurs</h1>
-          <ServiceBadge service="notion" />
+          <p className="page-header-sub">{auteurs.length} auteur(s)</p>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>
-          + Ajouter un auteur
-        </button>
+        <div className="flex-center gap-8">
+          <ServiceBadge service="notion" />
+          <button className="btn btn-primary" onClick={openAdd}>+ Ajouter un auteur</button>
+        </div>
       </div>
 
       <div className="page-body">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Rechercher un auteur..."
-        />
+        <div className="mb-20">
+          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un auteur…" />
+        </div>
 
         {filtered.length === 0 ? (
-          <p className="empty-state">Aucun auteur trouve.</p>
+          <div className="empty-state">
+            <div className="empty-icon">&#128100;</div>
+            <p>Aucun auteur trouvé.</p>
+          </div>
         ) : (
           <div className="grid grid-3">
-            {filtered.map((auteur, index) => {
+            {filtered.map((auteur) => {
               const realIndex = auteurs.indexOf(auteur);
-              const pubCount = getPublicationCount(auteur.nom);
+              const pubCount = auteur.publications || getPublicationCount(auteur.name);
               return (
                 <div
-                  className="card author-card"
-                  key={realIndex}
+                  className="author-card"
+                  key={auteur.id || realIndex}
                   onClick={() => openEdit(auteur, realIndex)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <div className="author-card-header">
-                    {auteur.photo ? (
-                      <img
-                        className="author-avatar"
-                        src={auteur.photo}
-                        alt={auteur.nom}
-                        style={{
-                          width: 80,
-                          height: 80,
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    ) : (
-                      <div
-                        className="author-avatar"
-                        style={{
-                          width: 80,
-                          height: 80,
-                          borderRadius: '50%',
-                          backgroundColor: getAvatarColor(realIndex),
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#fff',
-                          fontSize: '2rem',
-                          fontFamily: 'Cormorant Garamond, serif',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {getInitial(auteur.nom)}
-                      </div>
-                    )}
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(realIndex);
+                  {auteur.photo ? (
+                    <div className="author-avatar">
+                      <img src={auteur.photo} alt={auteur.name} />
+                    </div>
+                  ) : (
+                    <div
+                      className="author-avatar"
+                      style={{
+                        backgroundColor: getAvatarColor(realIndex),
+                        color: '#fff',
+                        fontSize: 32,
+                        fontFamily: "'Cormorant Garamond', serif",
+                        fontWeight: 700,
                       }}
-                      title="Supprimer"
+                    >
+                      {getInitial(auteur.name)}
+                    </div>
+                  )}
+                  <h3 style={{ fontSize: 16, marginBottom: 4 }}>{auteur.name}</h3>
+                  {auteur.titre && (
+                    <p style={{ fontSize: 13, color: COLORS.textLight, marginBottom: 8 }}>{auteur.titre}</p>
+                  )}
+                  <span className="badge badge-sky">
+                    {pubCount} publication{pubCount !== 1 ? 's' : ''}
+                  </span>
+                  <div style={{ marginTop: 10 }}>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      style={{ color: 'var(--danger)', fontSize: 12 }}
+                      onClick={(e) => handleDelete(realIndex, e)}
                     >
                       Supprimer
                     </button>
                   </div>
-                  <h3>{auteur.nom}</h3>
-                  {auteur.titre && <p className="author-titre">{auteur.titre}</p>}
-                  <span className="badge">
-                    {pubCount} publication{pubCount !== 1 ? 's' : ''}
-                  </span>
                 </div>
               );
             })}
@@ -196,64 +167,40 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
       </div>
 
       {modalOpen && (
-        <Modal onClose={() => setModalOpen(false)} title={editIndex !== null ? 'Modifier l\'auteur' : 'Ajouter un auteur'}>
-          <form onSubmit={handleSubmit} className="modal-form">
-            <div className="form-group">
-              <label htmlFor="auteur-nom">Nom</label>
-              <input
-                id="auteur-nom"
-                name="nom"
-                type="text"
-                value={form.nom}
-                onChange={handleChange}
-                placeholder="Nom complet"
-                required
-              />
+        <Modal onClose={() => setModalOpen(false)} title={editIndex !== null ? 'Modifier l\u2019auteur' : 'Ajouter un auteur'}>
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label>Nom complet</label>
+                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Nom complet" required />
+              </div>
+              <div>
+                <label>Titre / Fonction</label>
+                <input value={form.titre} onChange={e => setForm({ ...form, titre: e.target.value })} placeholder="Ex: Chercheur en politique climatique" />
+              </div>
             </div>
-            <div className="form-group">
-              <label htmlFor="auteur-titre">Titre / Fonction</label>
-              <input
-                id="auteur-titre"
-                name="titre"
-                type="text"
-                value={form.titre}
-                onChange={handleChange}
-                placeholder="Ex: Chercheur en politique climatique"
-              />
+            <div style={{ marginBottom: 16 }}>
+              <label>Chemin de la photo</label>
+              <input value={form.photo} onChange={e => setForm({ ...form, photo: e.target.value })} placeholder="/images/auteurs/nom.jpg" />
             </div>
-            <div className="form-group">
-              <label htmlFor="auteur-photo">Chemin de la photo</label>
-              <input
-                id="auteur-photo"
-                name="photo"
-                type="text"
-                value={form.photo}
-                onChange={handleChange}
-                placeholder="/images/auteurs/nom.jpg"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="auteur-bio">Biographie</label>
+            <div style={{ marginBottom: 16 }}>
+              <label>Biographie (max 200 car.)</label>
               <textarea
-                id="auteur-bio"
-                name="bio"
                 value={form.bio}
-                onChange={handleChange}
-                rows={5}
-                placeholder="Courte biographie..."
+                onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 200) })}
+                rows={4}
+                placeholder="Courte biographie…"
+                maxLength={200}
               />
+              <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4 }}>{(form.bio || '').length} / 200</p>
             </div>
-            <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>
-                Annuler
-              </button>
-              <button type="submit" className="btn btn-primary">
-                {editIndex !== null ? 'Mettre a jour' : 'Ajouter'}
-              </button>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-outline" onClick={() => setModalOpen(false)}>Annuler</button>
+              <button type="submit" className="btn btn-primary">{editIndex !== null ? 'Mettre à jour' : 'Ajouter'}</button>
             </div>
           </form>
         </Modal>
       )}
-    </div>
+    </>
   );
 }
