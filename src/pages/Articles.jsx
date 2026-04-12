@@ -485,7 +485,7 @@ export default function Articles({
             onChange={e => setTypeFilter(e.target.value)}
           >
             <option value="all">Tous les types</option>
-            {[...PUB_TYPES, 'Tribune'].map(t => <option key={t} value={t}>{t}</option>)}
+            {PUB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
           {(statusFilter !== 'all' || themeFilter !== 'all' || typeFilter !== 'all') && (
             <button
@@ -537,7 +537,7 @@ export default function Articles({
               <div>
                 <label>Type</label>
                 <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
-                  {[...PUB_TYPES, 'Tribune'].map(t => <option key={t} value={t}>{t}</option>)}
+                  {PUB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
