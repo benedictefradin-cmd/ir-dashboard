@@ -35,6 +35,36 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
   document.head.appendChild(style)
 }
 
+// ─── GITHUB API ────────────────────────────────────────────────────────────────
+const GH_OWNER = 'benedictefradin-cmd'
+const GH_REPO = 'institut-rousseau'
+const GH_BRANCH = 'main'
+const GH_API = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents`
+const GH_PAGES_URL = `https://${GH_OWNER}.github.io/${GH_REPO}`
+
+function ghHeaders(token) {
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'application/vnd.github.v3+json',
+  }
+}
+
+function handleGhError(status) {
+  if (status === 401) return 'Token GitHub invalide'
+  if (status === 403) return "Limite d'appels GitHub atteinte"
+  if (status === 404) return 'Fichier non trouvé'
+  if (status === 409) return 'Fichier modifié entre-temps, rechargez'
+  return `Erreur GitHub (${status})`
+}
+
+function toKebabCase(str) {
+  return str
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 // ─── HELPERS ────────────────────────────────────────────────────────────────────
 const MONTHS_FR = ['janv.', 'fév.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
 
@@ -111,12 +141,12 @@ function getPageStatus(page) {
 
 // ─── REUSABLE COMPONENTS ────────────────────────────────────────────────────────
 
-function Toast({ toasts, removeToast }) {
+function Toast({ toasts }) {
   return (
     <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 8 }}>
       {toasts.map(t => (
         <div key={t.id} style={{
-          background: C.navy, color: C.white, padding: '12px 20px', borderRadius: 10,
+          background: t.color === 'red' ? C.red : C.navy, color: C.white, padding: '12px 20px', borderRadius: 10,
           fontFamily: font.body, fontSize: 14, animation: t.removing ? 'toastOut 0.3s forwards' : 'toastIn 0.3s ease-out',
           boxShadow: '0 4px 16px rgba(0,0,0,0.15)', maxWidth: 320
         }}>
@@ -130,9 +160,9 @@ function Toast({ toasts, removeToast }) {
 function useToasts() {
   const [toasts, setToasts] = useState([])
   const nextId = useRef(0)
-  const addToast = useCallback((message) => {
+  const addToast = useCallback((message, color) => {
     const id = nextId.current++
-    setToasts(prev => [...prev, { id, message, removing: false }])
+    setToasts(prev => [...prev, { id, message, color, removing: false }])
     setTimeout(() => {
       setToasts(prev => prev.map(t => t.id === id ? { ...t, removing: true } : t))
       setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 300)
@@ -259,7 +289,7 @@ function Select({ value, onChange, options, style: extra }) {
   )
 }
 
-function Textarea({ value, onChange, placeholder, rows = 4 }) {
+function Textarea({ value, onChange, placeholder, rows = 4, style: extra }) {
   return (
     <textarea
       value={value}
@@ -269,6 +299,7 @@ function Textarea({ value, onChange, placeholder, rows = 4 }) {
       style={{
         fontFamily: font.body, fontSize: 14, padding: '8px 12px', borderRadius: 6,
         border: `1px solid ${C.border}`, outline: 'none', width: '100%', resize: 'vertical',
+        ...extra,
       }}
       onFocus={e => e.target.style.borderColor = C.sky}
       onBlur={e => e.target.style.borderColor = C.border}
@@ -390,13 +421,14 @@ function LoginScreen({ onLogin }) {
 }
 
 // ─── HEADER ─────────────────────────────────────────────────────────────────────
-function Header({ tab, setTab, onLogout }) {
+function Header({ tab, setTab, onLogout, githubToken }) {
   const tabs = [
     { key: 'dashboard', label: 'Dashboard' },
     { key: 'newsletter', label: 'Newsletter' },
     { key: 'articles', label: 'Articles' },
     { key: 'pages', label: 'Pages' },
   ]
+  const hasToken = !!githubToken
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 100, background: C.navy, color: C.white,
@@ -432,6 +464,12 @@ function Header({ tab, setTab, onLogout }) {
             </button>
           ))}
         </nav>
+        <span style={{
+          fontSize: 13, fontWeight: 600,
+          color: hasToken ? '#6FCF97' : 'rgba(255,255,255,0.4)',
+        }}>
+          {'\u25CF'} GitHub
+        </span>
         <button
           onClick={onLogout}
           style={{
@@ -701,7 +739,7 @@ function NewsletterTab({ subscribers, setSubscribers, addToast }) {
 }
 
 // ─── ARTICLES TAB ───────────────────────────────────────────────────────────────
-function ArticlesTab({ articles, setArticles, addToast }) {
+function ArticlesTab({ articles, setArticles, addToast, githubToken }) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [showForm, setShowForm] = useState(false)
@@ -760,13 +798,70 @@ function ArticlesTab({ articles, setArticles, addToast }) {
     addToast(`Article ${labels[newStatus] || newStatus}`)
   }
 
-  const publishArticle = (id) => {
+  const publishArticle = async (id) => {
+    if (!githubToken) {
+      addToast('Connectez votre token GitHub pour publier les articles', 'red')
+      return
+    }
+    const article = articles.find(a => a.id === id)
+    if (!article) return
     setSyncingId(id)
-    setTimeout(() => {
+
+    const slug = toKebabCase(article.title)
+    const filePath = `articles/${slug}.html`
+    const htmlContent = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${article.title} — Institut Rousseau</title>
+</head>
+<body>
+  <article>
+    <h1>${article.title}</h1>
+    <p><strong>${article.author}</strong> — ${formatDateFR(article.date)}</p>
+    <p><em>${article.category}</em></p>
+    <div>${article.content || ''}</div>
+  </article>
+</body>
+</html>`
+
+    try {
+      // Check if file already exists to get sha
+      let sha = null
+      try {
+        const existing = await fetch(`${GH_API}/${filePath}?ref=${GH_BRANCH}`, { headers: ghHeaders(githubToken) })
+        if (existing.ok) {
+          const data = await existing.json()
+          sha = data.sha
+        }
+      } catch (_) { /* file doesn't exist yet */ }
+
+      const body = {
+        message: 'Mise à jour depuis le back-office',
+        content: btoa(unescape(encodeURIComponent(htmlContent))),
+        branch: GH_BRANCH,
+      }
+      if (sha) body.sha = sha
+
+      const res = await fetch(`${GH_API}/${filePath}`, {
+        method: 'PUT',
+        headers: { ...ghHeaders(githubToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      if (!res.ok) {
+        addToast(handleGhError(res.status), 'red')
+        setSyncingId(null)
+        return
+      }
+
       setArticles(prev => prev.map(a => a.id === id ? { ...a, status: 'published', synced: true } : a))
-      setSyncingId(null)
-      addToast('Article publié et synchronisé')
-    }, 2000)
+      addToast('Article publié et synchronisé sur GitHub')
+    } catch (err) {
+      addToast(`Erreur : ${err.message}`, 'red')
+    }
+    setSyncingId(null)
   }
 
   const unpublish = (id) => {
@@ -862,7 +957,108 @@ function ArticlesTab({ articles, setArticles, addToast }) {
 }
 
 // ─── PAGES TAB ──────────────────────────────────────────────────────────────────
-function PagesTab({ pages, addToast }) {
+function PagesTab({ pages, addToast, githubToken }) {
+  const hasToken = !!githubToken
+  const [ghFiles, setGhFiles] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorFile, setEditorFile] = useState(null)
+  const [editorContent, setEditorContent] = useState('')
+  const [editorLoading, setEditorLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const loadFiles = useCallback(async () => {
+    if (!githubToken) return
+    setLoading(true)
+    try {
+      const res = await fetch(`${GH_API}/?ref=${GH_BRANCH}`, { headers: ghHeaders(githubToken) })
+      if (!res.ok) {
+        addToast(handleGhError(res.status), 'red')
+        setLoading(false)
+        return
+      }
+      const data = await res.json()
+      const files = []
+      for (const item of data) {
+        if (item.type === 'file' && item.name.endsWith('.html')) {
+          files.push({ name: item.name, path: item.path, sha: item.sha, type: 'file' })
+        } else if (item.type === 'dir') {
+          files.push({ name: item.name + '/', path: item.path, sha: item.sha, type: 'dir' })
+        }
+      }
+      setGhFiles(files)
+    } catch (err) {
+      addToast(`Erreur : ${err.message}`, 'red')
+    }
+    setLoading(false)
+  }, [githubToken, addToast])
+
+  useEffect(() => {
+    if (githubToken) loadFiles()
+  }, [githubToken, loadFiles])
+
+  const openEditor = async (file) => {
+    if (!githubToken) {
+      addToast('Connectez votre token GitHub pour éditer les fichiers', 'red')
+      return
+    }
+    setEditorLoading(true)
+    setEditorOpen(true)
+    setEditorFile(file)
+    try {
+      const res = await fetch(`${GH_API}/${file.path}?ref=${GH_BRANCH}`, { headers: ghHeaders(githubToken) })
+      if (!res.ok) {
+        addToast(handleGhError(res.status), 'red')
+        setEditorOpen(false)
+        setEditorLoading(false)
+        return
+      }
+      const data = await res.json()
+      const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))))
+      setEditorContent(content)
+      setEditorFile({ ...file, sha: data.sha })
+    } catch (err) {
+      addToast(`Erreur : ${err.message}`, 'red')
+      setEditorOpen(false)
+    }
+    setEditorLoading(false)
+  }
+
+  const saveEditor = async () => {
+    if (!editorFile) return
+    setSaving(true)
+    try {
+      const body = {
+        message: 'Mise à jour depuis le back-office',
+        content: btoa(unescape(encodeURIComponent(editorContent))),
+        sha: editorFile.sha,
+        branch: GH_BRANCH,
+      }
+      const res = await fetch(`${GH_API}/${editorFile.path}`, {
+        method: 'PUT',
+        headers: { ...ghHeaders(githubToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        addToast(handleGhError(res.status), 'red')
+        setSaving(false)
+        return
+      }
+      addToast('Fichier mis à jour et déployé')
+      setEditorOpen(false)
+      setEditorFile(null)
+      setEditorContent('')
+      loadFiles()
+    } catch (err) {
+      addToast(`Erreur : ${err.message}`, 'red')
+    }
+    setSaving(false)
+  }
+
+  const viewFile = (path) => {
+    window.open(`${GH_PAGES_URL}/${path}`, '_blank')
+  }
+
   const stats = useMemo(() => {
     const fresh = pages.filter(p => getPageStatus(p) === 'fresh').length
     const review = pages.filter(p => getPageStatus(p) === 'review').length
@@ -872,6 +1068,25 @@ function PagesTab({ pages, addToast }) {
 
   return (
     <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
+      {/* Connection banner */}
+      {hasToken ? (
+        <div style={{
+          padding: '10px 18px', borderRadius: 8, marginBottom: 20,
+          background: '#E8F5E9', border: '1px solid #A5D6A7', color: '#2E7D32',
+          fontFamily: font.body, fontSize: 14, fontWeight: 500,
+        }}>
+          Connecté au repo institut-rousseau — modifications publiées en direct
+        </div>
+      ) : (
+        <div style={{
+          padding: '10px 18px', borderRadius: 8, marginBottom: 20,
+          background: '#FFF8E1', border: `1px solid ${C.ochre}`, color: '#F57F17',
+          fontFamily: font.body, fontSize: 14, fontWeight: 500,
+        }}>
+          Mode démonstration — connectez votre token GitHub pour éditer le site
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
         <Card accent={C.green}>
           <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Pages à jour</p>
@@ -887,6 +1102,7 @@ function PagesTab({ pages, addToast }) {
         </Card>
       </div>
 
+      {/* Demo pages table */}
       <TableWrap>
         <thead>
           <tr>
@@ -909,7 +1125,10 @@ function PagesTab({ pages, addToast }) {
                 <Td><PageStatusBadge status={status} /></Td>
                 <Td>
                   <div style={{ display: 'flex', gap: 4 }}>
-                    <Btn variant="ghost" onClick={() => addToast(`Édition de "${p.name}" ouverte`)}>Éditer</Btn>
+                    <Btn variant="ghost" onClick={() => {
+                      if (!hasToken) addToast('Connectez votre token GitHub pour éditer les fichiers', 'red')
+                      else addToast(`Édition de "${p.name}" — utilisez la section fichiers GitHub ci-dessous`)
+                    }}>Éditer</Btn>
                     <Btn variant="ghost" onClick={() => addToast(`Aperçu de ${p.path}`)}>Voir</Btn>
                   </div>
                 </Td>
@@ -918,6 +1137,56 @@ function PagesTab({ pages, addToast }) {
           })}
         </tbody>
       </TableWrap>
+
+      {/* GitHub files section */}
+      {hasToken && (
+        <div style={{ marginTop: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <SectionTitle>Fichiers du repo GitHub</SectionTitle>
+            <Btn variant="secondary" onClick={loadFiles} disabled={loading}>
+              {loading ? 'Chargement...' : 'Rafraîchir'}
+            </Btn>
+          </div>
+
+          {loading ? (
+            <p style={{ color: C.muted, fontFamily: font.body, fontSize: 14, padding: 20, textAlign: 'center' }}>
+              Chargement des fichiers...
+            </p>
+          ) : ghFiles.length === 0 ? (
+            <p style={{ color: C.muted, fontFamily: font.body, fontSize: 14, padding: 20, textAlign: 'center' }}>
+              Aucun fichier trouvé
+            </p>
+          ) : (
+            <TableWrap>
+              <thead>
+                <tr>
+                  <Th>Fichier</Th><Th>Type</Th><Th>Actions</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {ghFiles.map(f => (
+                  <Tr key={f.path}>
+                    <Td style={{ fontWeight: 600, color: C.navy }}>
+                      <code style={{ fontFamily: 'monospace', fontSize: 13 }}>{f.name}</code>
+                    </Td>
+                    <Td>
+                      <Badge label={f.type === 'dir' ? 'Dossier' : 'Fichier'} bg={f.type === 'dir' ? C.ochre : C.sky} color={C.white} />
+                    </Td>
+                    <Td>
+                      {f.type === 'file' && (
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <Btn variant="ghost" onClick={() => openEditor(f)}>Éditer</Btn>
+                          <Btn variant="ghost" onClick={() => viewFile(f.path)}>Voir</Btn>
+                        </div>
+                      )}
+                    </Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </TableWrap>
+          )}
+        </div>
+      )}
 
       <div style={{
         marginTop: 20, padding: '14px 18px', background: '#F7F6F3', borderRadius: 10,
@@ -928,6 +1197,59 @@ function PagesTab({ pages, addToast }) {
         Exemple : L'équipe est considérée à jour pendant 6 mois, les Événements pendant 30 jours.
         Une page est "à revoir" au-delà du seuil, et "obsolète" au-delà de 1,5 fois le seuil.
       </div>
+
+      {/* Editor modal overlay */}
+      {editorOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', zIndex: 999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'fadeIn 0.2s ease-out',
+        }}>
+          <div style={{
+            background: C.white, borderRadius: 12, width: '90vw', maxWidth: 900,
+            maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{
+              padding: '16px 24px', borderBottom: `1px solid ${C.borderLight}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <h2 style={{ fontFamily: font.title, fontSize: 20, fontWeight: 600, color: C.navy, margin: 0 }}>
+                {editorFile ? editorFile.name : 'Éditeur'}
+              </h2>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Btn variant="secondary" onClick={() => { setEditorOpen(false); setEditorFile(null); setEditorContent('') }} disabled={saving}>
+                  Annuler
+                </Btn>
+                <Btn variant="success" onClick={saveEditor} disabled={editorLoading || saving}>
+                  {saving ? 'Publication en cours...' : 'Sauvegarder et publier'}
+                </Btn>
+              </div>
+            </div>
+            <div style={{ padding: 24, flex: 1, overflow: 'auto' }}>
+              {editorLoading ? (
+                <p style={{ color: C.muted, fontFamily: font.body, fontSize: 14, textAlign: 'center', padding: 40 }}>
+                  Chargement du fichier...
+                </p>
+              ) : (
+                <textarea
+                  value={editorContent}
+                  onChange={e => setEditorContent(e.target.value)}
+                  style={{
+                    width: '100%', minHeight: 500, fontFamily: 'monospace', fontSize: 13,
+                    padding: 16, borderRadius: 8, border: `1px solid ${C.border}`,
+                    outline: 'none', resize: 'vertical', lineHeight: 1.6,
+                    background: '#FAFAF7',
+                  }}
+                  onFocus={e => e.target.style.borderColor = C.sky}
+                  onBlur={e => e.target.style.borderColor = C.border}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -935,7 +1257,7 @@ function PagesTab({ pages, addToast }) {
 // ─── MAIN APP ───────────────────────────────────────────────────────────────────
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(false)
-  const [githubToken] = useState(import.meta.env.VITE_GITHUB_TOKEN || "")
+  const [githubToken] = useState(import.meta.env.VITE_GITHUB_TOKEN || '')
   const [tab, setTab] = useState('dashboard')
   const [subscribers, setSubscribers] = useState(INIT_SUBSCRIBERS)
   const [articles, setArticles] = useState(INIT_ARTICLES)
@@ -961,14 +1283,14 @@ export default function App() {
     return (
       <>
         <LoginScreen onLogin={() => setLoggedIn(true)} />
-        <Toast toasts={toasts} removeToast={() => {}} />
+        <Toast toasts={toasts} />
       </>
     )
   }
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg, fontFamily: font.body }}>
-      <Header tab={tab} setTab={setTab} onLogout={() => { setLoggedIn(false); setTab('dashboard') }} />
+      <Header tab={tab} setTab={setTab} onLogout={() => { setLoggedIn(false); setTab('dashboard') }} githubToken={githubToken} />
       <main style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 48px' }}>
         {tab === 'dashboard' && (
           <DashboardTab
@@ -984,13 +1306,13 @@ export default function App() {
           <NewsletterTab subscribers={subscribers} setSubscribers={setSubscribers} addToast={addToast} />
         )}
         {tab === 'articles' && (
-          <ArticlesTab articles={articles} setArticles={setArticles} addToast={addToast} />
+          <ArticlesTab articles={articles} setArticles={setArticles} addToast={addToast} githubToken={githubToken} />
         )}
         {tab === 'pages' && (
-          <PagesTab pages={pages} addToast={addToast} />
+          <PagesTab pages={pages} addToast={addToast} githubToken={githubToken} />
         )}
       </main>
-      <Toast toasts={toasts} removeToast={() => {}} />
+      <Toast toasts={toasts} />
     </div>
   )
 }
