@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
 import { COLORS } from '../utils/constants';
 import useDebounce from '../hooks/useDebounce';
+import { hasGitHub, githubUploadImage } from '../services/github';
 
 const emptyForm = { firstName: '', lastName: '', role: '', photo: '', bio: '', email: '' };
 
@@ -15,6 +16,10 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
   const debouncedSearch = useDebounce(search, 150);
 
   const normalize = (str) =>
@@ -54,9 +59,35 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
 
   const getAvatarColor = (index) => avatarColors[index % avatarColors.length];
 
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast('Veuillez sélectionner une image (JPG, PNG, WebP)', 'error');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast('La photo ne doit pas dépasser 2 Mo', 'error');
+      return;
+    }
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPhotoPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setForm(f => ({ ...f, photo: '' }));
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const openAdd = () => {
     setEditId(null);
     setForm({ ...emptyForm });
+    setPhotoPreview(null);
+    setPhotoFile(null);
     setModalOpen(true);
   };
 
@@ -70,10 +101,12 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
       bio: auteur.bio || '',
       email: auteur.email || '',
     });
+    setPhotoPreview(auteur.photo || null);
+    setPhotoFile(null);
     setModalOpen(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.firstName.trim() || !form.lastName.trim()) {
       toast('Le prénom et le nom sont requis', 'error');
@@ -84,6 +117,34 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
+    let photoUrl = form.photo;
+
+    // Upload de la photo sur GitHub si un nouveau fichier est sélectionné
+    if (photoFile && hasGitHub()) {
+      setUploading(true);
+      try {
+        const ext = photoFile.name.split('.').pop().toLowerCase() || 'jpg';
+        const path = `images/auteurs/${slug}.${ext}`;
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.readAsDataURL(photoFile);
+        });
+        const result = await githubUploadImage(path, base64, `Photo auteur : ${form.firstName} ${form.lastName}`);
+        photoUrl = result.url;
+        toast('Photo uploadée sur GitHub');
+      } catch (err) {
+        toast(`Erreur upload photo : ${err.message}`, 'error');
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    } else if (photoFile && !hasGitHub()) {
+      toast('Token GitHub non configuré — photo non uploadée', 'error');
+      setUploading(false);
+      return;
+    }
+
     if (editId) {
       setAuteurs(prev => prev.map(a => a.id === editId ? {
         ...a,
@@ -92,7 +153,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
         name: `${form.firstName} ${form.lastName}`,
         role: form.role,
         titre: form.role,
-        photo: form.photo,
+        photo: photoUrl,
         bio: form.bio,
         email: form.email,
       } : a));
@@ -105,7 +166,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
         name: `${form.firstName} ${form.lastName}`,
         role: form.role,
         titre: form.role,
-        photo: form.photo,
+        photo: photoUrl,
         bio: form.bio,
         email: form.email,
         publications: 0,
@@ -228,8 +289,38 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
               <input value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="Ex: Secrétaire générale de la CNCDH" required />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label>Chemin de la photo</label>
-              <input value={form.photo} onChange={e => setForm({ ...form, photo: e.target.value })} placeholder="assets/images/auteurs/prenom-nom.jpg" />
+              <label>Photo de l'auteur</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handlePhotoSelect}
+                style={{ display: 'none' }}
+              />
+              {photoPreview ? (
+                <div className="photo-upload-preview">
+                  <img src={photoPreview} alt="Aperçu" />
+                  <div className="photo-upload-actions">
+                    <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()}>
+                      Changer
+                    </button>
+                    <button type="button" className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={removePhoto}>
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="photo-upload-zone" onClick={() => fileInputRef.current?.click()}>
+                  <span style={{ fontSize: 32, marginBottom: 4 }}>&#128247;</span>
+                  <span>Cliquez pour télécharger une photo</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-light)' }}>JPG, PNG ou WebP — max 2 Mo</span>
+                </div>
+              )}
+              {!hasGitHub() && (
+                <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
+                  Token GitHub requis pour stocker les photos (voir Paramètres)
+                </p>
+              )}
             </div>
             <div style={{ marginBottom: 16 }}>
               <label>Biographie (max 200 car.)</label>
@@ -247,8 +338,10 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast 
               <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@exemple.fr" />
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-outline" onClick={() => setModalOpen(false)}>Annuler</button>
-              <button type="submit" className="btn btn-primary">{editId ? 'Mettre à jour' : 'Ajouter'}</button>
+              <button type="button" className="btn btn-outline" onClick={() => setModalOpen(false)} disabled={uploading}>Annuler</button>
+              <button type="submit" className="btn btn-primary" disabled={uploading}>
+                {uploading ? 'Upload en cours…' : editId ? 'Mettre à jour' : 'Ajouter'}
+              </button>
             </div>
           </form>
         </Modal>
