@@ -5,6 +5,7 @@ import Modal from '../components/shared/Modal';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
 import { formatDateFr } from '../utils/formatters';
 import { COLORS, EVT_TYPES, EVT_STATUSES } from '../utils/constants';
+import { hasGitHub, insertHtmlInPage, formatDateSite } from '../services/github';
 
 const isFuture = (dateStr) => {
   if (!dateStr) return false;
@@ -16,7 +17,7 @@ const isFuture = (dateStr) => {
 
 const emptyForm = {
   date: '',
-  type: 'Conférence',
+  type: 'Conf\u00e9rence',
   title: '',
   sousTitre: '',
   description: '',
@@ -41,8 +42,9 @@ export default function Evenements({ events, setEvents, loading, toast }) {
   const [editingEvt, setEditingEvt] = useState(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [publishingId, setPublishingId] = useState(null);
 
-  // ─── Stats ────────────────────────────────────
+  // Stats
   const stats = useMemo(() => {
     const aVenir = events.filter(e => isFuture(e.date) && e.status !== 'annule').length;
     const passes = events.filter(e => !isFuture(e.date)).length;
@@ -50,34 +52,20 @@ export default function Evenements({ events, setEvents, loading, toast }) {
     return { aVenir, passes, enPrep };
   }, [events]);
 
-  // ─── Tri : futurs d'abord, puis passés ────────
+  // Tri : futurs d'abord, puis pass\u00e9s
   const sorted = useMemo(() => {
-    const futurs = events
-      .filter(e => isFuture(e.date))
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-    const passes = events
-      .filter(e => !isFuture(e.date))
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    const futurs = events.filter(e => isFuture(e.date)).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const passes = events.filter(e => !isFuture(e.date)).sort((a, b) => new Date(b.date) - new Date(a.date));
     return [...futurs, ...passes];
   }, [events]);
 
-  // ─── Form helpers ─────────────────────────────
+  // Form helpers
   const setField = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
-
-  const addIntervenant = () =>
-    setForm(prev => ({ ...prev, intervenants: [...prev.intervenants, { name: '', titre: '' }] }));
-
-  const removeIntervenant = (idx) =>
-    setForm(prev => ({
-      ...prev,
-      intervenants: prev.intervenants.filter((_, i) => i !== idx),
-    }));
-
-  const updateIntervenant = (idx, key, val) =>
-    setForm(prev => ({
-      ...prev,
-      intervenants: prev.intervenants.map((item, i) => (i === idx ? { ...item, [key]: val } : item)),
-    }));
+  const addIntervenant = () => setForm(prev => ({ ...prev, intervenants: [...prev.intervenants, { name: '', titre: '' }] }));
+  const removeIntervenant = (idx) => setForm(prev => ({ ...prev, intervenants: prev.intervenants.filter((_, i) => i !== idx) }));
+  const updateIntervenant = (idx, key, val) => setForm(prev => ({
+    ...prev, intervenants: prev.intervenants.map((item, i) => (i === idx ? { ...item, [key]: val } : item)),
+  }));
 
   const openNew = () => {
     setEditingEvt(null);
@@ -88,17 +76,11 @@ export default function Evenements({ events, setEvents, loading, toast }) {
   const openEdit = (evt) => {
     setEditingEvt(evt);
     setForm({
-      date: evt.date || '',
-      type: evt.type || 'Conférence',
-      title: evt.title || '',
-      sousTitre: evt.sousTitre || '',
-      description: evt.description || '',
-      lieu: evt.lieu || '',
+      date: evt.date || '', type: evt.type || 'Conf\u00e9rence', title: evt.title || '',
+      sousTitre: evt.sousTitre || '', description: evt.description || '', lieu: evt.lieu || '',
       intervenants: evt.intervenants?.length ? evt.intervenants.map(i => ({ ...i })) : [{ name: '', titre: '' }],
-      partenaire: evt.partenaire || '',
-      lienInscription: evt.lienInscription || '',
-      lienConcours: evt.lienConcours || '',
-      status: evt.status || 'confirme',
+      partenaire: evt.partenaire || '', lienInscription: evt.lienInscription || '',
+      lienConcours: evt.lienConcours || '', status: evt.status || 'confirme',
     });
     setShowForm(true);
   };
@@ -106,25 +88,13 @@ export default function Evenements({ events, setEvents, loading, toast }) {
   const saveEvent = () => {
     if (!form.title) return toast('Le titre est requis', 'error');
     if (!form.date) return toast('La date est requise', 'error');
-
     const cleanIntervenants = form.intervenants.filter(i => i.name.trim());
-
     if (editingEvt) {
-      setEvents(prev =>
-        prev.map(e =>
-          e.id === editingEvt.id ? { ...e, ...form, intervenants: cleanIntervenants } : e
-        )
-      );
-      toast('Événement mis à jour');
+      setEvents(prev => prev.map(e => e.id === editingEvt.id ? { ...e, ...form, intervenants: cleanIntervenants } : e));
+      toast('\u00c9v\u00e9nement mis \u00e0 jour');
     } else {
-      const newEvt = {
-        ...form,
-        intervenants: cleanIntervenants,
-        id: 'evt-' + Date.now(),
-        createdAt: new Date().toISOString(),
-      };
-      setEvents(prev => [newEvt, ...prev]);
-      toast('Événement ajouté');
+      setEvents(prev => [{ ...form, intervenants: cleanIntervenants, id: Date.now() }, ...prev]);
+      toast('\u00c9v\u00e9nement ajout\u00e9');
     }
     setShowForm(false);
     setEditingEvt(null);
@@ -133,167 +103,148 @@ export default function Evenements({ events, setEvents, loading, toast }) {
   const deleteEvent = (id) => {
     setEvents(prev => prev.filter(e => e.id !== id));
     setConfirmDelete(null);
-    toast('Événement supprimé');
+    toast('\u00c9v\u00e9nement supprim\u00e9');
   };
 
   const archivePasses = () => {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
     let count = 0;
-    setEvents(prev =>
-      prev.map(e => {
-        if (!isFuture(e.date) && e.status !== 'passe' && e.status !== 'annule') {
-          count++;
-          return { ...e, status: 'passe' };
-        }
-        return e;
-      })
-    );
-    toast(`${count} événement(s) archivé(s)`);
+    setEvents(prev => prev.map(e => {
+      if (!isFuture(e.date) && e.status !== 'passe' && e.status !== 'annule') { count++; return { ...e, status: 'passe' }; }
+      return e;
+    }));
+    toast(`${count} \u00e9v\u00e9nement(s) archiv\u00e9(s)`);
   };
 
-  // ─── Loading ──────────────────────────────────
+  // Publier sur le site via GitHub API
+  const publishEvent = async (evt) => {
+    setPublishingId(evt.id);
+    try {
+      if (hasGitHub()) {
+        const intervenantsHtml = (evt.intervenants || []).map(i =>
+          `<span class="intervenant">${i.name}${i.titre ? ` \u2014 ${i.titre}` : ''}</span>`
+        ).join('\n  ');
+
+        const cardHtml = `
+<article class="event-card" data-status="${evt.status}">
+  <time>${formatDateSite(evt.date)}</time>
+  <span class="type">${evt.type}</span>
+  <h3>${evt.title}</h3>${evt.sousTitre ? `\n  <p class="sous-titre">${evt.sousTitre}</p>` : ''}
+  <p class="lieu">${evt.lieu || ''}</p>${evt.partenaire ? `\n  <p class="partenaire">En partenariat avec ${evt.partenaire}</p>` : ''}${intervenantsHtml ? `\n  <div class="intervenants">${intervenantsHtml}</div>` : ''}
+  <p>${evt.description || ''}</p>${evt.lienInscription ? `\n  <a href="${evt.lienInscription}" target="_blank" class="btn-inscription">S\u2019inscrire</a>` : ''}
+</article>`;
+        await insertHtmlInPage('evenements.html', cardHtml, `Ajout \u00e9v\u00e9nement : ${evt.title}`);
+        toast('\u00c9v\u00e9nement publi\u00e9 sur le site');
+      } else {
+        await new Promise(r => setTimeout(r, 1500));
+        toast('\u00c9v\u00e9nement publi\u00e9 (simulation \u2014 configurez VITE_GITHUB_TOKEN)');
+      }
+    } catch (e) {
+      toast(e.message || 'Erreur de publication', 'error');
+    }
+    setPublishingId(null);
+  };
+
   if (loading) {
     return (
       <div className="page-body">
-        <div className="grid grid-3 mb-24">
-          <SkeletonCard /><SkeletonCard /><SkeletonCard />
-        </div>
+        <div className="grid grid-3 mb-24"><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
       </div>
     );
   }
 
   return (
     <>
-      {/* Header */}
       <div className="page-header">
         <div>
-          <h1>Événements</h1>
-          <p style={{ color: COLORS.textLight }}>{events.length} événement(s) au total</p>
+          <h1>\u00c9v\u00e9nements</h1>
+          <p className="page-header-sub">{events.length} \u00e9v\u00e9nement(s) au total</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost" onClick={archivePasses}>Archiver les passés</button>
-          <button className="btn btn-primary" onClick={openNew}>+ Nouvel événement</button>
+        <div className="flex-center gap-8">
+          <ServiceBadge service="github" />
+          <button className="btn btn-outline" onClick={archivePasses}>Archiver les pass\u00e9s</button>
+          <button className="btn btn-primary" onClick={openNew}>+ Nouvel \u00e9v\u00e9nement</button>
         </div>
       </div>
 
       <div className="page-body">
+        {!hasGitHub() && (
+          <div className="alert-banner alert-warning mb-16">
+            Mode d\u00e9mo \u2014 configurez VITE_GITHUB_TOKEN pour publier sur le site
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-3 mb-24">
-          <StatsCard label="À venir" value={stats.aVenir} accentColor={COLORS.green} sub="confirmés ou en préparation" />
-          <StatsCard label="Passés" value={stats.passes} accentColor={COLORS.textLight} sub="événements terminés" />
-          <StatsCard label="En préparation" value={stats.enPrep} accentColor={COLORS.ochre} sub="à confirmer" />
+          <StatsCard label="\u00c0 venir" value={stats.aVenir} accentColor={COLORS.green} sub="confirm\u00e9s ou en pr\u00e9paration" />
+          <StatsCard label="Pass\u00e9s" value={stats.passes} accentColor={COLORS.textLight} sub="\u00e9v\u00e9nements termin\u00e9s" />
+          <StatsCard label="En pr\u00e9paration" value={stats.enPrep} accentColor={COLORS.ochre} sub="\u00e0 confirmer" />
         </div>
 
-        {/* Form */}
+        {/* Formulaire */}
         {showForm && (
           <div className="card mb-24 slide-down" style={{ padding: 24 }}>
-            <h3 style={{ marginBottom: 16 }}>{editingEvt ? 'Modifier l\u2019événement' : 'Nouvel événement'}</h3>
+            <h3 style={{ marginBottom: 16 }}>{editingEvt ? 'Modifier l\u2019\u00e9v\u00e9nement' : 'Nouvel \u00e9v\u00e9nement'}</h3>
 
-            <div className="grid grid-3 mb-24" style={{ gap: 12 }}>
-              <div>
-                <label className="form-label">Date *</label>
-                <input type="date" className="form-input" value={form.date} onChange={e => setField('date', e.target.value)} />
-              </div>
-              <div>
-                <label className="form-label">Type</label>
-                <select className="form-input" value={form.type} onChange={e => setField('type', e.target.value)}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div><label>Date *</label><input type="date" value={form.date} onChange={e => setField('date', e.target.value)} /></div>
+              <div><label>Type</label>
+                <select value={form.type} onChange={e => setField('type', e.target.value)}>
                   {EVT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="form-label">Statut</label>
-                <select className="form-input" value={form.status} onChange={e => setField('status', e.target.value)}>
-                  {Object.entries(EVT_STATUSES).map(([k, v]) => (
-                    <option key={k} value={k}>{v.label}</option>
-                  ))}
+              <div><label>Statut</label>
+                <select value={form.status} onChange={e => setField('status', e.target.value)}>
+                  {Object.entries(EVT_STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
               </div>
             </div>
 
-            <div className="mb-24" style={{ display: 'flex', gap: 12 }}>
-              <div style={{ flex: 2 }}>
-                <label className="form-label">Titre *</label>
-                <input className="form-input" value={form.title} onChange={e => setField('title', e.target.value)} placeholder="Titre de l'événement" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label className="form-label">Sous-titre</label>
-                <input className="form-input" value={form.sousTitre} onChange={e => setField('sousTitre', e.target.value)} placeholder="Optionnel" />
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div><label>Titre *</label><input value={form.title} onChange={e => setField('title', e.target.value)} placeholder="Titre de l\u2019\u00e9v\u00e9nement" /></div>
+              <div><label>Sous-titre</label><input value={form.sousTitre} onChange={e => setField('sousTitre', e.target.value)} placeholder="Optionnel" /></div>
             </div>
 
-            <div className="mb-24">
-              <label className="form-label">Description</label>
-              <textarea className="form-input" rows={3} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="Description de l'événement" />
+            <div style={{ marginBottom: 16 }}>
+              <label>Description</label>
+              <textarea rows={3} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="Description de l\u2019\u00e9v\u00e9nement" />
             </div>
 
-            <div className="grid grid-3 mb-24" style={{ gap: 12 }}>
-              <div>
-                <label className="form-label">Lieu / Adresse</label>
-                <input className="form-input" value={form.lieu} onChange={e => setField('lieu', e.target.value)} placeholder="Adresse de l'événement" />
-              </div>
-              <div>
-                <label className="form-label">Partenaire</label>
-                <input className="form-input" value={form.partenaire} onChange={e => setField('partenaire', e.target.value)} placeholder="Optionnel" />
-              </div>
-              <div>
-                <label className="form-label">Lien d'inscription</label>
-                <input className="form-input" value={form.lienInscription} onChange={e => setField('lienInscription', e.target.value)} placeholder="https://..." />
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div><label>Lieu / Adresse</label><input value={form.lieu} onChange={e => setField('lieu', e.target.value)} /></div>
+              <div><label>Partenaire</label><input value={form.partenaire} onChange={e => setField('partenaire', e.target.value)} placeholder="Optionnel" /></div>
+              <div><label>Lien d\u2019inscription</label><input value={form.lienInscription} onChange={e => setField('lienInscription', e.target.value)} placeholder="https://..." /></div>
             </div>
 
-            <div className="mb-24">
-              <label className="form-label">Lien concours</label>
-              <input className="form-input" value={form.lienConcours} onChange={e => setField('lienConcours', e.target.value)} placeholder="Optionnel" style={{ maxWidth: 400 }} />
+            <div style={{ marginBottom: 16 }}>
+              <label>Lien concours (optionnel)</label>
+              <input value={form.lienConcours} onChange={e => setField('lienConcours', e.target.value)} placeholder="https://..." style={{ maxWidth: 400 }} />
             </div>
 
             {/* Intervenants */}
-            <div className="mb-24">
-              <label className="form-label">Intervenants</label>
+            <div style={{ marginBottom: 16 }}>
+              <label>Intervenants</label>
               {form.intervenants.map((inter, idx) => (
                 <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                  <input
-                    className="form-input"
-                    value={inter.name}
-                    onChange={e => updateIntervenant(idx, 'name', e.target.value)}
-                    placeholder="Nom"
-                    style={{ flex: 1 }}
-                  />
-                  <input
-                    className="form-input"
-                    value={inter.titre}
-                    onChange={e => updateIntervenant(idx, 'titre', e.target.value)}
-                    placeholder="Titre / Fonction"
-                    style={{ flex: 1 }}
-                  />
+                  <input value={inter.name} onChange={e => updateIntervenant(idx, 'name', e.target.value)} placeholder="Nom" style={{ flex: 1 }} />
+                  <input value={inter.titre} onChange={e => updateIntervenant(idx, 'titre', e.target.value)} placeholder="Titre / Fonction" style={{ flex: 1 }} />
                   {form.intervenants.length > 1 && (
-                    <button className="btn btn-ghost" onClick={() => removeIntervenant(idx)} style={{ padding: '4px 8px', color: COLORS.terra }}>
-                      &times;
-                    </button>
+                    <button className="btn btn-outline btn-sm" onClick={() => removeIntervenant(idx)} style={{ color: 'var(--terra)' }}>&times;</button>
                   )}
                 </div>
               ))}
-              <button className="btn btn-ghost" onClick={addIntervenant} style={{ fontSize: 13 }}>
-                + Ajouter un intervenant
-              </button>
+              <button className="btn btn-outline btn-sm" onClick={addIntervenant}>+ Ajouter un intervenant</button>
             </div>
 
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-primary" onClick={saveEvent}>
-                {editingEvt ? 'Enregistrer' : 'Ajouter'}
-              </button>
-              <button className="btn btn-ghost" onClick={() => { setShowForm(false); setEditingEvt(null); }}>
-                Annuler
-              </button>
+              <button className="btn btn-primary" onClick={saveEvent}>{editingEvt ? 'Enregistrer' : 'Ajouter'}</button>
+              <button className="btn btn-outline" onClick={() => { setShowForm(false); setEditingEvt(null); }}>Annuler</button>
             </div>
           </div>
         )}
 
-        {/* Event list */}
+        {/* Liste des \u00e9v\u00e9nements */}
         {sorted.length === 0 ? (
-          <div className="card" style={{ padding: 40, textAlign: 'center', color: COLORS.textLight }}>
-            Aucun événement pour le moment.
-          </div>
+          <div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-light)' }}>Aucun \u00e9v\u00e9nement</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {sorted.map(evt => {
@@ -303,86 +254,35 @@ export default function Evenements({ events, setEvents, loading, toast }) {
               const dotColor = statusDot(evt.status, past);
 
               return (
-                <div
-                  key={evt.id}
-                  className="card"
-                  style={{
-                    display: 'flex',
-                    gap: 16,
-                    padding: 16,
-                    opacity: past ? 0.5 : 1,
-                    background: COLORS.white,
-                    border: `1px solid ${COLORS.border}`,
-                    borderRadius: 10,
-                  }}
-                >
-                  {/* Date section */}
-                  <div style={{
-                    minWidth: 70,
-                    textAlign: 'center',
-                    padding: '8px 4px',
-                    borderRight: `2px solid ${COLORS.border}`,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                  }}>
-                    {d && (
-                      <>
-                        <span style={{ fontSize: 24, fontWeight: 700, color: COLORS.navy, lineHeight: 1 }}>
-                          {d.getDate()}
-                        </span>
-                        <span style={{ fontSize: 12, textTransform: 'uppercase', color: COLORS.textLight, marginTop: 2 }}>
-                          {d.toLocaleDateString('fr-FR', { month: 'short' })}
-                        </span>
-                        <span style={{ fontSize: 12, color: COLORS.textLight }}>
-                          {d.getFullYear()}
-                        </span>
-                      </>
-                    )}
+                <div key={evt.id} className="card" style={{ display: 'flex', gap: 16, padding: 16, opacity: past ? 0.5 : 1 }}>
+                  {/* Date */}
+                  <div style={{ minWidth: 70, textAlign: 'center', padding: '8px 4px', borderRight: '2px solid var(--border)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    {d && <>
+                      <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--navy)', lineHeight: 1 }}>{d.getDate()}</span>
+                      <span style={{ fontSize: 12, textTransform: 'uppercase', color: 'var(--text-light)', marginTop: 2 }}>{d.toLocaleDateString('fr-FR', { month: 'short' })}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{d.getFullYear()}</span>
+                    </>}
                   </div>
 
-                  {/* Content section */}
+                  {/* Contenu */}
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-                      <span className={`badge badge-navy`} style={{ fontSize: 11 }}>{evt.type || 'Événement'}</span>
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        fontSize: 12,
-                        color: dotColor,
-                      }}>
-                        <span style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: dotColor,
-                          display: 'inline-block',
-                        }} />
-                        {past && evt.status !== 'annule' ? 'Passé' : statusCfg.label}
+                      <span className="badge badge-navy" style={{ fontSize: 11 }}>{evt.type || '\u00c9v\u00e9nement'}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: dotColor }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor, display: 'inline-block' }} />
+                        {past && evt.status !== 'annule' ? 'Pass\u00e9' : statusCfg.label}
                       </span>
                     </div>
-
-                    <h4 style={{ margin: '2px 0', color: COLORS.navy }}>{evt.title}</h4>
-                    {evt.sousTitre && (
-                      <p style={{ margin: '2px 0', fontSize: 13, color: COLORS.textLight }}>{evt.sousTitre}</p>
-                    )}
-
-                    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8, fontSize: 13, color: COLORS.textLight }}>
-                      {evt.lieu && (
-                        <span>{evt.lieu}</span>
-                      )}
-                      {evt.partenaire && (
-                        <span>Partenaire : {evt.partenaire}</span>
-                      )}
+                    <h4 style={{ margin: '2px 0', color: 'var(--navy)' }}>{evt.title}</h4>
+                    {evt.sousTitre && <p style={{ margin: '2px 0', fontSize: 13, color: 'var(--text-light)' }}>{evt.sousTitre}</p>}
+                    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8, fontSize: 13, color: 'var(--text-light)' }}>
+                      {evt.lieu && <span>{evt.lieu}</span>}
+                      {evt.partenaire && <span>Partenaire : {evt.partenaire}</span>}
                     </div>
-
                     {evt.intervenants?.length > 0 && (
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
                         {evt.intervenants.map((inter, i) => (
-                          <span key={i} className="pill" style={{ fontSize: 12 }}>
-                            {inter.name}{inter.titre ? ` — ${inter.titre}` : ''}
-                          </span>
+                          <span key={i} className="pill" style={{ fontSize: 12 }}>{inter.name}{inter.titre ? ` \u2014 ${inter.titre}` : ''}</span>
                         ))}
                       </div>
                     )}
@@ -390,16 +290,15 @@ export default function Evenements({ events, setEvents, loading, toast }) {
 
                   {/* Actions */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center' }}>
-                    <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => openEdit(evt)}>
-                      Modifier
-                    </button>
+                    <button className="btn btn-outline btn-sm" onClick={() => openEdit(evt)}>Modifier</button>
                     <button
-                      className="btn btn-ghost"
-                      style={{ fontSize: 12, color: COLORS.terra }}
-                      onClick={() => setConfirmDelete(evt)}
+                      className="btn btn-green btn-sm"
+                      onClick={() => publishEvent(evt)}
+                      disabled={publishingId === evt.id}
                     >
-                      Supprimer
+                      {publishingId === evt.id ? 'Publication\u2026' : 'Publier'}
                     </button>
+                    <button className="btn btn-outline btn-sm" style={{ color: 'var(--terra)' }} onClick={() => setConfirmDelete(evt)}>Supprimer</button>
                   </div>
                 </div>
               );
@@ -408,21 +307,14 @@ export default function Evenements({ events, setEvents, loading, toast }) {
         )}
       </div>
 
-      {/* Delete confirmation modal */}
+      {/* Modal suppression */}
       {confirmDelete && (
-        <Modal
-          title="Supprimer l'événement"
-          onClose={() => setConfirmDelete(null)}
-          footer={
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="btn btn-ghost" onClick={() => setConfirmDelete(null)}>Annuler</button>
-              <button className="btn btn-danger" onClick={() => deleteEvent(confirmDelete.id)}>Supprimer</button>
-            </div>
-          }
-        >
-          <div style={{ padding: '16px 24px' }}>
-            <p>Voulez-vous vraiment supprimer <strong>{confirmDelete.title}</strong> ?</p>
-            <p style={{ color: COLORS.textLight, fontSize: 13 }}>Cette action est irréversible.</p>
+        <Modal title="Supprimer l\u2019\u00e9v\u00e9nement" onClose={() => setConfirmDelete(null)}>
+          <p style={{ marginBottom: 8 }}>Voulez-vous vraiment supprimer <strong>{confirmDelete.title}</strong> ?</p>
+          <p style={{ color: 'var(--text-light)', fontSize: 13 }}>Cette action est irr\u00e9versible.</p>
+          <div className="modal-footer">
+            <button className="btn btn-outline" onClick={() => setConfirmDelete(null)}>Annuler</button>
+            <button className="btn btn-terra" onClick={() => deleteEvent(confirmDelete.id)}>Supprimer</button>
           </div>
         </Modal>
       )}

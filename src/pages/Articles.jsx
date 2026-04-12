@@ -6,6 +6,7 @@ import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr } from '../utils/formatters';
 import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES } from '../utils/constants';
+import { hasGitHub, insertHtmlInPage, formatDateSite } from '../services/github';
 import useDebounce from '../hooks/useDebounce';
 
 export default function Articles({ articles, setArticles, loading, toast }) {
@@ -51,9 +52,29 @@ export default function Articles({ articles, setArticles, loading, toast }) {
 
   const publishArticle = async (id) => {
     setPublishingId(id);
-    await new Promise(r => setTimeout(r, 1500));
-    setArticles(prev => prev.map(a => a.id === id ? { ...a, status: 'published', synced: true } : a));
-    toast('Publication publi\u00e9e');
+    const pub = articles.find(a => a.id === id);
+    if (!pub) { setPublishingId(null); return; }
+    try {
+      if (hasGitHub()) {
+        const cardHtml = `
+<article class="publication-card" data-tags="${(pub.tags || []).join(' ')}">
+  ${(pub.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
+  <span class="type">${pub.type}</span>
+  <h3>${pub.title}</h3>
+  <p class="meta">${pub.author} \u2014 ${formatDateSite(pub.date)}</p>
+  <p>${pub.summary || ''}</p>${pub.pdfUrl ? `\n  <a href="${pub.pdfUrl}" target="_blank">Lire le PDF</a>` : ''}
+</article>`;
+        await insertHtmlInPage('publications.html', cardHtml, `Ajout publication : ${pub.title}`);
+        setArticles(prev => prev.map(a => a.id === id ? { ...a, status: 'published', synced: true } : a));
+        toast('Publication publi\u00e9e sur le site');
+      } else {
+        await new Promise(r => setTimeout(r, 1500));
+        setArticles(prev => prev.map(a => a.id === id ? { ...a, status: 'published', synced: true } : a));
+        toast('Publication publi\u00e9e (simulation)');
+      }
+    } catch (e) {
+      toast(e.message || 'Erreur de publication', 'error');
+    }
     setPublishingId(null);
   };
 

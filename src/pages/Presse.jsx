@@ -6,6 +6,7 @@ import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr } from '../utils/formatters';
 import { COLORS, PRESSE_TYPES } from '../utils/constants';
+import { hasGitHub, insertHtmlInPage, formatDateSite } from '../services/github';
 import useDebounce from '../hooks/useDebounce';
 
 const TYPE_BADGE = {
@@ -34,6 +35,7 @@ export default function Presse({ presse, setPresse, loading, toast }) {
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [publishingId, setPublishingId] = useState(null);
   const debouncedSearch = useDebounce(search);
 
   // ─── Années disponibles ──────────────────────
@@ -116,6 +118,29 @@ export default function Presse({ presse, setPresse, loading, toast }) {
     toast('Entr\u00e9e presse supprim\u00e9e');
   };
 
+  const publishItem = async (item) => {
+    setPublishingId(item.id);
+    try {
+      if (hasGitHub()) {
+        const cardHtml = `
+<article class="presse-item">
+  <span class="media">${item.media}</span>
+  <h3><a href="${item.urlExterne || '#'}" target="_blank">${item.title}</a></h3>
+  <p class="auteur">${item.auteur || ''}</p>
+  <time>${formatDateSite(item.date)}</time>
+</article>`;
+        await insertHtmlInPage('presse.html', cardHtml, `Ajout presse : ${item.title}`);
+        toast('Article presse publi\u00e9 sur le site');
+      } else {
+        await new Promise(r => setTimeout(r, 1500));
+        toast('Article presse publi\u00e9 (simulation)');
+      }
+    } catch (e) {
+      toast(e.message || 'Erreur de publication', 'error');
+    }
+    setPublishingId(null);
+  };
+
   // ─── Colonnes ─────────────────────────────────
   const columns = [
     {
@@ -154,6 +179,9 @@ export default function Presse({ presse, setPresse, loading, toast }) {
       render: (_, row) => (
         <div className="flex-center gap-8" style={{ flexWrap: 'nowrap' }}>
           <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); startEdit(row); }}>\u00c9diter</button>
+          <button className="btn btn-green btn-sm" onClick={(e) => { e.stopPropagation(); publishItem(row); }} disabled={publishingId === row.id}>
+            {publishingId === row.id ? '\u2026' : 'Publier'}
+          </button>
           <button className="btn btn-outline btn-sm" style={{ color: 'var(--terra)' }} onClick={(e) => { e.stopPropagation(); deleteItem(row.id); }}>Supprimer</button>
         </div>
       ),
