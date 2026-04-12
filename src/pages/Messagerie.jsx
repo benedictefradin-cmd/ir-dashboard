@@ -142,15 +142,17 @@ export default function Messagerie({ subscribers = [], services, toast }) {
               <>
                 <div className="card mb-16">
                   <h3 style={{ fontSize: 15, marginBottom: 12 }}>Destinataires</h3>
-                  {[
-                    ['all_subscribers', `Abonnés newsletter (${subscribers.filter(s => s.status === 'added' || s.status === 'abonné').length})`],
-                    ['all', 'Tous les contacts'],
-                  ].map(([key, label]) => (
-                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer', textTransform: 'none', fontWeight: 400, fontSize: 14 }}>
-                      <input type="radio" name="recipients" value={key} checked={recipients === key} onChange={() => setRecipients(key)} />
-                      {label}
-                    </label>
-                  ))}
+                  {SEGMENTS.map(({ key, label }) => {
+                    const count = key === 'all_subscribers'
+                      ? subscribers.filter(s => s.status === 'added' || s.status === 'abonné').length
+                      : key === 'all' ? subscribers.length : null;
+                    return (
+                      <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer', textTransform: 'none', fontWeight: 400, fontSize: 14 }}>
+                        <input type="radio" name="recipients" value={key} checked={recipients === key} onChange={() => setRecipients(key)} />
+                        {label}{count != null ? ` (${count})` : ''}
+                      </label>
+                    );
+                  })}
                 </div>
 
                 <div className="card">

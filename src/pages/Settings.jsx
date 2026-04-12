@@ -38,9 +38,6 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
 
   // ─── Automatisations ──────────────────────────
   const [automations, setAutomations] = useState(() => loadLocal('automations', {
-    welcomeEmail: true,
-    renewalReminder: false,
-    telegramNewAdherent: true,
     telegramNewSubscriber: false,
   }));
 
