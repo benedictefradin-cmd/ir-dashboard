@@ -935,6 +935,7 @@ function PagesTab({ pages, addToast }) {
 // ─── MAIN APP ───────────────────────────────────────────────────────────────────
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(false)
+  const [githubToken] = useState(import.meta.env.VITE_GITHUB_TOKEN || "")
   const [tab, setTab] = useState('dashboard')
   const [subscribers, setSubscribers] = useState(INIT_SUBSCRIBERS)
   const [articles, setArticles] = useState(INIT_ARTICLES)
