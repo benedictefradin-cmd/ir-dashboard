@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Sidebar from './Sidebar';
 import ToastContainer from '../shared/ToastContainer';
 import { loadLocal, saveLocal } from '../../utils/localStorage';
-import { LS_KEYS } from '../../utils/constants';
+import { LS_KEYS, SITE_URL } from '../../utils/constants';
 
 export default function Layout({ activeTab, onTabChange, badges, toasts, onRemoveToast, children }) {
   const [collapsed, setCollapsed] = useState(() => loadLocal(LS_KEYS.sidebarCollapsed, false));
@@ -36,6 +36,23 @@ export default function Layout({ activeTab, onTabChange, badges, toasts, onRemov
       </div>
 
       <main className={`main-content${collapsed ? ' sidebar-collapsed' : ''}`}>
+        {/* Topbar */}
+        <div className="topbar">
+          <div className="topbar-left">
+            <span className="topbar-title">Institut Rousseau</span>
+            <span className="topbar-badge">Admin</span>
+          </div>
+          <div className="topbar-right">
+            <span className="site-status">
+              <span className="status-dot green" />
+              Site en ligne
+            </span>
+            <a href={SITE_URL} target="_blank" rel="noopener noreferrer" className="site-link">
+              Voir le site &#8599;
+            </a>
+          </div>
+        </div>
+
         {children}
       </main>
 

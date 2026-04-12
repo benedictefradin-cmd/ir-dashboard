@@ -18,22 +18,40 @@ export const COLORS = {
   textLight: '#6B7280',
   danger: '#DC2626',
   dangerLight: '#FEE2E2',
+  sand: '#F5F0E8',
+  grayText: '#6B6560',
 };
 
 // ─── Navigation ───────────────────────────────────────
 export const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { key: 'adherents', label: 'Adh\u00e9rents', icon: 'people' },
-  { key: 'newsletter', label: 'Newsletter', icon: 'mail' },
-  { key: 'articles', label: 'Articles', icon: 'article' },
-  { key: 'messagerie', label: 'Messagerie', icon: 'send' },
-  { key: 'settings', label: 'Param\u00e8tres', icon: 'settings' },
+  { key: 'dashboard', label: 'Dashboard', icon: '\u2302' },
+  { key: 'separator-1', type: 'separator' },
+  { key: 'articles', label: 'Publications', icon: '\u{1F4C4}' },
+  { key: 'evenements', label: '\u00c9v\u00e9nements', icon: '\u{1F4C5}' },
+  { key: 'presse', label: 'Presse', icon: '\u{1F4F0}' },
+  { key: 'auteurs', label: 'Auteurs', icon: '\u{1F465}' },
+  { key: 'separator-2', type: 'separator' },
+  { key: 'adherents', label: 'Adh\u00e9rents', icon: '\u{1F4CB}' },
+  { key: 'dons', label: 'Dons', icon: '\u2764' },
+  { key: 'newsletter', label: 'Newsletter', icon: '\u2709' },
+  { key: 'messagerie', label: 'Messagerie', icon: '\u2708' },
+  { key: 'separator-3', type: 'separator' },
+  { key: 'contenu', label: 'Contenu', icon: '\u270E' },
+  { key: 'contact', label: 'Contact', icon: '\u{1F4E5}' },
+  { key: 'separator-4', type: 'separator' },
+  { key: 'settings', label: 'Config', icon: '\u2699' },
 ];
 
 // ─── Cat\u00e9gories et sources ──────────────────────────
 export const CATEGORIES = [
   '\u00c9conomie', '\u00c9cologie', 'Social', 'Num\u00e9rique', 'G\u00e9opolitique', 'D\u00e9mocratie',
 ];
+
+export const THEMATIQUES = [
+  '\u00c9cologie', '\u00c9conomie', 'Institutions', 'Social', 'International', 'Culture',
+];
+
+export const PUB_TYPES = ['Note d\'analyse', 'Point de vue', 'Rapport', 'Rapport phare'];
 
 export const SOURCES = ['Site web', '\u00c9v\u00e9nement', 'LinkedIn', 'Manuel', 'HelloAsso', 'Brevo'];
 
@@ -55,6 +73,31 @@ export const SUB_STATUSES = {
   added: { label: 'Ajout\u00e9', badgeClass: 'badge-green' },
   pending: { label: 'En attente', badgeClass: 'badge-ochre' },
   rejected: { label: 'Refus\u00e9', badgeClass: 'badge-danger' },
+};
+
+export const EVT_TYPES = ['Conf\u00e9rence', 'Atelier', 'Salon', 'Cycle', 'Anniversaire', 'Partenariat'];
+
+export const EVT_STATUSES = {
+  confirme: { label: 'Confirm\u00e9', badgeClass: 'badge-green' },
+  en_preparation: { label: 'En pr\u00e9paration', badgeClass: 'badge-ochre' },
+  annule: { label: 'Annul\u00e9', badgeClass: 'badge-terra' },
+  passe: { label: 'Pass\u00e9', badgeClass: 'badge-gray' },
+};
+
+export const PRESSE_TYPES = ['Tribune', 'Entretien', 'Podcast'];
+
+export const CONTACT_SUBJECTS = [
+  { key: 'general', label: 'G\u00e9n\u00e9ral' },
+  { key: 'evenement', label: '\u00c9v\u00e9nement' },
+  { key: 'presse', label: 'Presse' },
+  { key: 'partenariat', label: 'Partenariat' },
+];
+
+export const CONTACT_STATUSES = {
+  nouveau: { label: 'Nouveau', badgeClass: 'badge-sky' },
+  lu: { label: 'Lu', badgeClass: 'badge-ochre' },
+  traite: { label: 'Trait\u00e9', badgeClass: 'badge-green' },
+  a_suivre: { label: '\u00c0 suivre', badgeClass: 'badge-terra' },
 };
 
 // ─── Templates email ──────────────────────────────────
@@ -97,7 +140,7 @@ L\u2019Institut Rousseau`,
 
 L\u2019Institut Rousseau publie aujourd\u2019hui une nouvelle note\u00a0:
 
-\ud83d\udcc4 {titre_article}
+{titre_article}
 Par {auteur}
 
 {extrait}...
@@ -124,3 +167,6 @@ export const LS_KEYS = {
 // ─── Config par d\u00e9faut ──────────────────────────────
 export const DEFAULT_WORKER_URL = import.meta.env.VITE_WORKER_URL || '';
 export const DEFAULT_PAGE_SIZE = 50;
+
+// ─── Site URL ────────────────────────────────────────
+export const SITE_URL = 'https://institut-rousseau-kb9p.vercel.app';

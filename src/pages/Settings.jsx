@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import ServiceBadge from '../components/shared/ServiceBadge';
 import { loadLocal, saveLocal } from '../utils/localStorage';
 import { LS_KEYS, DEFAULT_WORKER_URL } from '../utils/constants';
 import { parseFile, isValidEmail, findDuplicates } from '../services/export';
@@ -229,8 +230,11 @@ export default function Settings({ adherents, subscribers, services, onImportAdh
     <>
       <div className="page-header">
         <div>
-          <h1>Param\u00e8tres</h1>
-          <p className="page-header-sub">Configuration API, import/export, automatisations</p>
+          <h1>Configuration</h1>
+          <p className="page-header-sub">Connexions API, import/export, automatisations</p>
+        </div>
+        <div className="flex-center gap-8">
+          <ServiceBadge service="cloudflare" />
         </div>
       </div>
 

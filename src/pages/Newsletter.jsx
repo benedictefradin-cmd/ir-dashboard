@@ -3,6 +3,7 @@ import StatsCard from '../components/shared/StatsCard';
 import DataTable from '../components/shared/DataTable';
 import SearchBar from '../components/shared/SearchBar';
 import ExportButton from '../components/shared/ExportButton';
+import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard, SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr } from '../utils/formatters';
 import { COLORS, SUB_STATUSES, SOURCES } from '../utils/constants';
@@ -132,6 +133,7 @@ export default function Newsletter({ subscribers, setSubscribers, campaigns, loa
           <p className="page-header-sub">Abonn\u00e9s et campagnes Brevo</p>
         </div>
         <div className="flex-center gap-8">
+          <ServiceBadge service="brevo" />
           <ExportButton data={filtered} columns={exportColumns} sheetName="Newsletter" filename="newsletter-IR.xlsx" />
           <button className="btn btn-outline" onClick={onRefresh}>Rafra\u00eechir</button>
         </div>

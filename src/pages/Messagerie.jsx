@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import Modal from '../components/shared/Modal';
+import ServiceBadge from '../components/shared/ServiceBadge';
 import { EMAIL_TEMPLATES, COLORS } from '../utils/constants';
-import { sendEmail, sendBulkEmail } from '../services/brevo';
-import { sendMessage, sendChannelMessage, formatArticleMessage } from '../services/telegram';
+import { sendBulkEmail } from '../services/brevo';
+import { sendMessage, sendChannelMessage } from '../services/telegram';
 
 export default function Messagerie({ adherents, subscribers, services, toast }) {
   const [channel, setChannel] = useState('email');
@@ -109,6 +110,9 @@ export default function Messagerie({ adherents, subscribers, services, toast }) 
           <h1>Messagerie</h1>
           <p className="page-header-sub">Envois cibl\u00e9s par email et Telegram</p>
         </div>
+        <div className="flex-center gap-8">
+          <ServiceBadge service="brevo" />
+        </div>
       </div>
 
       <div className="page-body">
@@ -144,6 +148,9 @@ export default function Messagerie({ adherents, subscribers, services, toast }) 
                   {[
                     ['all_subscribers', `Abonn\u00e9s newsletter (${subscribers.filter(s => s.status === 'added' || s.status === 'abonn\u00e9').length})`],
                     ['all_adherents', `Adh\u00e9rents actifs (${adherents.filter(a => a.status === 'actif' || a.status === 'Pay\u00e9').length})`],
+                    ['donateurs', 'Donateurs'],
+                    ['presse', 'Contacts presse'],
+                    ['auteurs', 'Auteurs'],
                     ['all', 'Tous les contacts'],
                   ].map(([key, label]) => (
                     <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer', textTransform: 'none', fontWeight: 400, fontSize: 14 }}>

@@ -1,14 +1,5 @@
 import { NAV_ITEMS } from '../../utils/constants';
 
-const ICONS = {
-  dashboard: '\u2302',
-  people: '\u263A',
-  mail: '\u2709',
-  article: '\u270E',
-  send: '\u2708',
-  settings: '\u2699',
-};
-
 export default function Sidebar({ activeTab, onTabChange, badges, collapsed, onToggle, mobileOpen, onMobileClose }) {
   return (
     <>
@@ -23,19 +14,24 @@ export default function Sidebar({ activeTab, onTabChange, badges, collapsed, onT
         </div>
 
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map(item => (
-            <button
-              key={item.key}
-              className={`nav-item${activeTab === item.key ? ' active' : ''}`}
-              onClick={() => { onTabChange(item.key); onMobileClose?.(); }}
-            >
-              <span className="nav-icon">{ICONS[item.icon] || '\u25CF'}</span>
-              <span className="nav-label">{item.label}</span>
-              {badges[item.key] > 0 && (
-                <span className="nav-badge">{badges[item.key]}</span>
-              )}
-            </button>
-          ))}
+          {NAV_ITEMS.map(item => {
+            if (item.type === 'separator') {
+              return <div key={item.key} className="nav-separator" />;
+            }
+            return (
+              <button
+                key={item.key}
+                className={`nav-item${activeTab === item.key ? ' active' : ''}`}
+                onClick={() => { onTabChange(item.key); onMobileClose?.(); }}
+              >
+                <span className="nav-icon">{item.icon}</span>
+                <span className="nav-label">{item.label}</span>
+                {badges[item.key] > 0 && (
+                  <span className="nav-badge">{badges[item.key]}</span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">
