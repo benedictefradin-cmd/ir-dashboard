@@ -144,7 +144,7 @@ export default function Calendrier({ socialPosts, setSocialPosts, rapports, setR
 // ═══════════════════════════════════════════════════════════
 // A1 — CALENDRIER RÉSEAUX SOCIAUX
 // ═══════════════════════════════════════════════════════════
-function SocialMediaCalendar({ posts, setPosts, toast }) {
+function SocialMediaCalendar({ posts, setPosts, events = [], toast, onTabChange }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -167,6 +167,16 @@ function SocialMediaCalendar({ posts, setPosts, toast }) {
     });
     return map;
   }, [posts]);
+
+  // Événements IR indexés par date
+  const eventsByDate = useMemo(() => {
+    const map = {};
+    events.forEach(e => {
+      const key = (e.date || '')?.slice(0, 10);
+      if (key) (map[key] = map[key] || []).push(e);
+    });
+    return map;
+  }, [events]);
 
   // Compteurs par plateforme pour le mois courant
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -228,19 +238,34 @@ function SocialMediaCalendar({ posts, setPosts, toast }) {
     return [...filtered].sort((a, b) => (a.date + (a.heure || '')).localeCompare(b.date + (b.heure || '')));
   }, [posts, monthKey]);
 
+  // Événements IR du mois
+  const monthEvents = useMemo(() => {
+    return events.filter(e => (e.date || '').startsWith(monthKey)).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  }, [events, monthKey]);
+
   return (
     <>
-      {/* Compteurs par plateforme */}
-      <div className="grid grid-5 mb-16">
-        {PLATFORMS.map(pl => (
-          <StatsCard
-            key={pl.key}
-            label={pl.label}
-            value={platformCounts[pl.key]}
-            sub={`posts en ${MONTH_NAMES[month].toLowerCase()}`}
-            accentColor={pl.color}
-          />
-        ))}
+      {/* Compteurs par plateforme + événements */}
+      <div className="grid grid-3 mb-16">
+        <StatsCard
+          label="Posts ce mois"
+          value={Object.values(platformCounts).reduce((a, b) => a + b, 0)}
+          sub={PLATFORMS.map(p => platformCounts[p.key] > 0 ? `${p.label}: ${platformCounts[p.key]}` : null).filter(Boolean).join(' · ') || 'Aucun post'}
+          accentColor={COLORS.ochre}
+        />
+        <StatsCard
+          label="Événements IR"
+          value={monthEvents.length}
+          sub={`en ${MONTH_NAMES[month].toLowerCase()}`}
+          accentColor={COLORS.sky}
+          onClick={() => onTabChange?.('evenements')}
+        />
+        <StatsCard
+          label="Publiés"
+          value={posts.filter(p => p.date?.startsWith(monthKey) && p.status === 'publie').length}
+          sub={`sur ${Object.values(platformCounts).reduce((a, b) => a + b, 0)} planifiés`}
+          accentColor={COLORS.green}
+        />
       </div>
 
       {/* Navigation mois + toggle vue */}
@@ -274,7 +299,10 @@ function SocialMediaCalendar({ posts, setPosts, toast }) {
               if (day === null) return <div key={`e-${i}`} className="cal-cell cal-cell-empty" />;
               const dateKey = toDateKey(year, month, day);
               const cellPosts = postsByDate[dateKey] || [];
+              const cellEvents = eventsByDate[dateKey] || [];
               const isToday = day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+              const maxItems = 3;
+              const totalItems = cellEvents.length + cellPosts.length;
               return (
                 <div
                   key={dateKey}
@@ -283,7 +311,21 @@ function SocialMediaCalendar({ posts, setPosts, toast }) {
                 >
                   <span className="cal-day-num">{day}</span>
                   <div className="cal-cell-posts">
-                    {cellPosts.slice(0, 3).map(p => {
+                    {/* Événements IR en premier */}
+                    {cellEvents.slice(0, maxItems).map(evt => (
+                      <div
+                        key={evt.id || evt.slug}
+                        className="cal-post-chip"
+                        style={{ borderLeftColor: COLORS.sky, background: COLORS.skyLight }}
+                        onClick={(e) => { e.stopPropagation(); onTabChange?.('evenements'); }}
+                        title={evt.titre || evt.title}
+                      >
+                        <span style={{ marginRight: 2 }}>📅</span>
+                        <span className="cal-chip-text">{(evt.titre || evt.title || 'Événement')?.slice(0, 28)}</span>
+                      </div>
+                    ))}
+                    {/* Posts social media */}
+                    {cellPosts.slice(0, Math.max(0, maxItems - cellEvents.length)).map(p => {
                       const pl = platformObj(p.platform);
                       return (
                         <div
@@ -299,8 +341,8 @@ function SocialMediaCalendar({ posts, setPosts, toast }) {
                         </div>
                       );
                     })}
-                    {cellPosts.length > 3 && (
-                      <span style={{ fontSize: 10, color: COLORS.textLight }}>+{cellPosts.length - 3} autres</span>
+                    {totalItems > maxItems && (
+                      <span style={{ fontSize: 10, color: COLORS.textLight }}>+{totalItems - maxItems} autres</span>
                     )}
                   </div>
                 </div>
@@ -313,9 +355,28 @@ function SocialMediaCalendar({ posts, setPosts, toast }) {
       {/* Vue liste */}
       {viewMode === 'liste' && (
         <div className="card fade-in">
-          {upcomingPosts.length === 0 && (
-            <p style={{ color: COLORS.textLight, padding: 20, textAlign: 'center' }}>Aucun post prévu pour {MONTH_NAMES[month].toLowerCase()} {year}</p>
+          {upcomingPosts.length === 0 && monthEvents.length === 0 && (
+            <p style={{ color: COLORS.textLight, padding: 20, textAlign: 'center' }}>Rien de prévu pour {MONTH_NAMES[month].toLowerCase()} {year}</p>
           )}
+          {/* Événements IR */}
+          {monthEvents.map(evt => (
+            <div key={evt.id || evt.slug} className="cal-list-row" onClick={() => onTabChange?.('evenements')}>
+              <div style={{ width: 4, borderRadius: 4, background: COLORS.sky, alignSelf: 'stretch', flexShrink: 0 }} />
+              <div style={{ minWidth: 80, fontSize: 13, color: COLORS.textLight }}>
+                {formatDateShort(evt.date)}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span className="badge badge-sky" style={{ fontSize: 10 }}>📅 Événement IR</span>
+                  {evt.type && <span style={{ fontSize: 12, color: COLORS.textLight }}>{evt.type}</span>}
+                </div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: COLORS.navy, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.titre || evt.title}</p>
+                {(evt.lieu || evt.location) && <p style={{ fontSize: 12, color: COLORS.textLight, margin: '2px 0 0' }}>📍 {evt.lieu || evt.location}</p>}
+              </div>
+              <span className="badge badge-navy" style={{ flexShrink: 0 }}>Voir →</span>
+            </div>
+          ))}
+          {/* Posts social media */}
           {upcomingPosts.map(p => {
             const pl = platformObj(p.platform);
             return (
