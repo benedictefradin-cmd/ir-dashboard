@@ -230,7 +230,7 @@
     "lastName": "Lory",
     "role": "Secrétaire Générale",
     "bio": "Secrétaire Générale de l'Institut Rousseau.",
-    "photo": "",
+    "photo": "assets/images/equipe/emilie-lory.jpg",
     "publications": 0
   },
   {
@@ -239,7 +239,7 @@
     "lastName": "Butin",
     "role": "Trésorier",
     "bio": "Trésorier de l'Institut Rousseau.",
-    "photo": "",
+    "photo": "assets/images/equipe/gabriel-butin.png",
     "publications": 0
   },
   {
@@ -248,7 +248,7 @@
     "lastName": "Combet",
     "role": "Co-directeur des études économiques",
     "bio": "Co-directeur des études économiques de l'Institut Rousseau.",
-    "photo": "",
+    "photo": "assets/images/equipe/nathan-combet.png",
     "publications": 0
   },
   {
@@ -257,7 +257,7 @@
     "lastName": "Fradin",
     "role": "Directrice des Relations Publiques et Partenariales",
     "bio": "Directrice des Relations Publiques et Partenariales de l'Institut Rousseau.",
-    "photo": "",
+    "photo": "assets/images/equipe/marie-benedicte-fradin.jpg",
     "publications": 0
   },
   {
@@ -266,7 +266,7 @@
     "lastName": "Iss",
     "role": "Directeur des études internationales et Europe",
     "bio": "Directeur des études internationales et Europe de l'Institut Rousseau.",
-    "photo": "",
+    "photo": "assets/images/equipe/arnaud-iss.png",
     "publications": 0
   },
   {
@@ -275,7 +275,7 @@
     "lastName": "Malek",
     "role": "Co-directeur des études économiques",
     "bio": "Co-directeur des études économiques de l'Institut Rousseau.",
-    "photo": "",
+    "photo": "assets/images/equipe/gabriel-malek.png",
     "publications": 0
   },
   {
@@ -284,7 +284,7 @@
     "lastName": "Moutenet",
     "role": "Directeur des études sur les affaires sociales",
     "bio": "Directeur des études sur les affaires sociales de l'Institut Rousseau.",
-    "photo": "",
+    "photo": "assets/images/equipe/philippe-moutenet.png",
     "publications": 0
   },
   {
@@ -293,7 +293,7 @@
     "lastName": "Guinard",
     "role": "Membre du Conseil scientifique — Droit & Institutions",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Droit & Institutions.",
-    "photo": "",
+    "photo": "assets/images/equipe/dorian-guinard.jpg",
     "publications": 0
   },
   {
@@ -302,7 +302,7 @@
     "lastName": "Lafourcade",
     "role": "Membre du Conseil scientifique — Droit & Institutions",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Droit & Institutions.",
-    "photo": "",
+    "photo": "assets/images/equipe/magali-lafourcade.jpg",
     "publications": 0
   },
   {
@@ -311,7 +311,7 @@
     "lastName": "Morel",
     "role": "Membre du Conseil scientifique — Droit & Institutions",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Droit & Institutions.",
-    "photo": "",
+    "photo": "assets/images/equipe/benjamin-morel.jpg",
     "publications": 0
   },
   {
@@ -320,7 +320,7 @@
     "lastName": "Desquinado",
     "role": "Membre du Conseil scientifique — Économie",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
-    "photo": "",
+    "photo": "assets/images/equipe/nicolas-desquinado.jpg",
     "publications": 0
   },
   {
@@ -329,7 +329,7 @@
     "lastName": "Dugast",
     "role": "Membre du Conseil scientifique — Économie",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
-    "photo": "",
+    "photo": "assets/images/equipe/cesar-dugast.jpg",
     "publications": 0
   },
   {
@@ -338,7 +338,7 @@
     "lastName": "Lataste",
     "role": "Membre du Conseil scientifique — Économie",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
-    "photo": "",
+    "photo": "assets/images/equipe/remi-lataste.png",
     "publications": 0
   },
   {
@@ -347,7 +347,7 @@
     "lastName": "Lugassy",
     "role": "Membre du Conseil scientifique — Économie",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
-    "photo": "",
+    "photo": "assets/images/equipe/lea-lugassy.jpg",
     "publications": 0
   },
   {
@@ -356,7 +356,7 @@
     "lastName": "Ponsot",
     "role": "Membre du Conseil scientifique — Économie",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
-    "photo": "",
+    "photo": "assets/images/equipe/jean-francois-ponsot.jpg",
     "publications": 0
   },
   {
@@ -365,7 +365,7 @@
     "lastName": "Tcherneva",
     "role": "Membre du Conseil scientifique — Économie",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
-    "photo": "",
+    "photo": "assets/images/equipe/pavlina-tcherneva.jpg",
     "publications": 0
   },
   {
@@ -374,7 +374,7 @@
     "lastName": "Cargoet",
     "role": "Membre du Conseil scientifique — Idées & Société",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
-    "photo": "",
+    "photo": "assets/images/equipe/antoine-cargoet.jpg",
     "publications": 0
   },
   {
@@ -383,7 +383,7 @@
     "lastName": "Chaudouët-Delmas",
     "role": "Membre du Conseil scientifique — Idées & Société",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
-    "photo": "",
+    "photo": "assets/images/equipe/mahaut-chaudouet-delmas.jpg",
     "publications": 0
   },
   {
@@ -392,7 +392,7 @@
     "lastName": "Escalona",
     "role": "Membre du Conseil scientifique — Idées & Société",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
-    "photo": "",
+    "photo": "assets/images/equipe/fabien-escalona.jpg",
     "publications": 0
   },
   {
@@ -401,7 +401,7 @@
     "lastName": "Le Bras",
     "role": "Membre du Conseil scientifique — Idées & Société",
     "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
-    "photo": "",
+    "photo": "assets/images/equipe/herve-le-bras.jpg",
     "publications": 0
   }
 ]
