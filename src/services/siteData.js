@@ -4,7 +4,7 @@
 // Quand on sauvegarde, un commit est créé → Vercel redéploie le site.
 
 import { githubGetFile, githubPutFile, hasGitHub } from './github';
-import { SITE_URL } from '../utils/constants';
+import { resolvePhotoUrl } from '../utils/constants';
 
 const DATA_PATH = 'data';
 
@@ -155,16 +155,6 @@ export function normalizePresse(presse) {
     url: p.url || '',
     urlInterne: p.urlInterne || '',
   }));
-}
-
-/**
- * Transforme un chemin relatif d'image en URL complète du site.
- */
-function resolvePhotoUrl(photo) {
-  if (!photo) return '';
-  if (photo.startsWith('http')) return photo;
-  // Chemin relatif → URL complète du site déployé
-  return `${SITE_URL}/${photo}`;
 }
 
 /**

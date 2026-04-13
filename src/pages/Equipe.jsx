@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import Modal from '../components/shared/Modal';
-import { COLORS } from '../utils/constants';
+import { COLORS, resolvePhotoUrl, normalizeName, namesMatch, findPublicationsForAuthor, canonicalPhotoPath } from '../utils/constants';
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
 
 const SECTIONS = [
@@ -21,51 +21,31 @@ const CS_CATEGORIES = [
   { id: 'international', label: 'International' },
 ];
 
-export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, articles = [], toast, saveToSite }) {
+function slugify(prenom, nom) {
+  return `${prenom}-${nom}`.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, articles = [], toast, saveToSite, onTabChange }) {
   const [activeSection, setActiveSection] = useState('ca');
   const [saving, setSaving] = useState(false);
-  const [editingCA, setEditingCA] = useState(null); // index of CA member being edited
+  const [editingCA, setEditingCA] = useState(null);
   const [caModal, setCaModal] = useState(false);
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef(null);
 
   const equipe = contenu?.equipe || {};
 
-  // ─── Helpers ───
-  const normalize = (str) =>
-    (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-  const slugify = (prenom, nom) =>
-    `${prenom}-${nom}`.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-  // Find linked author for a CA member (by linkedAuthorId or name match)
+  // ─── Find linked author (by explicit ID or exact name match) ───
   const findLinkedAuthor = (membre) => {
     if (!membre) return null;
     if (membre.linkedAuthorId) {
       return auteurs.find(a => a.id === membre.linkedAuthorId) || null;
     }
-    // Fallback: match by name
-    const fullName = normalize(`${membre.prenom} ${membre.nom}`);
-    if (!fullName.trim()) return null;
-    return auteurs.find(a => {
-      const aName = normalize(`${a.firstName} ${a.lastName}`);
-      return aName === fullName;
-    }) || null;
+    if (!membre.prenom || !membre.nom) return null;
+    return auteurs.find(a => namesMatch(membre.prenom, membre.nom, a.firstName, a.lastName)) || null;
   };
 
-  // Get publications linked to an author
-  const getLinkedPublications = (auteur) => {
-    if (!auteur || !articles?.length) return [];
-    const name = `${auteur.firstName} ${auteur.lastName}`.toLowerCase();
-    if (!name.trim()) return [];
-    return articles.filter(art =>
-      art.author && art.author.toLowerCase().includes(name)
-    );
-  };
+  const getLinkedPublications = (auteur) => findPublicationsForAuthor(auteur, articles);
 
   // ─── Contenu updates ───
   const handleChange = (section, key, value) => {
@@ -104,107 +84,69 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     }
   };
 
-  // ─── Photo handling ───
-  const handlePhotoSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      toast('Veuillez sélectionner une image (JPG, PNG, WebP)', 'error');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      toast('La photo ne doit pas dépasser 2 Mo', 'error');
-      return;
-    }
-    setPhotoFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setPhotoPreview(ev.target.result);
-    reader.readAsDataURL(file);
-  };
-
-  const removePhoto = () => {
-    setPhotoFile(null);
-    setPhotoPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  // ─── Sync photo between team member and author ───
-  const syncPhotoToAuthor = async (authorId, photoPath, photoUrl) => {
+  // ─── Sync photo from CA member → linked author ───
+  const syncPhotoToAuthor = async (authorId, photoPath) => {
     if (!authorId || !setAuteurs) return;
+    const photoUrl = resolvePhotoUrl(photoPath);
     const updated = auteurs.map(a =>
-      a.id === authorId ? { ...a, photo: photoUrl || photoPath, photoPath: photoPath } : a
+      a.id === authorId ? { ...a, photo: photoUrl, photoPath } : a
     );
     setAuteurs(updated);
     if (hasGitHub()) {
-      try {
-        await saveAuthorsToGitHub(updated);
-      } catch { /* silent */ }
+      try { await saveAuthorsToGitHub(updated); } catch { /* silent */ }
       if (saveToSite) {
         try {
-          await saveToSite('auteurs', updated.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
-            id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
-          })), `Sync photo auteur depuis Équipe`);
+          await saveToSite('auteurs', updated.map(({ id, firstName, lastName, role, bio, photo, photoPath: pp, publications }) => ({
+            id, firstName, lastName, role, bio, photo: pp || photo || '', publications: publications || 0,
+          })), 'Sync photo auteur depuis Équipe');
         } catch { /* silent */ }
       }
     }
   };
 
-  // ─── CA Member Modal ───
+  // ─── CA Modal handlers ───
   const openCAEdit = (index) => {
-    const membres = equipe?.ca?.membres || [];
     setEditingCA(index);
-    const m = index !== null ? membres[index] : null;
-    setPhotoFile(null);
-    setPhotoPreview(m?.photo || null);
     setCaModal(true);
   };
 
   const openCAAdd = () => {
     setEditingCA(null);
-    setPhotoFile(null);
-    setPhotoPreview(null);
     setCaModal(true);
   };
 
-  const getCAForm = () => {
+  const getCAInitial = () => {
     if (editingCA === null) return { prenom: '', nom: '', role: '', description: '', photo: '', linkedin: '', linkedAuthorId: '' };
-    const m = (equipe?.ca?.membres || [])[editingCA] || {};
-    return { ...m };
+    return { ...(equipe?.ca?.membres || [])[editingCA] } || {};
   };
 
-  const handleCASave = async (formData) => {
+  const handleCASave = async (formData, photoFile) => {
     const membres = [...(equipe?.ca?.membres || [])];
-    let photoUrl = formData.photo || '';
     let photoPath = formData.photo || '';
 
-    // Upload photo if new file selected
+    // Upload new photo if provided — always to canonical equipe/ path
     if (photoFile && hasGitHub()) {
-      setUploading(true);
       try {
-        const slug = slugify(formData.prenom, formData.nom);
         const ext = photoFile.name.split('.').pop().toLowerCase() || 'jpg';
-        const path = `images/equipe/${slug}.${ext}`;
+        photoPath = canonicalPhotoPath(formData.prenom, formData.nom, ext);
+        const ghPath = photoPath.replace('assets/', '');
         const base64 = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result.split(',')[1]);
           reader.readAsDataURL(photoFile);
         });
-        const result = await githubUploadImage(path, base64, `Photo équipe : ${formData.prenom} ${formData.nom}`);
-        photoUrl = result.url;
-        photoPath = `assets/${path}`;
+        await githubUploadImage(ghPath, base64, `Photo équipe : ${formData.prenom} ${formData.nom}`);
         toast('Photo uploadée sur GitHub');
       } catch (err) {
         toast(`Erreur upload photo : ${err.message}`, 'error');
-        setUploading(false);
         return;
       }
-      setUploading(false);
+    } else if (photoFile && !hasGitHub()) {
+      toast('Token GitHub non configuré — photo non uploadée', 'error');
+      return;
     }
 
-    const updatedMember = {
-      ...formData,
-      photo: photoPath || photoUrl,
-    };
+    const updatedMember = { ...formData, photo: photoPath };
 
     if (editingCA !== null) {
       membres[editingCA] = updatedMember;
@@ -215,34 +157,17 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     handleChange('ca', 'membres', membres);
     setCaModal(false);
 
-    // Sync photo to linked author
-    const linkedId = formData.linkedAuthorId;
-    if (linkedId && (photoFile || photoPath)) {
-      await syncPhotoToAuthor(linkedId, photoPath, photoUrl);
+    // Sync photo to linked author if photo changed
+    const linkedId = formData.linkedAuthorId || findLinkedAuthor(formData)?.id;
+    if (linkedId && photoPath) {
+      await syncPhotoToAuthor(linkedId, photoPath);
       toast('Photo synchronisée avec l\'auteur');
-    }
-
-    // Auto-create author link if linking to an existing author
-    if (linkedId) {
-      const author = auteurs.find(a => a.id === linkedId);
-      if (author && photoPath && !photoFile) {
-        // If the CA member has a photo but no new upload, just ensure the link
-      }
-    }
-  };
-
-  // ─── Link/Unlink author ───
-  const handleLinkAuthor = (caIndex, authorId) => {
-    const membres = [...(equipe?.ca?.membres || [])];
-    if (membres[caIndex]) {
-      membres[caIndex] = { ...membres[caIndex], linkedAuthorId: authorId || '' };
-      handleChange('ca', 'membres', membres);
     }
   };
 
   // ─── Create author from CA member ───
   const createAuthorFromCA = async (membre) => {
-    if (!setAuteurs) return;
+    if (!setAuteurs) return null;
     const slug = slugify(membre.prenom, membre.nom);
     if (auteurs.find(a => a.id === slug)) {
       toast('Un auteur avec ce nom existe déjà', 'error');
@@ -256,7 +181,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
       role: membre.role || '',
       titre: membre.role || '',
       bio: membre.description || '',
-      photo: membre.photo || '',
+      photo: resolvePhotoUrl(membre.photo),
       photoPath: membre.photo || '',
       publications: 0,
     };
@@ -271,8 +196,8 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
       }
       if (saveToSite) {
         try {
-          await saveToSite('auteurs', updated.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
-            id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
+          await saveToSite('auteurs', updated.map(({ id, firstName, lastName, role, bio, photo, photoPath: pp, publications }) => ({
+            id, firstName, lastName, role, bio, photo: pp || photo || '', publications: publications || 0,
           })), `Création auteur depuis Équipe : ${membre.prenom} ${membre.nom}`);
         } catch { /* silent */ }
       }
@@ -351,7 +276,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     { key: 'linkedin', label: 'LinkedIn (URL)', placeholder: 'https://www.linkedin.com/in/…' },
   ];
 
-  // ─── CA Section with author linking ───
+  // ─── CA Section ───
   const renderCA = () => {
     const membres = equipe?.ca?.membres || [];
 
@@ -388,7 +313,8 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
                     width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
                     border: `2px solid ${COLORS.sky}`,
                   }}>
-                    <img src={membre.photo.startsWith('http') ? membre.photo : `https://raw.githubusercontent.com/${import.meta.env.VITE_GITHUB_OWNER || 'benedictefradin-cmd'}/${import.meta.env.VITE_GITHUB_SITE_REPO || 'institut-rousseau'}/main/${membre.photo.replace('assets/', '')}`}
+                    <img
+                      src={resolvePhotoUrl(membre.photo)}
                       alt={`${membre.prenom} ${membre.nom}`}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => { e.target.style.display = 'none'; }}
@@ -414,7 +340,9 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
                   </div>
                   <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
                     {linked ? (
-                      <span className="badge badge-green" style={{ fontSize: 10 }}>
+                      <span className="badge badge-green" style={{ fontSize: 10, cursor: onTabChange ? 'pointer' : 'default' }}
+                        onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('auteurs'); }}
+                        title="Voir la fiche auteur">
                         Auteur lié ({pubs.length} pub{pubs.length !== 1 ? 's' : ''})
                       </span>
                     ) : (
@@ -448,7 +376,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
                 </div>
               </div>
 
-              {/* Publications if linked */}
+              {/* Publications preview */}
               {linked && pubs.length > 0 && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-light)' }}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: COLORS.textLight }}>
@@ -625,22 +553,17 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
       </div>
 
       {caModal && (
-        <Modal onClose={() => { setCaModal(false); removePhoto(); }} title={editingCA !== null ? 'Modifier le membre du CA' : 'Ajouter un membre du CA'}>
+        <Modal onClose={() => setCaModal(false)} title={editingCA !== null ? 'Modifier le membre du CA' : 'Ajouter un membre du CA'}>
           <CAEditForm
-            initial={getCAForm()}
+            key={editingCA ?? 'new'}
+            initial={getCAInitial()}
             auteurs={auteurs}
-            articles={articles}
             findLinkedAuthor={findLinkedAuthor}
             getLinkedPublications={getLinkedPublications}
-            photoPreview={photoPreview}
-            photoFile={photoFile}
-            fileInputRef={fileInputRef}
-            handlePhotoSelect={handlePhotoSelect}
-            removePhoto={removePhoto}
-            uploading={uploading}
             onSave={handleCASave}
-            onClose={() => { setCaModal(false); removePhoto(); }}
+            onClose={() => setCaModal(false)}
             onCreateAuthor={createAuthorFromCA}
+            onTabChange={onTabChange}
             toast={toast}
             isEdit={editingCA !== null}
           />
@@ -650,36 +573,64 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
   );
 }
 
-// ─── CA Edit Form (separate component to manage local state) ───
-function CAEditForm({ initial, auteurs, articles, findLinkedAuthor, getLinkedPublications, photoPreview, photoFile, fileInputRef, handlePhotoSelect, removePhoto, uploading, onSave, onClose, onCreateAuthor, toast, isEdit }) {
+// ─── CA Edit Form — fully self-contained state ───
+function CAEditForm({ initial, auteurs, findLinkedAuthor, getLinkedPublications, onSave, onClose, onCreateAuthor, onTabChange, toast, isEdit }) {
   const [form, setForm] = useState({ ...initial });
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(initial.photo ? resolvePhotoUrl(initial.photo) : null);
+  const [uploading, setUploading] = useState(false);
   const [creatingAuthor, setCreatingAuthor] = useState(false);
+  const fileInputRef = useRef(null);
 
-  const linked = form.linkedAuthorId
-    ? auteurs.find(a => a.id === form.linkedAuthorId)
-    : findLinkedAuthor(form);
+  // Resolve linked author (explicit ID > auto-detect by name)
+  const effectiveLinked = useMemo(() => {
+    if (form.linkedAuthorId) {
+      return auteurs.find(a => a.id === form.linkedAuthorId) || null;
+    }
+    return findLinkedAuthor(form);
+  }, [form.prenom, form.nom, form.linkedAuthorId, auteurs]);
 
-  const linkedPubs = linked ? getLinkedPublications(linked) : [];
+  const autoDetected = !form.linkedAuthorId && effectiveLinked;
+  const effectivePubs = effectiveLinked ? getLinkedPublications(effectiveLinked) : [];
 
-  // Auto-detect linked author when name changes
-  const autoDetected = useMemo(() => {
-    if (form.linkedAuthorId) return null;
-    const detected = findLinkedAuthor(form);
-    return detected;
-  }, [form.prenom, form.nom, form.linkedAuthorId]);
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast('Veuillez sélectionner une image (JPG, PNG, WebP)', 'error');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast('La photo ne doit pas dépasser 2 Mo', 'error');
+      return;
+    }
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPhotoPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
 
-  const handleSubmit = (e) => {
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setForm(f => ({ ...f, photo: '' }));
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.prenom?.trim() || !form.nom?.trim()) {
       toast('Le prénom et le nom sont requis', 'error');
       return;
     }
-    // If auto-detected, set the link
+    setUploading(true);
     const finalForm = { ...form };
+    // Auto-link if detected
     if (!finalForm.linkedAuthorId && autoDetected) {
       finalForm.linkedAuthorId = autoDetected.id;
     }
-    onSave(finalForm);
+    await onSave(finalForm, photoFile);
+    setUploading(false);
   };
 
   const handleCreateAuthor = async () => {
@@ -690,9 +641,6 @@ function CAEditForm({ initial, auteurs, articles, findLinkedAuthor, getLinkedPub
     }
     setCreatingAuthor(false);
   };
-
-  const effectiveLinked = linked || autoDetected;
-  const effectivePubs = effectiveLinked ? getLinkedPublications(effectiveLinked) : [];
 
   return (
     <form onSubmit={handleSubmit}>
@@ -727,21 +675,14 @@ function CAEditForm({ initial, auteurs, articles, findLinkedAuthor, getLinkedPub
           onChange={handlePhotoSelect}
           style={{ display: 'none' }}
         />
-        {photoPreview || form.photo ? (
+        {photoPreview ? (
           <div className="photo-upload-preview">
-            <img
-              src={photoPreview || (form.photo?.startsWith('http') ? form.photo : `https://raw.githubusercontent.com/${import.meta.env.VITE_GITHUB_OWNER || 'benedictefradin-cmd'}/${import.meta.env.VITE_GITHUB_SITE_REPO || 'institut-rousseau'}/main/${(form.photo || '').replace('assets/', '')}`)}
-              alt="Aperçu"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
+            <img src={photoPreview} alt="Aperçu" onError={(e) => { e.target.style.display = 'none'; }} />
             <div className="photo-upload-actions">
               <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()}>
                 Changer
               </button>
-              <button type="button" className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={() => {
-                removePhoto();
-                setForm(f => ({ ...f, photo: '' }));
-              }}>
+              <button type="button" className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={removePhoto}>
                 Supprimer
               </button>
             </div>
@@ -753,9 +694,14 @@ function CAEditForm({ initial, auteurs, articles, findLinkedAuthor, getLinkedPub
             <span style={{ fontSize: 12, color: 'var(--text-light)' }}>JPG, PNG ou WebP — max 2 Mo</span>
           </div>
         )}
+        {!hasGitHub() && (
+          <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
+            Token GitHub requis pour stocker les photos (voir Config)
+          </p>
+        )}
         {effectiveLinked && (
           <p style={{ fontSize: 11, color: COLORS.green, marginTop: 4 }}>
-            La photo sera synchronisée avec la fiche auteur "{effectiveLinked.firstName} {effectiveLinked.lastName}"
+            La photo sera synchronisée avec la fiche auteur « {effectiveLinked.firstName} {effectiveLinked.lastName} »
           </p>
         )}
       </div>
@@ -769,7 +715,7 @@ function CAEditForm({ initial, auteurs, articles, findLinkedAuthor, getLinkedPub
       <div style={{ marginBottom: 16, padding: 12, backgroundColor: 'var(--bg-alt, #f8f9fa)', borderRadius: 8, border: '1px solid var(--border)' }}>
         <label style={{ fontWeight: 600, fontSize: 13 }}>Auteur lié</label>
 
-        {autoDetected && !form.linkedAuthorId && (
+        {autoDetected && (
           <div style={{ padding: '8px 0', fontSize: 12, color: COLORS.green }}>
             Auteur détecté automatiquement : <strong>{autoDetected.firstName} {autoDetected.lastName}</strong>
           </div>
@@ -788,12 +734,20 @@ function CAEditForm({ initial, auteurs, articles, findLinkedAuthor, getLinkedPub
           ))}
         </select>
 
-        {!effectiveLinked && form.prenom && form.nom && (
-          <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 8 }}
-            onClick={handleCreateAuthor} disabled={creatingAuthor}>
-            {creatingAuthor ? 'Création…' : `Créer "${form.prenom} ${form.nom}" comme auteur`}
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          {!effectiveLinked && form.prenom && form.nom && (
+            <button type="button" className="btn btn-outline btn-sm"
+              onClick={handleCreateAuthor} disabled={creatingAuthor}>
+              {creatingAuthor ? 'Création…' : `Créer « ${form.prenom} ${form.nom} » comme auteur`}
+            </button>
+          )}
+          {effectiveLinked && onTabChange && (
+            <button type="button" className="btn btn-outline btn-sm"
+              onClick={() => { onClose(); onTabChange('auteurs'); }}>
+              Voir la fiche auteur
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Linked publications */}

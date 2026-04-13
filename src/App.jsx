@@ -283,11 +283,11 @@ export default function App() {
       case 'evenements':
         return <Evenements events={events} setEvents={setEvents} loading={loading} toast={toast} saveToSite={saveToSite} />;
       case 'calendrier':
-        return <Calendrier socialPosts={socialPosts} setSocialPosts={setSocialPosts} rapports={rapports} setRapports={setRapports} extEvents={extEvents} setExtEvents={setExtEvents} toast={toast} />;
+        return <Calendrier socialPosts={socialPosts} setSocialPosts={setSocialPosts} rapports={rapports} setRapports={setRapports} extEvents={extEvents} setExtEvents={setExtEvents} events={events} toast={toast} onTabChange={changeTab} />;
       case 'presse':
         return <Presse presse={presse} setPresse={setPresse} sollicitations={sollicitations} loading={loading} toast={toast} saveToSite={saveToSite} />;
       case 'auteurs':
-        return <Auteurs auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} contenu={contenu} setContenu={setContenu} loading={loading} toast={toast} saveToSite={saveToSite} />;
+        return <Auteurs auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} contenu={contenu} setContenu={setContenu} loading={loading} toast={toast} saveToSite={saveToSite} onTabChange={changeTab} />;
       case 'newsletter':
         return <Newsletter subscribers={subscribers} setSubscribers={setSubscribers} campaigns={campaigns} loading={loading} connected={services.brevo} onRefresh={loadData} toast={toast} />;
       case 'messagerie':
@@ -303,7 +303,7 @@ export default function App() {
       case 'navigation':
         return <Navigation contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
       case 'equipe':
-        return <Equipe contenu={contenu} setContenu={setContenu} auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} toast={toast} saveToSite={saveToSite} />;
+        return <Equipe contenu={contenu} setContenu={setContenu} auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} toast={toast} saveToSite={saveToSite} onTabChange={changeTab} />;
       case 'technique':
         return <Technique toast={toast} />;
       case 'sollicitations':

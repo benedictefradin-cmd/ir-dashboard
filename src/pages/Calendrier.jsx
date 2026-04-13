@@ -101,7 +101,7 @@ const DOW_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 // ═══════════════════════════════════════════════════════════
 // COMPOSANT PRINCIPAL
 // ═══════════════════════════════════════════════════════════
-export default function Calendrier({ socialPosts, setSocialPosts, rapports, setRapports, extEvents, setExtEvents, toast }) {
+export default function Calendrier({ socialPosts, setSocialPosts, rapports, setRapports, extEvents, setExtEvents, events = [], toast, onTabChange }) {
   const [subTab, setSubTab] = useState('social');
 
   return (
@@ -128,7 +128,7 @@ export default function Calendrier({ socialPosts, setSocialPosts, rapports, setR
         </div>
 
         {subTab === 'social' && (
-          <SocialMediaCalendar posts={socialPosts} setPosts={setSocialPosts} toast={toast} />
+          <SocialMediaCalendar posts={socialPosts} setPosts={setSocialPosts} events={events} toast={toast} onTabChange={onTabChange} />
         )}
         {subTab === 'rapports' && (
           <RapportsFondations rapports={rapports} setRapports={setRapports} toast={toast} />

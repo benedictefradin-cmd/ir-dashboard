@@ -167,3 +167,63 @@ export const DEFAULT_PAGE_SIZE = 50;
 
 // ─── Site URL ────────────────────────────────────────
 export const SITE_URL = 'https://institut-rousseau-kb9p.vercel.app';
+
+// ─── Photo helpers ───────────────────────────────────
+const GITHUB_RAW_BASE = `https://raw.githubusercontent.com/${DEFAULT_GITHUB_OWNER}/${DEFAULT_GITHUB_SITE_REPO}/main`;
+
+/**
+ * Résout un chemin de photo vers une URL affichable.
+ * Gère les URLs absolues, les chemins assets/*, et les chemins relatifs.
+ */
+export function resolvePhotoUrl(photo) {
+  if (!photo) return '';
+  if (photo.startsWith('http')) return photo;
+  if (photo.startsWith('assets/')) return `${GITHUB_RAW_BASE}/${photo.replace('assets/', '')}`;
+  if (photo.startsWith('images/')) return `${GITHUB_RAW_BASE}/${photo}`;
+  return `${SITE_URL}/${photo}`;
+}
+
+/**
+ * Normalise un nom complet pour comparaison (minuscules, sans accents, trimmed).
+ */
+export function normalizeName(str) {
+  return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+/**
+ * Compare deux noms (prénom+nom) de façon exacte après normalisation.
+ */
+export function namesMatch(prenom1, nom1, prenom2, nom2) {
+  const a = normalizeName(`${prenom1} ${nom1}`);
+  const b = normalizeName(`${prenom2} ${nom2}`);
+  return a && b && a === b;
+}
+
+/**
+ * Trouve les publications liées à un auteur par correspondance exacte du nom complet.
+ * Gère les champs auteur multi-noms séparés par virgule, & ou "et".
+ * @param {{ firstName: string, lastName: string }} auteur
+ * @param {Array<{ author?: string }>} articles
+ * @returns {Array}
+ */
+export function findPublicationsForAuthor(auteur, articles) {
+  if (!auteur || !articles?.length) return [];
+  const fullName = normalizeName(`${auteur.firstName} ${auteur.lastName}`);
+  if (!fullName) return [];
+  return articles.filter(art => {
+    if (!art.author) return false;
+    const authorNames = art.author.split(/,|&|\bet\b/).map(s => normalizeName(s));
+    return authorNames.some(an => an === fullName);
+  });
+}
+
+/**
+ * Génère un chemin canonique pour la photo d'une personne.
+ * Toujours dans images/equipe/ pour garantir un seul fichier partagé.
+ */
+export function canonicalPhotoPath(prenom, nom, extension = 'jpg') {
+  const slug = `${prenom}-${nom}`.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  return `assets/images/equipe/${slug}.${extension}`;
+}

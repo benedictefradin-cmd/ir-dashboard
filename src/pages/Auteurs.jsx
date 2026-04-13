@@ -3,7 +3,7 @@ import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
-import { COLORS } from '../utils/constants';
+import { COLORS, resolvePhotoUrl, normalizeName, namesMatch, findPublicationsForAuthor, canonicalPhotoPath } from '../utils/constants';
 import useDebounce from '../hooks/useDebounce';
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
 
@@ -11,7 +11,7 @@ const emptyForm = { firstName: '', lastName: '', role: '', photo: '', bio: '', e
 
 const avatarColors = [COLORS.navy, COLORS.sky, COLORS.terra, COLORS.ochre, COLORS.green];
 
-export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setContenu, loading, toast, saveToSite }) {
+export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setContenu, loading, toast, saveToSite, onTabChange }) {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -22,18 +22,15 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
   const fileInputRef = useRef(null);
   const debouncedSearch = useDebounce(search, 150);
 
-  const normalize = (str) =>
-    (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
   const filtered = useMemo(() => {
     if (!debouncedSearch) return auteurs;
-    const q = normalize(debouncedSearch);
+    const q = normalizeName(debouncedSearch);
     return auteurs.filter(a =>
-      normalize(a.firstName).includes(q) ||
-      normalize(a.lastName).includes(q) ||
-      normalize(a.name).includes(q) ||
-      normalize(a.role).includes(q) ||
-      normalize(a.titre).includes(q)
+      normalizeName(a.firstName).includes(q) ||
+      normalizeName(a.lastName).includes(q) ||
+      normalizeName(a.name).includes(q) ||
+      normalizeName(a.role).includes(q) ||
+      normalizeName(a.titre).includes(q)
     );
   }, [auteurs, debouncedSearch]);
 
@@ -42,15 +39,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     return a.name || '';
   };
 
-  // Get publications linked to an author (by name matching)
-  const getLinkedPublications = (auteur) => {
-    if (!articles?.length) return [];
-    const name = getDisplayName(auteur).toLowerCase();
-    if (!name) return [];
-    return articles.filter(art =>
-      art.author && art.author.toLowerCase().includes(name)
-    );
-  };
+  const getLinkedPublications = (auteur) => findPublicationsForAuthor(auteur, articles);
 
   const getPublicationCount = (auteur) => {
     const linked = getLinkedPublications(auteur);
@@ -65,75 +54,55 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
 
   const getAvatarColor = (index) => avatarColors[index % avatarColors.length];
 
-  // Check if an author is also a team member
+  // ─── Team membership detection ───
   const getTeamRole = (auteur) => {
     if (!contenu?.equipe) return null;
-    const normName = (p, n) => `${p} ${n}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-    const target = normName(auteur.firstName, auteur.lastName);
-    if (!target) return null;
-
     const eq = contenu.equipe;
-    // CA
-    const caMatch = (eq?.ca?.membres || []).find(m => normName(m.prenom, m.nom) === target);
-    if (caMatch) return 'Membre du CA';
-    // Permanents
-    const permMatch = (eq?.equipe_permanente?.membres || []).find(m => normName(m.prenom, m.nom) === target);
-    if (permMatch) return 'Équipe permanente';
-    // Directions
+
+    const matchInList = (list) =>
+      (list || []).some(m => namesMatch(m.prenom, m.nom, auteur.firstName, auteur.lastName));
+
+    if (matchInList(eq?.ca?.membres)) return 'Membre du CA';
+    if (matchInList(eq?.equipe_permanente?.membres)) return 'Équipe permanente';
     if (eq?.directions) {
       for (const k of Object.keys(eq.directions)) {
-        if (k.endsWith('_membres')) {
-          const match = (eq.directions[k] || []).find(m => normName(m.prenom, m.nom) === target);
-          if (match) return 'Direction d\'études';
-        }
+        if (k.endsWith('_membres') && matchInList(eq.directions[k])) return 'Direction d\'études';
       }
     }
-    // CS
     if (eq?.conseil_scientifique) {
       for (const k of Object.keys(eq.conseil_scientifique)) {
-        if (k.endsWith('_membres')) {
-          const match = (eq.conseil_scientifique[k] || []).find(m => normName(m.prenom, m.nom) === target);
-          if (match) return 'Conseil scientifique';
-        }
+        if (k.endsWith('_membres') && matchInList(eq.conseil_scientifique[k])) return 'Conseil scientifique';
       }
     }
     return null;
   };
 
-  // Sync photo to team members in contenu.equipe (CA, directions, CS, permanents)
+  // ─── Sync photo to all matching team members in contenu.equipe ───
   const syncPhotoToEquipe = (firstName, lastName, photoPath) => {
     if (!setContenu || !contenu?.equipe) return;
-    const normName = (p, n) => `${p} ${n}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-    const targetName = normName(firstName, lastName);
-    if (!targetName) return;
+    if (!firstName || !lastName) return;
 
     let changed = false;
     const updated = JSON.parse(JSON.stringify(contenu));
     const eq = updated.equipe;
 
-    // Helper: sync photo in a member list
     const syncInList = (list) => {
       if (!Array.isArray(list)) return;
       list.forEach((m, i) => {
-        const mName = normName(m.prenom || '', m.nom || '');
-        if (mName === targetName && m.photo !== photoPath) {
+        if (namesMatch(m.prenom, m.nom, firstName, lastName) && m.photo !== photoPath) {
           list[i] = { ...m, photo: photoPath };
           changed = true;
         }
       });
     };
 
-    // CA
     syncInList(eq?.ca?.membres);
-    // Équipe permanente
     syncInList(eq?.equipe_permanente?.membres);
-    // Directions
     if (eq?.directions) {
       Object.keys(eq.directions).forEach(k => {
         if (k.endsWith('_membres')) syncInList(eq.directions[k]);
       });
     }
-    // Conseil scientifique
     if (eq?.conseil_scientifique) {
       Object.keys(eq.conseil_scientifique).forEach(k => {
         if (k.endsWith('_membres')) syncInList(eq.conseil_scientifique[k]);
@@ -142,13 +111,13 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
 
     if (changed) {
       setContenu(updated);
-      // Also save contenu to site
       if (saveToSite) {
         saveToSite('contenu', updated, `Sync photo équipe : ${firstName} ${lastName}`).catch(() => {});
       }
     }
   };
 
+  // ─── Photo handling ───
   const handlePhotoSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -208,19 +177,21 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     let photoUrl = form.photo;
+    let uploadedPath = null;
 
-    // Upload de la photo sur GitHub si un nouveau fichier est sélectionné
+    // Upload photo to GitHub — canonical equipe/ path shared with team members
     if (photoFile && hasGitHub()) {
       setUploading(true);
       try {
         const ext = photoFile.name.split('.').pop().toLowerCase() || 'jpg';
-        const path = `images/auteurs/${slug}.${ext}`;
+        uploadedPath = canonicalPhotoPath(form.firstName, form.lastName, ext);
+        const ghPath = uploadedPath.replace('assets/', '');
         const base64 = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result.split(',')[1]);
           reader.readAsDataURL(photoFile);
         });
-        const result = await githubUploadImage(path, base64, `Photo auteur : ${form.firstName} ${form.lastName}`);
+        const result = await githubUploadImage(ghPath, base64, `Photo auteur : ${form.firstName} ${form.lastName}`);
         photoUrl = result.url;
         toast('Photo uploadée sur GitHub');
       } catch (err) {
@@ -248,6 +219,10 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       publications: editId ? (auteurs.find(a => a.id === editId)?.publications || 0) : 0,
     };
 
+    // Detect if photo actually changed
+    const oldAuteur = editId ? auteurs.find(a => a.id === editId) : null;
+    const photoChanged = oldAuteur ? oldAuteur.photo !== photoUrl : !!photoUrl;
+
     let updatedList;
     if (editId) {
       updatedList = auteurs.map(a => a.id === editId ? { ...a, ...auteurData } : a);
@@ -260,7 +235,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     }
     setModalOpen(false);
 
-    // Persister dans authors.json via GitHub + sync vers le site
+    // Persist to GitHub
     if (hasGitHub()) {
       try {
         await saveAuthorsToGitHub(updatedList);
@@ -269,22 +244,21 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
         toast(`Erreur sync GitHub : ${err.message}`, 'error');
       }
 
-      // Sync auteurs.json sur le site repo
       if (saveToSite) {
         try {
           await saveToSite('auteurs', updatedList.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
             id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
           })), `Mise à jour auteur : ${form.firstName} ${form.lastName}`);
-        } catch { /* silent — already toasted from saveToSite */ }
+        } catch { /* silent */ }
       }
     }
 
     // Sync photo to team members if photo changed
-    if (photoUrl) {
-      const photoPath = photoUrl.startsWith('http')
-        ? `assets/images/auteurs/${slug}.${(photoFile?.name || 'jpg').split('.').pop()}`
-        : photoUrl;
-      syncPhotoToEquipe(form.firstName, form.lastName, photoPath);
+    if (photoChanged && photoUrl) {
+      const pathForEquipe = uploadedPath || (photoUrl.startsWith('http') ? '' : photoUrl);
+      if (pathForEquipe) {
+        syncPhotoToEquipe(form.firstName, form.lastName, pathForEquipe);
+      }
     }
   };
 
@@ -306,7 +280,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     }
   };
 
-  // Publications linked to the author being edited
+  // Publications for the author being edited
   const editingAuteur = editId ? auteurs.find(a => a.id === editId) : null;
   const linkedPubs = editingAuteur ? getLinkedPublications(editingAuteur) : [];
 
@@ -390,7 +364,12 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
                       {pubCount} publication{pubCount !== 1 ? 's' : ''}
                     </span>
                     {teamRole && (
-                      <span className="badge badge-green" style={{ fontSize: 10 }}>
+                      <span
+                        className="badge badge-green"
+                        style={{ fontSize: 10, cursor: onTabChange ? 'pointer' : 'default' }}
+                        onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('equipe'); }}
+                        title="Voir dans Équipe"
+                      >
                         {teamRole}
                       </span>
                     )}
@@ -461,6 +440,11 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
                   Token GitHub requis pour stocker les photos (voir Paramètres)
                 </p>
               )}
+              {editingAuteur && getTeamRole(editingAuteur) && (
+                <p style={{ fontSize: 11, color: COLORS.green, marginTop: 4 }}>
+                  La photo sera synchronisée avec la fiche équipe ({getTeamRole(editingAuteur)})
+                </p>
+              )}
             </div>
             <div style={{ marginBottom: 16 }}>
               <label>Biographie (max 200 car.)</label>
@@ -477,6 +461,20 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               <label>Email (optionnel, non affiché)</label>
               <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@exemple.fr" />
             </div>
+
+            {/* Team membership info */}
+            {editingAuteur && getTeamRole(editingAuteur) && (
+              <div style={{ marginBottom: 16, padding: 10, backgroundColor: COLORS.greenLight, borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="badge badge-green" style={{ fontSize: 10 }}>{getTeamRole(editingAuteur)}</span>
+                <span style={{ fontSize: 12 }}>Cet auteur est aussi membre de l'équipe.</span>
+                {onTabChange && (
+                  <button type="button" className="btn btn-outline btn-sm" style={{ marginLeft: 'auto', fontSize: 11 }}
+                    onClick={() => { setModalOpen(false); onTabChange('equipe'); }}>
+                    Voir dans Équipe
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Publications liées */}
             {editId && (
