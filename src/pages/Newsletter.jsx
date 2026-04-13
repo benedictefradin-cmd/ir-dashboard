@@ -186,13 +186,14 @@ export default function Newsletter({ subscribers, setSubscribers, campaigns, loa
         {subTab === 'contacts' && (
           <>
             {/* Recherche + filtres */}
-            <div className="flex-wrap mb-16">
+            <div className="filter-bar mb-16">
               <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un contact…" />
-              <div>
-                {[['all', 'Tous'], ['pending', 'En attente'], ['added', 'Ajoutés'], ['rejected', 'Refusés']].map(([k, l]) => (
-                  <span key={k} className={`pill${statusFilter === k ? ' active' : ''}`} onClick={() => setStatusFilter(k)}>{l}</span>
-                ))}
-              </div>
+              <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="filter-select">
+                <option value="all">Tous les statuts</option>
+                <option value="pending">En attente ({stats.pending})</option>
+                <option value="added">Ajoutés ({stats.added})</option>
+                <option value="rejected">Refusés</option>
+              </select>
               <div style={{ flex: 1 }} />
               <button className="btn btn-sky" onClick={() => setShowAdd(!showAdd)}>Ajouter un contact</button>
             </div>
@@ -223,6 +224,7 @@ export default function Newsletter({ subscribers, setSubscribers, campaigns, loa
               columns={columns}
               data={filtered}
               pageSize={20}
+              totalCount={subscribers.length}
               emptyMessage="Aucun abonné trouvé"
               footer={
                 <div style={{ padding: '10px 14px', fontSize: 13, color: 'var(--text-light)', display: 'flex', gap: 16 }}>

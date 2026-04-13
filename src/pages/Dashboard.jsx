@@ -106,7 +106,7 @@ export default function Dashboard({
 
       <div className="page-body">
         {/* ── KPI cards ──────────────────────────── */}
-        <div className="grid grid-5 mb-16">
+        <div className="grid grid-4 mb-16">
           <StatsCard
             label="Publications"
             value={pubStats.total}
@@ -124,23 +124,16 @@ export default function Dashboard({
           <StatsCard
             label="Newsletter"
             value={nlStats.total}
-            sub={nlStats.lastOpenRate != null ? `Dernier taux : ${nlStats.lastOpenRate} %` : 'abonnés'}
+            sub={nlStats.lastOpenRate != null ? `Ouverture : ${nlStats.lastOpenRate} %` : 'abonnés'}
             accentColor={COLORS.navy}
             onClick={() => onTabChange('newsletter')}
           />
           <StatsCard
-            label="Presse"
-            value={presseStats.total}
-            sub={`${presseStats.thisMonthCount} ce mois-ci`}
-            accentColor={COLORS.green}
-            onClick={() => onTabChange('presse')}
-          />
-          <StatsCard
-            label="Sollicitations"
-            value={newSollCount}
-            sub="en attente"
+            label="À traiter"
+            value={newSollCount + presseStats.thisMonthCount}
+            sub={`${newSollCount} sollicitation${newSollCount > 1 ? 's' : ''} · ${presseStats.thisMonthCount} presse`}
             accentColor={newSollCount > 0 ? COLORS.terra : COLORS.green}
-            onClick={() => onTabChange('sollicitations')}
+            onClick={() => onTabChange(newSollCount > 0 ? 'sollicitations' : 'presse')}
           />
         </div>
 

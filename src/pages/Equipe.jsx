@@ -51,7 +51,7 @@ function Avatar({ photo, prenom, nom, size = 48 }) {
   );
 }
 
-export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, articles = [], toast, saveToSite, onTabChange }) {
+export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, articles = [], toast, saveToSite, onTabChange, embedded }) {
   const [activeSection, setActiveSection] = useState('ca');
   const [saving, setSaving] = useState(false);
 
@@ -519,24 +519,8 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     </div>
   );
 
-  return (
+  const content = (
     <>
-      <div className="page-header">
-        <div>
-          <h1>Équipe</h1>
-          <p className="page-header-sub">{totalMembers} membre{totalMembers !== 1 ? 's' : ''} au total</p>
-        </div>
-        <div className="flex-center gap-8">
-          <ServiceBadge service="github" />
-          {saveToSite && hasGitHub() && (
-            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
-              {saving ? 'Publication…' : 'Publier sur le site'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="page-body">
         {/* Stats bar */}
         <div className="equipe-stats-bar">
           {SECTIONS.filter(s => s.count !== null).map(s => (
@@ -588,7 +572,6 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
             Les modifications seront visibles sur institut-rousseau.fr après publication.
           </span>
         </div>
-      </div>
 
       {/* ─── Unified member edit modal ─── */}
       {modalOpen && (
@@ -611,6 +594,30 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
           />
         </Modal>
       )}
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <>
+      <div className="page-header">
+        <div>
+          <h1>Équipe</h1>
+          <p className="page-header-sub">{totalMembers} membre{totalMembers !== 1 ? 's' : ''} au total</p>
+        </div>
+        <div className="flex-center gap-8">
+          <ServiceBadge service="github" />
+          {saveToSite && hasGitHub() && (
+            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
+              {saving ? 'Publication…' : 'Publier sur le site'}
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="page-body">
+        {content}
+      </div>
     </>
   );
 }

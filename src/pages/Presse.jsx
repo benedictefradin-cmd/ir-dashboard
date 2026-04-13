@@ -219,33 +219,21 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
       </div>
 
       <div className="page-body">
-        {/* Onglets */}
-        <div className="tab-group mb-16">
-          {TABS.map(tab => (
-            <button
-              key={tab}
-              className={`tab-item${activeTab === tab ? ' active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        {/* Recherche + filtre année */}
-        <div className="flex-wrap mb-16">
+        {/* Recherche + filtres */}
+        <div className="filter-bar mb-16">
           <SearchBar value={search} onChange={setSearch} placeholder="Rechercher titre, auteur, média…" />
-          <select
-            value={yearFilter}
-            onChange={e => setYearFilter(e.target.value)}
-            style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid var(--border)' }}
-          >
+          <select value={activeTab} onChange={e => setActiveTab(e.target.value)} className="filter-select">
+            <option value="Tribunes">Tribunes ({stats.tribune})</option>
+            <option value="Entretiens">Entretiens ({stats.entretien})</option>
+            <option value="Podcast">Podcast ({stats.podcast})</option>
+          </select>
+          <select value={yearFilter} onChange={e => setYearFilter(e.target.value)} className="filter-select">
             <option value="all">Toutes les années</option>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
 
-        <DataTable columns={columns} data={filtered} pageSize={15} emptyMessage="Aucune entrée presse trouvée" />
+        <DataTable columns={columns} data={filtered} pageSize={15} totalCount={presse.length} emptyMessage="Aucune entrée presse trouvée" />
 
         {/* Demandes de contact presse */}
         {(() => {

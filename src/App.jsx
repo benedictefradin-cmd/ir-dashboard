@@ -18,6 +18,7 @@ import Equipe from './pages/Equipe';
 import Technique from './pages/Technique';
 import Sollicitations from './pages/Sollicitations';
 import Calendrier from './pages/Calendrier';
+import PagesSite from './pages/PagesSite';
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
 import { fetchSollicitations } from './services/contact';
@@ -239,6 +240,7 @@ export default function App() {
     equipe: 0,
     technique: 0,
     sollicitations: sollicitations.filter(s => s.status === 'new').length,
+    pagessite: 0,
     settings: 0,
   };
 
@@ -292,6 +294,8 @@ export default function App() {
         return <Newsletter subscribers={subscribers} setSubscribers={setSubscribers} campaigns={campaigns} loading={loading} connected={services.brevo} onRefresh={loadData} toast={toast} />;
       case 'messagerie':
         return <Messagerie subscribers={subscribers} presse={presse} auteurs={auteurs} events={events} services={services} toast={toast} />;
+      case 'pagessite':
+        return <PagesSite contenu={contenu} setContenu={setContenu} auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} toast={toast} saveToSite={saveToSite} onTabChange={changeTab} />;
       case 'contenu':
         return <Contenu contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
       case 'accueil':
@@ -333,6 +337,11 @@ export default function App() {
       badges={badges}
       toasts={toasts}
       onRemoveToast={(id) => setToasts(prev => prev.filter(t => t.id !== id))}
+      articles={articles}
+      events={events}
+      presse={presse}
+      subscribers={subscribers}
+      sollicitations={sollicitations}
     >
       {renderPage()}
     </Layout>

@@ -13,7 +13,7 @@ const TABS = [
   { id: 'reseaux', label: 'Réseaux sociaux' },
 ];
 
-export default function Navigation({ contenu, setContenu, toast, saveToSite }) {
+export default function Navigation({ contenu, setContenu, toast, saveToSite, embedded }) {
   const [activeTab, setActiveTab] = useState('menu');
   const [saving, setSaving] = useState(false);
   const { markSaved } = useUnsavedGuard(contenu);
@@ -395,24 +395,8 @@ export default function Navigation({ contenu, setContenu, toast, saveToSite }) {
     );
   };
 
-  return (
+  const content = (
     <>
-      <div className="page-header">
-        <div>
-          <h1>Navigation & Footer</h1>
-          <p className="page-header-sub">Header, menus, dropdowns, boutons CTA, langues, footer, réseaux</p>
-        </div>
-        <div className="flex-center gap-8">
-          <ServiceBadge service="github" />
-          {saveToSite && hasGitHub() && (
-            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
-              {saving ? 'Publication…' : 'Publier'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="page-body">
         <div className="tab-group" style={{ flexWrap: 'wrap' }}>
           {TABS.map((tab) => (
             <button key={tab.id} className={`tab-item${activeTab === tab.id ? ' active' : ''}`}
@@ -435,6 +419,29 @@ export default function Navigation({ contenu, setContenu, toast, saveToSite }) {
             {saving ? 'Sauvegarde…' : 'Sauvegarder tout'}
           </button>
         </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <>
+      <div className="page-header">
+        <div>
+          <h1>Navigation & Footer</h1>
+          <p className="page-header-sub">Header, menus, dropdowns, boutons CTA, langues, footer, réseaux</p>
+        </div>
+        <div className="flex-center gap-8">
+          <ServiceBadge service="github" />
+          {saveToSite && hasGitHub() && (
+            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
+              {saving ? 'Publication…' : 'Publier'}
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="page-body">
+        {content}
       </div>
     </>
   );

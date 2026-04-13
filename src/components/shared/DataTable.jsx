@@ -1,20 +1,39 @@
 import { useState, useMemo } from 'react';
 
 /**
- * Tableau générique avec pagination.
- * @param {Array} columns - [{ key, label, render?, width?, align? }]
- * @param {Array} data - Lignes de données
+ * Tableau générique avec pagination, tri par colonne et compteur filtré.
+ * @param {Array} columns - [{ key, label, render?, width?, align?, sortable? }]
+ * @param {Array} data - Lignes de données (filtrées)
  * @param {number} pageSize - Items par page (défaut 20)
  * @param {Function} onRowClick - Optionnel
  * @param {React.ReactNode} footer - Contenu additionnel sous le tableau
+ * @param {number} totalCount - Nombre total avant filtrage (optionnel)
+ * @param {Object} emptyAction - { label, onClick } pour le bouton de l'état vide
  */
-export default function DataTable({ columns, data, pageSize = 20, onRowClick, footer, emptyMessage, rowClassName }) {
+export default function DataTable({ columns, data, pageSize = 20, onRowClick, footer, emptyMessage, rowClassName, totalCount, emptyAction }) {
   const [page, setPage] = useState(0);
+  const [sortCol, setSortCol] = useState(null);
+  const [sortDir, setSortDir] = useState('asc');
 
-  const totalPages = Math.ceil((data?.length || 0) / pageSize);
-  const pageData = useMemo(() => {
-    return (data || []).slice(page * pageSize, (page + 1) * pageSize);
-  }, [data, page, pageSize]);
+  // Tri
+  const sorted = useMemo(() => {
+    if (!sortCol || !data) return data || [];
+    const col = columns.find(c => c.key === sortCol);
+    if (!col || col.sortable === false) return data;
+    return [...data].sort((a, b) => {
+      let va = a[sortCol], vb = b[sortCol];
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === 'string') va = va.toLowerCase();
+      if (typeof vb === 'string') vb = vb.toLowerCase();
+      if (va < vb) return sortDir === 'asc' ? -1 : 1;
+      if (va > vb) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data, sortCol, sortDir, columns]);
+
+  const totalPages = Math.ceil((sorted.length || 0) / pageSize);
+  const pageData = useMemo(() => sorted.slice(page * pageSize, (page + 1) * pageSize), [sorted, page, pageSize]);
 
   // Reset page quand les données changent
   useMemo(() => {
@@ -22,12 +41,28 @@ export default function DataTable({ columns, data, pageSize = 20, onRowClick, fo
     if (totalPages === 0) setPage(0);
   }, [totalPages]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleSort = (key) => {
+    const col = columns.find(c => c.key === key);
+    if (col?.sortable === false || key === 'actions') return;
+    if (sortCol === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortCol(key);
+      setSortDir('asc');
+    }
+  };
+
   if (!data || data.length === 0) {
     return (
       <div className="card">
         <div className="empty-state">
           <div className="empty-icon">{'\u{1F4CB}'}</div>
           <p>{emptyMessage || 'Aucune donnée à afficher'}</p>
+          {emptyAction && (
+            <button className="btn btn-primary btn-sm" style={{ marginTop: 12 }} onClick={emptyAction.onClick}>
+              {emptyAction.label}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -40,8 +75,26 @@ export default function DataTable({ columns, data, pageSize = 20, onRowClick, fo
           <thead>
             <tr>
               {columns.map(col => (
-                <th key={col.key} style={{ width: col.width, textAlign: col.align || 'left' }}>
+                <th
+                  key={col.key}
+                  style={{
+                    width: col.width,
+                    textAlign: col.align || 'left',
+                    cursor: col.sortable !== false && col.key !== 'actions' ? 'pointer' : 'default',
+                    userSelect: 'none',
+                    position: 'sticky',
+                    top: 0,
+                    background: 'var(--white)',
+                    zIndex: 2,
+                  }}
+                  onClick={() => handleSort(col.key)}
+                >
                   {col.label}
+                  {sortCol === col.key && (
+                    <span style={{ marginLeft: 4, fontSize: 11, opacity: 0.6 }}>
+                      {sortDir === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
                 </th>
               ))}
             </tr>
@@ -66,7 +119,10 @@ export default function DataTable({ columns, data, pageSize = 20, onRowClick, fo
       </div>
 
       <div className="table-footer">
-        <span>{data.length} résultat{data.length > 1 ? 's' : ''}</span>
+        <span>
+          {sorted.length} résultat{sorted.length > 1 ? 's' : ''}
+          {totalCount != null && totalCount !== sorted.length && ` sur ${totalCount}`}
+        </span>
 
         {totalPages > 1 && (
           <div className="pagination">

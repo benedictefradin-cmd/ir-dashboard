@@ -53,7 +53,7 @@ const PAGE_GROUPS = [
 
 const ALL_PAGES = PAGE_GROUPS.flatMap(g => g.pages);
 
-export default function Contenu({ contenu, setContenu, toast, saveToSite }) {
+export default function Contenu({ contenu, setContenu, toast, saveToSite, embedded }) {
   const [activePage, setActivePage] = useState('projet');
   const [preview, setPreview] = useState({});
   const [saving, setSaving] = useState(false);
@@ -591,24 +591,8 @@ export default function Contenu({ contenu, setContenu, toast, saveToSite }) {
 
   const activeLabel = ALL_PAGES.find(p => p.id === activePage)?.label || '';
 
-  return (
+  const content = (
     <>
-      <div className="page-header">
-        <div>
-          <h1>Contenu du site</h1>
-          <p className="page-header-sub">Toutes les pages statiques — {ALL_PAGES.length} pages</p>
-        </div>
-        <div className="flex-center gap-8">
-          <ServiceBadge service="github" />
-          {saveToSite && hasGitHub() && (
-            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
-              {saving ? 'Publication…' : 'Publier sur le site'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="page-body">
         {/* Sélecteur de page par groupes */}
         {PAGE_GROUPS.map((group) => (
           <div key={group.group} style={{ marginBottom: 8 }}>
@@ -644,6 +628,29 @@ export default function Contenu({ contenu, setContenu, toast, saveToSite }) {
             try { await triggerRebuild(); toast('Rebuild déclenché'); } catch (e) { toast(e.message, 'error'); }
           }}>Rebuild site</button>
         </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <>
+      <div className="page-header">
+        <div>
+          <h1>Contenu du site</h1>
+          <p className="page-header-sub">Toutes les pages statiques — {ALL_PAGES.length} pages</p>
+        </div>
+        <div className="flex-center gap-8">
+          <ServiceBadge service="github" />
+          {saveToSite && hasGitHub() && (
+            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
+              {saving ? 'Publication…' : 'Publier sur le site'}
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="page-body">
+        {content}
       </div>
     </>
   );

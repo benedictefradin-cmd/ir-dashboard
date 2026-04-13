@@ -13,7 +13,7 @@ const SECTIONS = [
   { id: 'cta', label: 'Appels à l\'action' },
 ];
 
-export default function Accueil({ contenu, setContenu, toast, saveToSite }) {
+export default function Accueil({ contenu, setContenu, toast, saveToSite, embedded }) {
   const [activeSection, setActiveSection] = useState('hero');
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState({});
@@ -283,24 +283,8 @@ export default function Accueil({ contenu, setContenu, toast, saveToSite }) {
     </>
   );
 
-  return (
+  const content = (
     <>
-      <div className="page-header">
-        <div>
-          <h1>Page d'accueil</h1>
-          <p className="page-header-sub">Hero, citations, chiffres clés, partenaires</p>
-        </div>
-        <div className="flex-center gap-8">
-          <ServiceBadge service="github" />
-          {saveToSite && hasGitHub() && (
-            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
-              {saving ? 'Publication…' : 'Publier sur le site'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="page-body">
         <div className="tab-group">
           {SECTIONS.map((s) => (
             <button
@@ -329,6 +313,29 @@ export default function Accueil({ contenu, setContenu, toast, saveToSite }) {
             try { await triggerRebuild(); toast('Rebuild déclenché'); } catch (e) { toast(e.message, 'error'); }
           }}>Rebuild site</button>
         </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <>
+      <div className="page-header">
+        <div>
+          <h1>Page d'accueil</h1>
+          <p className="page-header-sub">Hero, citations, chiffres clés, partenaires</p>
+        </div>
+        <div className="flex-center gap-8">
+          <ServiceBadge service="github" />
+          {saveToSite && hasGitHub() && (
+            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
+              {saving ? 'Publication…' : 'Publier sur le site'}
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="page-body">
+        {content}
       </div>
     </>
   );

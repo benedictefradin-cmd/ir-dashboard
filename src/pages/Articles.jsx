@@ -7,11 +7,13 @@ import AuthorPicker from '../components/shared/AuthorPicker';
 import MultiSelect from '../components/shared/MultiSelect';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
-import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL } from '../utils/constants';
+import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL, TARGET_LANGUAGES } from '../utils/constants';
 import { hasGitHub, insertHtmlInPage, formatDateSite } from '../services/github';
 import { fetchArticleContent, updateArticleStatus, hasNotion } from '../services/notion';
 import { loadLocal } from '../utils/localStorage';
 import useDebounce from '../hooks/useDebounce';
+import ARTICLE_TEMPLATES from '../data/articleTemplates';
+import PublishWithTranslation from '../components/articles/PublishWithTranslation';
 
 // ─── Notion status mapping ─────────────────────────
 const NOTION_STATUS_MAP = {
@@ -49,6 +51,7 @@ export default function Articles({
 
   // ─── Publish flow state ───────────────────────
   const [publishFlow, setPublishFlow] = useState(null); // { article, step: 1|2|3 }
+  const [showPublishTranslation, setShowPublishTranslation] = useState(false);
   const [selectedAuthors, setSelectedAuthors] = useState([]);
   const [previewHtml, setPreviewHtml] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -342,6 +345,7 @@ export default function Articles({
 
   const closeForm = () => {
     setShowForm(false);
+    setShowPublishTranslation(false);
     setEditingArt(null);
     setForm({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '' });
   };
@@ -479,12 +483,10 @@ export default function Articles({
             onChange={setThemeFilter}
             options={THEMATIQUES.map(t => ({ value: t, label: t }))}
           />
-          <MultiSelect
-            label="Type"
-            selected={typeFilter}
-            onChange={setTypeFilter}
-            options={PUB_TYPES.map(t => ({ value: t, label: t }))}
-          />
+          <select className="filter-select" value={typeFilter[0] || ''} onChange={e => setTypeFilter(e.target.value ? [e.target.value] : [])}>
+            <option value="">Tous les types</option>
+            {PUB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
           {(statusFilter.length > 0 || themeFilter.length > 0 || typeFilter.length > 0) && (
             <button
               className="btn btn-outline btn-sm"
@@ -521,6 +523,7 @@ export default function Articles({
           columns={columns}
           data={filtered}
           pageSize={15}
+          totalCount={allArticles.length}
           emptyMessage="Aucune publication trouvée"
           rowClassName={rowClassName}
         />
@@ -556,15 +559,58 @@ export default function Articles({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
                 <label>Type</label>
-                <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+                <select value={form.type} onChange={e => {
+                  const newType = e.target.value;
+                  setForm(f => ({ ...f, type: newType }));
+                  // Si article nouveau et contenu vide, proposer la trame
+                  if (!editingArt && !form.content && ARTICLE_TEMPLATES[newType]) {
+                    if (window.confirm(`Charger la trame "${newType}" dans l'éditeur ?`)) {
+                      setForm(f => ({ ...f, type: newType, content: ARTICLE_TEMPLATES[newType].skeleton }));
+                    }
+                  }
+                }}>
                   {PUB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
+                {ARTICLE_TEMPLATES[form.type] && (
+                  <span style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 2, display: 'block' }}>
+                    Cible : {ARTICLE_TEMPLATES[form.type].estimatedWords}
+                  </span>
+                )}
               </div>
               <div>
                 <label>Lien PDF (optionnel)</label>
                 <input value={form.pdfUrl} onChange={e => setForm({ ...form, pdfUrl: e.target.value })} placeholder="https://..." />
               </div>
             </div>
+
+            {/* Guide de rédaction + bouton trame */}
+            {ARTICLE_TEMPLATES[form.type]?.guide && (
+              <div style={{ marginBottom: 16 }}>
+                <label>Guide de rédaction</label>
+                <div className="template-guide">
+                  {ARTICLE_TEMPLATES[form.type].guide.map((g, i) => (
+                    <div key={i} className="template-guide-item">
+                      <div className="template-guide-section">{g.section}</div>
+                      <div className="template-guide-hint">{g.hint}</div>
+                    </div>
+                  ))}
+                </div>
+                {ARTICLE_TEMPLATES[form.type] && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    style={{ width: '100%', marginTop: 8 }}
+                    onClick={() => {
+                      if (!form.content || window.confirm('Remplacer le contenu actuel par la trame ?')) {
+                        setForm(f => ({ ...f, content: ARTICLE_TEMPLATES[f.type].skeleton }));
+                      }
+                    }}
+                  >
+                    📋 Charger la trame
+                  </button>
+                )}
+              </div>
+            )}
 
             <div style={{ marginBottom: 16 }}>
               <label>Publication programmée (optionnel)</label>
@@ -601,8 +647,59 @@ export default function Articles({
 
             <div className="modal-footer">
               <button className="btn btn-outline" onClick={closeForm}>Annuler</button>
-              <button className="btn btn-primary" onClick={saveArticle}>{editingArt ? 'Sauvegarder' : 'Créer'}</button>
+              <button className="btn btn-sky" onClick={saveArticle}>{editingArt ? 'Sauvegarder' : 'Brouillon'}</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  if (!form.title.trim()) { toast('Le titre est obligatoire', 'error'); return; }
+                  if (!form.content.trim()) { toast('Le contenu est obligatoire', 'error'); return; }
+                  setShowPublishTranslation(true);
+                }}
+                disabled={!form.title.trim() || !form.content.trim()}
+              >
+                Publier ({TARGET_LANGUAGES.length + 1} langues)
+              </button>
             </div>
+
+            {showPublishTranslation && (
+              <PublishWithTranslation
+                article={{
+                  id: editingArt?.id || `pub-${Date.now()}`,
+                  slug: form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+                  date: editingArt?.date || new Date().toISOString().split('T')[0],
+                  type: form.type,
+                  tags: form.tags,
+                  author: form.author,
+                  pdfUrl: form.pdfUrl,
+                  fr: { title: form.title, summary: form.summary, content: form.content },
+                }}
+                onPublished={(finalArticle) => {
+                  // Mettre à jour ou ajouter l'article localement
+                  if (editingArt) {
+                    setArticles(prev => prev.map(a => a.id === editingArt.id ? {
+                      ...a,
+                      ...finalArticle,
+                      title: finalArticle.fr.title,
+                      summary: finalArticle.fr.summary,
+                      content: finalArticle.fr.content,
+                      synced: true,
+                    } : a));
+                  } else {
+                    setArticles(prev => [{
+                      ...finalArticle,
+                      title: finalArticle.fr.title,
+                      summary: finalArticle.fr.summary,
+                      content: finalArticle.fr.content,
+                      synced: true,
+                    }, ...prev]);
+                  }
+                  toast('Article publié dans toutes les langues');
+                  closeForm();
+                }}
+                onClose={() => setShowPublishTranslation(false)}
+                toast={toast}
+              />
+            )}
           </Modal>
         )}
 

@@ -373,17 +373,17 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
             onChange={setSearch}
             placeholder="Rechercher nom, email, message…"
           />
-          <MultiSelect
-            label={`Statut (${stats.total})`}
-            selected={filterStatus}
-            onChange={v => { setFilterStatus(v); setPage(1); }}
-            options={[
-              { value: 'new', label: `Nouveau (${stats.newCount})` },
-              { value: 'in_progress', label: `En cours (${stats.inProgress})` },
-              { value: 'resolved', label: `Résolu (${stats.resolved})` },
-              { value: 'archived', label: `Archivé (${stats.archived})` },
-            ]}
-          />
+          <select
+            className="filter-select"
+            value={filterStatus[0] || ''}
+            onChange={e => { setFilterStatus(e.target.value ? [e.target.value] : []); setPage(1); }}
+          >
+            <option value="">Tous les statuts</option>
+            <option value="new">Nouveau ({stats.newCount})</option>
+            <option value="in_progress">En cours ({stats.inProgress})</option>
+            <option value="resolved">Résolu ({stats.resolved})</option>
+            <option value="archived">Archivé ({stats.archived})</option>
+          </select>
           <MultiSelect
             label="Sujet"
             selected={filterSubject}

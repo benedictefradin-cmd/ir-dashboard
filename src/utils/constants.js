@@ -22,31 +22,52 @@ export const COLORS = {
   grayText: '#6B6560',
 };
 
-// ─── Navigation ───────────────────────────────────────
-export const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', icon: '⌂' },
-  { key: 'separator-1', type: 'separator' },
-  { key: 'articles', label: 'Publications', icon: '\u{1F4C4}' },
-  { key: 'evenements', label: 'Événements', icon: '\u{1F4C5}' },
-  { key: 'calendrier', label: 'Calendrier', icon: '\u{1F5D3}' },
-  { key: 'presse', label: 'Presse', icon: '\u{1F4F0}' },
-  { key: 'auteurs', label: 'Auteurs', icon: '\u{1F465}' },
-  { key: 'separator-2', type: 'separator' },
-  { key: 'newsletter', label: 'Newsletter', icon: '✉' },
-  { key: 'messagerie', label: 'Messagerie', icon: '\u{1F4AC}' },
-  { key: 'separator-3', type: 'separator' },
-  { key: 'accueil', label: 'Accueil', icon: '\u{1F3E0}' },
-  { key: 'contenu', label: 'Contenu', icon: '✎' },
-  { key: 'equipe', label: 'Équipe', icon: '\u{1F464}' },
-  { key: 'navigation', label: 'Navigation', icon: '\u{1F517}' },
-  { key: 'medias', label: 'Médias', icon: '\u{1F5BC}' },
-  { key: 'seo', label: 'SEO', icon: '\u{1F50D}' },
-  { key: 'technique', label: 'Technique', icon: '\u{2699}' },
-  { key: 'separator-4', type: 'separator' },
-  { key: 'sollicitations', label: 'Sollicitations', icon: '\u{1F4EC}' },
-  { key: 'separator-5', type: 'separator' },
-  { key: 'settings', label: 'Config', icon: '⚙' },
+// ─── Navigation (groupée) ─────────────────────────────
+export const NAV_GROUPS = [
+  {
+    key: 'main',
+    items: [
+      { key: 'dashboard', label: 'Dashboard', icon: '⌂' },
+    ],
+  },
+  {
+    key: 'editorial',
+    label: 'Éditorial',
+    defaultOpen: true,
+    items: [
+      { key: 'articles', label: 'Publications', icon: '\u{1F4C4}' },
+      { key: 'evenements', label: 'Événements', icon: '\u{1F4C5}' },
+      { key: 'presse', label: 'Presse', icon: '\u{1F4F0}' },
+      { key: 'auteurs', label: 'Auteurs', icon: '\u{1F465}' },
+    ],
+  },
+  {
+    key: 'communication',
+    label: 'Communication',
+    defaultOpen: false,
+    items: [
+      { key: 'newsletter', label: 'Newsletter', icon: '✉' },
+      { key: 'messagerie', label: 'Messagerie', icon: '\u{1F4AC}' },
+      { key: 'calendrier', label: 'Calendrier', icon: '\u{1F5D3}' },
+      { key: 'sollicitations', label: 'Sollicitations', icon: '\u{1F4EC}' },
+    ],
+  },
+  {
+    key: 'site',
+    label: 'Site & Config',
+    defaultOpen: false,
+    items: [
+      { key: 'pagessite', label: 'Pages du site', icon: '\u{1F3E0}' },
+      { key: 'seo', label: 'SEO', icon: '\u{1F50D}' },
+      { key: 'medias', label: 'Médias', icon: '\u{1F5BC}' },
+      { key: 'technique', label: 'Technique', icon: '\u{2699}' },
+      { key: 'settings', label: 'Config', icon: '⚙' },
+    ],
+  },
 ];
+
+// Flat array pour rétrocompatibilité des badges
+export const NAV_ITEMS = NAV_GROUPS.flatMap(g => g.items);
 
 // ─── Catégories et sources ──────────────────────────
 export const CATEGORIES = [
@@ -141,6 +162,17 @@ Bonne lecture,
 L’Institut Rousseau`,
   },
 };
+
+// ─── Langues du site ─────────────────────────────────
+export const SITE_LANGUAGES = [
+  { code: 'fr', label: 'Français', flag: '🇫🇷', isSource: true },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+];
+
+export const TARGET_LANGUAGES = SITE_LANGUAGES.filter(l => !l.isSource);
+export const SOURCE_LANGUAGE = SITE_LANGUAGES.find(l => l.isSource);
 
 // ─── LocalStorage keys ────────────────────────────────
 export const LS_PREFIX = 'ir-dash-';
