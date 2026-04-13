@@ -5,15 +5,22 @@ import { COLORS, resolvePhotoUrl, normalizeName, namesMatch, findPublicationsFor
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
 
 const CS_CATEGORIES = [
-  { id: 'droit', label: 'Droit & Institutions' },
-  { id: 'economie', label: 'Économie' },
-  { id: 'idees', label: 'Idées & Société' },
-  { id: 'culture', label: 'Culture' },
-  { id: 'ecologie', label: 'Écologie' },
-  { id: 'international', label: 'International' },
+  { id: 'droit', label: 'Droit & Institutions', icon: '⚖️' },
+  { id: 'economie', label: 'Économie', icon: '📈' },
+  { id: 'idees', label: 'Idées & Société', icon: '💡' },
+  { id: 'culture', label: 'Culture', icon: '🎨' },
+  { id: 'ecologie', label: 'Écologie', icon: '🌿' },
+  { id: 'international', label: 'International', icon: '🌍' },
 ];
 
-const DIRECTION_THEMES = ['Écologie', 'Économie', 'Institutions', 'Social', 'International', 'Culture'];
+const DIRECTION_THEMES = [
+  { name: 'Écologie', icon: '🌿' },
+  { name: 'Économie', icon: '📈' },
+  { name: 'Institutions', icon: '🏛️' },
+  { name: 'Social', icon: '🤝' },
+  { name: 'International', icon: '🌍' },
+  { name: 'Culture', icon: '🎨' },
+];
 
 function slugify(prenom, nom) {
   return `${prenom}-${nom}`.toLowerCase()
@@ -22,90 +29,24 @@ function slugify(prenom, nom) {
 }
 
 // ─── Shared avatar component ───
-function Avatar({ photo, prenom, nom, size = 44 }) {
+function Avatar({ photo, prenom, nom, size = 48 }) {
   const initials = (prenom || '?').charAt(0).toUpperCase();
   if (photo) {
     return (
-      <div style={{
-        width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-        border: `2px solid ${COLORS.sky}`,
-      }}>
+      <div className="equipe-avatar" style={{ width: size, height: size }}>
         <img
           src={resolvePhotoUrl(photo)}
           alt={`${prenom} ${nom}`}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.style.display = 'none'; }}
         />
       </div>
     );
   }
   return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', backgroundColor: COLORS.navy,
-      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.45, fontWeight: 700, fontFamily: "'Cormorant Garamond', serif", flexShrink: 0,
+    <div className="equipe-avatar equipe-avatar-placeholder" style={{
+      width: size, height: size, fontSize: size * 0.42,
     }}>
       {initials}
-    </div>
-  );
-}
-
-// ─── Shared photo upload widget ───
-function PhotoUpload({ photo, onFileSelect, onRemove, fileInputRef, linkedInfo }) {
-  const [preview, setPreview] = useState(photo ? resolvePhotoUrl(photo) : null);
-
-  const handleSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    onFileSelect(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setPreview(ev.target.result);
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemove = () => {
-    setPreview(null);
-    onRemove();
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ fontWeight: 600, fontSize: 13 }}>Photo</label>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        onChange={handleSelect}
-        style={{ display: 'none' }}
-      />
-      {preview ? (
-        <div className="photo-upload-preview">
-          <img src={preview} alt="Aperçu" onError={(e) => { e.target.style.display = 'none'; }} />
-          <div className="photo-upload-actions">
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()}>
-              Changer
-            </button>
-            <button type="button" className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={handleRemove}>
-              Supprimer
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="photo-upload-zone" onClick={() => fileInputRef.current?.click()}>
-          <span style={{ fontSize: 32, marginBottom: 4 }}>&#128247;</span>
-          <span>Cliquez pour ajouter une photo</span>
-          <span style={{ fontSize: 12, color: 'var(--text-light)' }}>JPG, PNG ou WebP — max 2 Mo</span>
-        </div>
-      )}
-      {!hasGitHub() && (
-        <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
-          Token GitHub requis pour stocker les photos (voir Config)
-        </p>
-      )}
-      {linkedInfo && (
-        <p style={{ fontSize: 11, color: COLORS.green, marginTop: 4 }}>{linkedInfo}</p>
-      )}
     </div>
   );
 }
@@ -114,11 +55,11 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
   const [activeSection, setActiveSection] = useState('ca');
   const [saving, setSaving] = useState(false);
 
-  // Modal state for all sections
+  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalSection, setModalSection] = useState(null);   // 'ca', 'equipe_permanente', etc.
-  const [modalListKey, setModalListKey] = useState(null);    // e.g. 'membres', 'ecologie_membres'
-  const [editingIndex, setEditingIndex] = useState(null);    // null = add, number = edit
+  const [modalSection, setModalSection] = useState(null);
+  const [modalListKey, setModalListKey] = useState(null);
+  const [editingIndex, setEditingIndex] = useState(null);
   const [modalFields, setModalFields] = useState([]);
   const [modalTitle, setModalTitle] = useState('');
   const [modalHasPhoto, setModalHasPhoto] = useState(false);
@@ -126,21 +67,22 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
 
   const equipe = contenu?.equipe || {};
 
-  // ─── Counts for tabs ───
+  // ─── Counts ───
   const countCA = (equipe?.ca?.membres || []).length;
   const countDirections = DIRECTION_THEMES.reduce((sum, t) => {
-    const key = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const key = t.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     return sum + (equipe?.directions?.[`${key}_membres`] || []).length;
   }, 0);
   const countCS = CS_CATEGORIES.reduce((sum, c) => sum + (equipe?.conseil_scientifique?.[`${c.id}_membres`] || []).length, 0);
   const countPerm = (equipe?.equipe_permanente?.membres || []).length;
+  const totalMembers = countCA + countDirections + countCS + countPerm;
 
   const SECTIONS = [
-    { id: 'ca', label: 'Conseil d\'administration', count: countCA },
-    { id: 'directions', label: 'Directions d\'études', count: countDirections },
-    { id: 'conseil_scientifique', label: 'Conseil scientifique', count: countCS },
-    { id: 'equipe_permanente', label: 'Équipe permanente', count: countPerm },
-    { id: 'page_settings', label: 'En-tête de page', count: null },
+    { id: 'ca', label: 'Conseil d\'administration', count: countCA, icon: '🏛️' },
+    { id: 'directions', label: 'Directions d\'études', count: countDirections, icon: '📚' },
+    { id: 'conseil_scientifique', label: 'Conseil scientifique', count: countCS, icon: '🔬' },
+    { id: 'equipe_permanente', label: 'Équipe permanente', count: countPerm, icon: '👥' },
+    { id: 'page_settings', label: 'En-tête de page', count: null, icon: '⚙️' },
   ];
 
   // ─── Find linked author ───
@@ -236,7 +178,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     return slug;
   };
 
-  // ─── Open modal for editing/adding a member ───
+  // ─── Open modal ───
   const openMemberModal = ({ section, listKey, index, fields, title, hasPhoto = false, hasAuthorLink = false }) => {
     setModalSection(section);
     setModalListKey(listKey);
@@ -263,7 +205,6 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     const items = [...(equipe?.[modalSection]?.[modalListKey] || [])];
     let photoPath = formData.photo || '';
 
-    // Upload photo if provided
     if (photoFile && hasGitHub()) {
       try {
         const ext = photoFile.name.split('.').pop().toLowerCase() || 'jpg';
@@ -296,7 +237,6 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     handleChange(modalSection, modalListKey, items);
     setModalOpen(false);
 
-    // Sync photo to linked author
     if (modalHasAuthorLink && photoPath) {
       const linkedId = formData.linkedAuthorId || findLinkedAuthor(formData)?.id;
       if (linkedId) {
@@ -306,7 +246,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     }
   };
 
-  // ─── Reorder / Delete helpers ───
+  // ─── Reorder / Delete ───
   const moveMember = (section, listKey, index, direction) => {
     const items = [...(equipe?.[section]?.[listKey] || [])];
     const target = index + direction;
@@ -316,11 +256,11 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
   };
 
   const deleteMember = (section, listKey, index, name) => {
-    if (!window.confirm(`Supprimer ${name} ?`)) return;
+    if (!window.confirm(`Supprimer ${name} ? Cette action est irréversible.`)) return;
     handleChange(section, listKey, (equipe?.[section]?.[listKey] || []).filter((_, i) => i !== index));
   };
 
-  // ─── Shared field configs ───
+  // ─── Field configs ───
   const caFields = [
     { key: 'prenom', label: 'Prénom *', placeholder: 'Jean', required: true },
     { key: 'nom', label: 'Nom *', placeholder: 'Dupont', required: true },
@@ -343,57 +283,54 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     { key: 'role', label: 'Rôle', placeholder: 'Directrice d\'études' },
   ];
 
-  // ─── Visual member card (used across all sections) ───
-  const MemberCard = ({ membre, index, section, listKey, total, fields, hasPhoto = false, hasAuthorLink = false, cardTitle }) => {
+  // ─── Visual member card ───
+  const MemberCard = ({ membre, index, section, listKey, total, fields, hasPhoto = false, hasAuthorLink = false }) => {
     const linked = hasAuthorLink ? findLinkedAuthor(membre) : null;
     const pubs = linked ? getLinkedPublications(linked) : [];
     const name = [membre.prenom, membre.nom].filter(Boolean).join(' ') || `#${index + 1}`;
 
     return (
-      <div className="card mb-8" style={{ padding: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="equipe-member-card">
+        <div className="equipe-member-card-main">
           {/* Reorder */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <button className="btn btn-outline btn-sm" onClick={() => moveMember(section, listKey, index, -1)}
-              disabled={index === 0} style={{ padding: '2px 6px', fontSize: 10 }}>{'\u25B2'}</button>
-            <button className="btn btn-outline btn-sm" onClick={() => moveMember(section, listKey, index, 1)}
-              disabled={index === total - 1} style={{ padding: '2px 6px', fontSize: 10 }}>{'\u25BC'}</button>
+          <div className="equipe-reorder">
+            <button className="equipe-reorder-btn" onClick={() => moveMember(section, listKey, index, -1)}
+              disabled={index === 0} title="Monter">{'▲'}</button>
+            <button className="equipe-reorder-btn" onClick={() => moveMember(section, listKey, index, 1)}
+              disabled={index === total - 1} title="Descendre">{'▼'}</button>
           </div>
 
           {/* Avatar */}
-          <Avatar photo={membre.photo} prenom={membre.prenom} nom={membre.nom} size={44} />
+          <Avatar photo={membre.photo} prenom={membre.prenom} nom={membre.nom} size={48} />
 
           {/* Info */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{name}</div>
-            <div style={{ fontSize: 12, color: COLORS.textLight }}>{membre.role || '—'}</div>
-            <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+          <div className="equipe-member-info">
+            <div className="equipe-member-name">{name}</div>
+            <div className="equipe-member-role">{membre.role || '—'}</div>
+            <div className="equipe-member-badges">
               {hasAuthorLink && linked && (
-                <span className="badge badge-green" style={{ fontSize: 10, cursor: onTabChange ? 'pointer' : 'default' }}
+                <span className="badge badge-green"
+                  style={{ cursor: onTabChange ? 'pointer' : 'default' }}
                   onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('auteurs'); }}
                   title="Voir la fiche auteur">
                   Auteur lié ({pubs.length} pub{pubs.length !== 1 ? 's' : ''})
                 </span>
               )}
               {hasAuthorLink && !linked && (
-                <span className="badge badge-ochre" style={{ fontSize: 10 }}>Pas d'auteur lié</span>
+                <span className="badge badge-ochre">Pas d'auteur lié</span>
               )}
               {membre.linkedin && (
                 <a href={membre.linkedin} target="_blank" rel="noopener noreferrer"
-                  className="badge badge-sky" style={{ fontSize: 10, textDecoration: 'none' }}
+                  className="badge badge-sky" style={{ textDecoration: 'none' }}
                   onClick={e => e.stopPropagation()}>LinkedIn</a>
               )}
-              {hasPhoto && membre.photo && (
-                <span className="badge badge-green" style={{ fontSize: 10 }}>Photo</span>
-              )}
-              {hasPhoto && !membre.photo && (
-                <span className="badge badge-ochre" style={{ fontSize: 10 }}>Pas de photo</span>
-              )}
+              {hasPhoto && membre.photo && <span className="badge badge-green">Photo</span>}
+              {hasPhoto && !membre.photo && <span className="badge badge-ochre">Pas de photo</span>}
             </div>
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          <div className="equipe-member-actions">
             <button className="btn btn-outline btn-sm" onClick={() => openMemberModal({
               section, listKey, index, fields, hasPhoto, hasAuthorLink,
               title: `Modifier — ${name}`,
@@ -405,18 +342,18 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
 
         {/* Publications preview for linked authors */}
         {linked && pubs.length > 0 && (
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-light)' }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: COLORS.textLight }}>Publications ({pubs.length})</label>
-            <div style={{ maxHeight: 100, overflowY: 'auto', marginTop: 4 }}>
-              {pubs.slice(0, 5).map(pub => (
-                <div key={pub.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 0', fontSize: 12 }}>
-                  <span className={`badge badge-${pub.status === 'published' ? 'green' : 'ochre'}`} style={{ fontSize: 9, flexShrink: 0 }}>
+          <div className="equipe-member-pubs">
+            <label>Publications ({pubs.length})</label>
+            <div className="equipe-member-pubs-list">
+              {pubs.slice(0, 3).map(pub => (
+                <div key={pub.id} className="equipe-member-pub-item">
+                  <span className={`badge badge-${pub.status === 'published' ? 'green' : 'ochre'}`}>
                     {pub.status === 'published' ? 'Publié' : 'Brouillon'}
                   </span>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pub.title}</span>
+                  <span className="equipe-member-pub-title">{pub.title}</span>
                 </div>
               ))}
-              {pubs.length > 5 && <div style={{ fontSize: 11, color: COLORS.textLight, marginTop: 2 }}>… et {pubs.length - 5} autre{pubs.length - 5 > 1 ? 's' : ''}</div>}
+              {pubs.length > 3 && <div style={{ fontSize: 11, color: COLORS.textLight, marginTop: 2 }}>… et {pubs.length - 3} autre{pubs.length - 3 > 1 ? 's' : ''}</div>}
             </div>
           </div>
         )}
@@ -428,44 +365,49 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
   const renderCA = () => {
     const membres = equipe?.ca?.membres || [];
     return (
-      <>
-        <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 16 }}>
+      <div className="equipe-section-content">
+        <div className="equipe-section-desc">
           Membres du Conseil d'administration — liés aux fiches auteurs pour synchroniser photos et publications.
-        </p>
-        {membres.map((membre, i) => (
-          <MemberCard key={i} membre={membre} index={i} total={membres.length}
-            section="ca" listKey="membres" fields={caFields}
-            hasPhoto hasAuthorLink />
-        ))}
-        <button className="btn btn-outline" style={{ marginTop: 8 }} onClick={() => openMemberModal({
+        </div>
+        <div className="equipe-member-list">
+          {membres.map((membre, i) => (
+            <MemberCard key={i} membre={membre} index={i} total={membres.length}
+              section="ca" listKey="membres" fields={caFields}
+              hasPhoto hasAuthorLink />
+          ))}
+        </div>
+        <button className="btn btn-outline equipe-add-btn" onClick={() => openMemberModal({
           section: 'ca', listKey: 'membres', index: null, fields: caFields,
           title: 'Ajouter un membre du CA', hasPhoto: true, hasAuthorLink: true,
         })}>+ Ajouter un membre du CA</button>
-      </>
+      </div>
     );
   };
 
   // ─── Section: Directions ───
   const renderDirections = () => (
-    <>
-      <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 16 }}>
+    <div className="equipe-section-content">
+      <div className="equipe-section-desc">
         Directions d'études thématiques — chaque direction a un titre, une description et une liste de membres.
-      </p>
+      </div>
       {DIRECTION_THEMES.map(theme => {
-        const key = theme.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const key = theme.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const listKey = `${key}_membres`;
         const membres = equipe?.directions?.[listKey] || [];
         return (
-          <div key={theme} className="card mb-16" style={{ padding: 20 }}>
-            <h3 style={{ fontSize: 15, marginBottom: 8 }}>
-              Direction — {theme}
-              <span className="badge badge-sky" style={{ marginLeft: 8, fontSize: 11 }}>{membres.length}</span>
-            </h3>
+          <div key={theme.name} className="equipe-direction-card">
+            <div className="equipe-direction-header">
+              <span className="equipe-direction-icon">{theme.icon}</span>
+              <h3 className="equipe-direction-title">
+                Direction — {theme.name}
+                <span className="badge badge-sky" style={{ marginLeft: 8 }}>{membres.length}</span>
+              </h3>
+            </div>
             <div style={{ marginBottom: 8 }}>
               <label style={{ fontSize: 12 }}>Titre de la direction</label>
               <input value={equipe?.directions?.[`${key}_titre`] || ''}
                 onChange={(e) => handleChange('directions', `${key}_titre`, e.target.value)}
-                placeholder={`Direction d'études ${theme}`} />
+                placeholder={`Direction d'études ${theme.name}`} />
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={{ fontSize: 12 }}>Description</label>
@@ -474,73 +416,83 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
                 rows={3} placeholder="Cette direction travaille sur…" />
             </div>
             <label style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, display: 'block' }}>Membres de la direction</label>
-            {membres.map((membre, i) => (
-              <MemberCard key={i} membre={membre} index={i} total={membres.length}
-                section="directions" listKey={listKey} fields={simpleMemberFields} />
-            ))}
-            <button className="btn btn-outline" style={{ marginTop: 4 }} onClick={() => openMemberModal({
-              section: 'directions', listKey, index: null, fields: simpleMemberFields,
-              title: `Ajouter un membre — ${theme}`,
+            <div className="equipe-member-list">
+              {membres.map((membre, i) => (
+                <MemberCard key={i} membre={membre} index={i} total={membres.length}
+                  section="directions" listKey={listKey} fields={fullMemberFields}
+                  hasPhoto hasAuthorLink />
+              ))}
+            </div>
+            <button className="btn btn-outline equipe-add-btn" onClick={() => openMemberModal({
+              section: 'directions', listKey, index: null, fields: fullMemberFields,
+              title: `Ajouter un membre — ${theme.name}`, hasPhoto: true, hasAuthorLink: true,
             })}>+ Ajouter un membre</button>
           </div>
         );
       })}
-    </>
+    </div>
   );
 
   // ─── Section: Conseil scientifique ───
   const renderConseilScientifique = () => (
-    <>
-      <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 16 }}>
+    <div className="equipe-section-content">
+      <div className="equipe-section-desc">
         Membres du Conseil scientifique, organisés par domaine d'expertise.
-      </p>
+      </div>
       {CS_CATEGORIES.map(cat => {
         const listKey = `${cat.id}_membres`;
         const membres = equipe?.conseil_scientifique?.[listKey] || [];
         return (
-          <div key={cat.id} className="card mb-16" style={{ padding: 20 }}>
-            <h3 style={{ fontSize: 15, marginBottom: 8 }}>
-              {cat.label}
-              <span className="badge badge-sky" style={{ marginLeft: 8, fontSize: 11 }}>{membres.length}</span>
-            </h3>
-            {membres.map((membre, i) => (
-              <MemberCard key={i} membre={membre} index={i} total={membres.length}
-                section="conseil_scientifique" listKey={listKey} fields={fullMemberFields} hasPhoto />
-            ))}
-            <button className="btn btn-outline" style={{ marginTop: 4 }} onClick={() => openMemberModal({
+          <div key={cat.id} className="equipe-direction-card">
+            <div className="equipe-direction-header">
+              <span className="equipe-direction-icon">{cat.icon}</span>
+              <h3 className="equipe-direction-title">
+                {cat.label}
+                <span className="badge badge-sky" style={{ marginLeft: 8 }}>{membres.length}</span>
+              </h3>
+            </div>
+            <div className="equipe-member-list">
+              {membres.map((membre, i) => (
+                <MemberCard key={i} membre={membre} index={i} total={membres.length}
+                  section="conseil_scientifique" listKey={listKey} fields={fullMemberFields} hasPhoto hasAuthorLink />
+              ))}
+            </div>
+            <button className="btn btn-outline equipe-add-btn" onClick={() => openMemberModal({
               section: 'conseil_scientifique', listKey, index: null, fields: fullMemberFields,
-              title: `Ajouter un expert — ${cat.label}`, hasPhoto: true,
+              title: `Ajouter un expert — ${cat.label}`, hasPhoto: true, hasAuthorLink: true,
             })}>+ Ajouter un expert</button>
           </div>
         );
       })}
-    </>
+    </div>
   );
 
   // ─── Section: Équipe permanente ───
   const renderEquipePermanente = () => {
     const membres = equipe?.equipe_permanente?.membres || [];
     return (
-      <>
-        <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 16 }}>
+      <div className="equipe-section-content">
+        <div className="equipe-section-desc">
           Salariés et collaborateurs permanents de l'Institut.
-        </p>
-        {membres.map((membre, i) => (
-          <MemberCard key={i} membre={membre} index={i} total={membres.length}
-            section="equipe_permanente" listKey="membres" fields={fullMemberFields} hasPhoto />
-        ))}
-        <button className="btn btn-outline" style={{ marginTop: 8 }} onClick={() => openMemberModal({
+        </div>
+        <div className="equipe-member-list">
+          {membres.map((membre, i) => (
+            <MemberCard key={i} membre={membre} index={i} total={membres.length}
+              section="equipe_permanente" listKey="membres" fields={fullMemberFields} hasPhoto hasAuthorLink />
+          ))}
+        </div>
+        <button className="btn btn-outline equipe-add-btn" onClick={() => openMemberModal({
           section: 'equipe_permanente', listKey: 'membres', index: null, fields: fullMemberFields,
-          title: 'Ajouter un membre permanent', hasPhoto: true,
+          title: 'Ajouter un membre permanent', hasPhoto: true, hasAuthorLink: true,
         })}>+ Ajouter un membre</button>
-      </>
+      </div>
     );
   };
 
   // ─── Section: Page settings ───
   const renderPageSettings = () => (
-    <>
-      <div className="card mb-16" style={{ padding: 20 }}>
+    <div className="equipe-section-content">
+      <div className="equipe-direction-card">
         <h3 style={{ fontSize: 15, marginBottom: 12 }}>En-tête de la page Équipe</h3>
         <div style={{ marginBottom: 12 }}>
           <label>Titre</label>
@@ -552,7 +504,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
             placeholder="L'Institut Rousseau rassemble des chercheurs…" />
         </div>
       </div>
-      <div className="card mb-16" style={{ padding: 20 }}>
+      <div className="equipe-direction-card">
         <h3 style={{ fontSize: 15, marginBottom: 12 }}>Appel à l'action (bas de page)</h3>
         <div style={{ marginBottom: 12 }}>
           <label>Titre CTA</label>
@@ -564,7 +516,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
             placeholder="Vous êtes chercheur, universitaire…" />
         </div>
       </div>
-    </>
+    </div>
   );
 
   return (
@@ -572,7 +524,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
       <div className="page-header">
         <div>
           <h1>Équipe</h1>
-          <p className="page-header-sub">CA, directions d'études, conseil scientifique, permanents</p>
+          <p className="page-header-sub">{totalMembers} membre{totalMembers !== 1 ? 's' : ''} au total</p>
         </div>
         <div className="flex-center gap-8">
           <ServiceBadge service="github" />
@@ -585,30 +537,38 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
       </div>
 
       <div className="page-body">
+        {/* Stats bar */}
+        <div className="equipe-stats-bar">
+          {SECTIONS.filter(s => s.count !== null).map(s => (
+            <button
+              key={s.id}
+              className={`equipe-stat-item${activeSection === s.id ? ' active' : ''}`}
+              onClick={() => setActiveSection(s.id)}
+            >
+              <span className="equipe-stat-icon">{s.icon}</span>
+              <span className="equipe-stat-count">{s.count}</span>
+              <span className="equipe-stat-label">{s.label}</span>
+            </button>
+          ))}
+        </div>
+
         {/* Live-site banner */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', marginBottom: 16,
-          background: 'linear-gradient(135deg, rgba(26, 35, 75, 0.06), rgba(74, 144, 226, 0.08))',
-          borderRadius: 10, border: '1px solid rgba(74, 144, 226, 0.2)', fontSize: 13,
-        }}>
-          <span style={{ fontSize: 18 }}>&#127760;</span>
+        <div className="equipe-site-banner">
+          <span style={{ fontSize: 16 }}>&#127760;</span>
           <span>
-            <strong>Lié au site en ligne</strong> — Chaque modification publiée ici met à jour la page Équipe du site institut-rousseau.fr en temps réel.
-            Modifiez un membre, changez sa photo, cliquez « Publier » : c'est en ligne.
+            <strong>Lié au site en ligne</strong> — chaque modification publiée met à jour la page Équipe sur institut-rousseau.fr.
           </span>
         </div>
 
-        {/* Tabs with counts */}
+        {/* Section tabs */}
         <div className="tab-group" style={{ flexWrap: 'wrap' }}>
           {SECTIONS.map((s) => (
             <button key={s.id} className={`tab-item${activeSection === s.id ? ' active' : ''}`}
               onClick={() => setActiveSection(s.id)}>
+              <span style={{ marginRight: 6 }}>{s.icon}</span>
               {s.label}
               {s.count !== null && (
-                <span style={{
-                  marginLeft: 6, padding: '1px 7px', borderRadius: 10, fontSize: 11, fontWeight: 600,
-                  backgroundColor: activeSection === s.id ? 'rgba(255,255,255,0.25)' : 'rgba(26,35,75,0.08)',
-                }}>{s.count}</span>
+                <span className="equipe-tab-count">{s.count}</span>
               )}
             </button>
           ))}
@@ -620,7 +580,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
         {activeSection === 'equipe_permanente' && renderEquipePermanente()}
         {activeSection === 'page_settings' && renderPageSettings()}
 
-        <div className="flex-wrap gap-8" style={{ marginTop: 24 }}>
+        <div className="equipe-footer-actions">
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
             {saving ? 'Sauvegarde…' : 'Publier sur le site'}
           </button>
@@ -664,7 +624,6 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
   const [creatingAuthor, setCreatingAuthor] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Author linking
   const effectiveLinked = useMemo(() => {
     if (!hasAuthorLink) return null;
     if (form.linkedAuthorId) return auteurs.find(a => a.id === form.linkedAuthorId) || null;
@@ -717,7 +676,6 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
 
   return (
     <form onSubmit={handleSubmit}>
-      {/* Grouped name fields on same row */}
       {fields.some(f => f.key === 'prenom') && fields.some(f => f.key === 'nom') ? (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
@@ -757,7 +715,6 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
         ))
       )}
 
-      {/* Photo upload */}
       {hasPhoto && (
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontWeight: 600, fontSize: 13 }}>Photo</label>
@@ -790,9 +747,8 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
         </div>
       )}
 
-      {/* Author linking */}
       {hasAuthorLink && (
-        <div style={{ marginBottom: 16, padding: 12, backgroundColor: 'var(--bg-alt, #f8f9fa)', borderRadius: 8, border: '1px solid var(--border)' }}>
+        <div className="equipe-author-link-section">
           <label style={{ fontWeight: 600, fontSize: 13 }}>Auteur lié</label>
           {autoDetected && (
             <div style={{ padding: '8px 0', fontSize: 12, color: COLORS.green }}>
@@ -821,7 +777,6 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
         </div>
       )}
 
-      {/* Linked publications */}
       {hasAuthorLink && effectiveLinked && (
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontWeight: 600 }}>Publications liées ({effectivePubs.length})</label>

@@ -138,6 +138,7 @@ export function normalizeEvents(events) {
     lienInscription: e.lienInscription || '',
     lienConcours: e.lienConcours || '',
     status: e.status || 'confirme',
+    externe: e.externe || false,
   }));
 }
 

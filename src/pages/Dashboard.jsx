@@ -124,7 +124,7 @@ export default function Dashboard({
           <StatsCard
             label="Newsletter"
             value={nlStats.total}
-            sub={nlStats.lastOpenRate != null ? `Dernier taux : ${nlStats.lastOpenRate}\u00a0%` : 'abonnés'}
+            sub={nlStats.lastOpenRate != null ? `Dernier taux : ${nlStats.lastOpenRate} %` : 'abonnés'}
             accentColor={COLORS.navy}
             onClick={() => onTabChange('newsletter')}
           />

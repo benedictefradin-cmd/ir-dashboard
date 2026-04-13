@@ -131,8 +131,8 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
     setPublishingId('all');
     try {
       if (hasGitHub() && saveToSite) {
-        const cleanEvents = events.map(({ id, date, type, title, sousTitre, lieu, intervenants, partenaire, description, lienInscription, status }) => ({
-          id, date, type, title, sousTitre, lieu, intervenants: (intervenants || []).filter(i => i.name), partenaire, description, lienInscription, status,
+        const cleanEvents = events.map(({ id, date, type, title, sousTitre, lieu, intervenants, partenaire, description, lienInscription, status, externe }) => ({
+          id, date, type, title, sousTitre, lieu, intervenants: (intervenants || []).filter(i => i.name), partenaire, description, lienInscription, status, externe: externe || false,
         }));
         await saveToSite('events', cleanEvents, 'Mise à jour événements depuis le back-office');
         toast('Événements publiés sur le site');
@@ -210,7 +210,7 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
         {showForm && (
           <div className="card mb-24 slide-down" style={{ padding: 24 }}>
             <div className="flex-between mb-16">
-              <h3>{editingEvt ? "Modifier l\u2019\u00e9v\u00e9nement" : "Nouvel \u00e9v\u00e9nement"}</h3>
+              <h3>{editingEvt ? "Modifier l’événement" : "Nouvel événement"}</h3>
               {!editingEvt && (
                 <div className="flex-center gap-8">
                   <span
@@ -227,6 +227,17 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
                   </span>
                 </div>
               )}
+            </div>
+
+            {/* ── Toggle externe (commun aux deux modes) ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '10px 14px', borderRadius: 'var(--radius-sm)', background: form.externe ? 'var(--ochre-light)' : 'var(--cream)', border: `1px solid ${form.externe ? 'var(--ochre)' : 'var(--border)'}`, transition: 'all 0.2s', cursor: 'pointer' }} onClick={() => setField('externe', !form.externe)}>
+              <label className="toggle-switch" onClick={e => e.stopPropagation()}>
+                <input type="checkbox" checked={form.externe} onChange={e => setField('externe', e.target.checked)} />
+                <span className="toggle-slider" />
+              </label>
+              <span style={{ fontSize: 14, fontWeight: 500, color: form.externe ? '#9A7B1A' : 'var(--text-light)' }}>
+                {form.externe ? '🔗 Événement extérieur' : 'Événement organisé par l’IR'}
+              </span>
             </div>
 
             {/* ── Mode texte à trou ──────────────── */}
@@ -309,21 +320,14 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <label style={{ margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <input type="checkbox" checked={form.externe} onChange={e => setField('externe', e.target.checked)} />
-                    Événement extérieur (non organisé par l'IR)
-                  </label>
-                </div>
-
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 16 }}>
-                  <div><label>Titre *</label><input value={form.title} onChange={e => setField('title', e.target.value)} placeholder="Titre de l\u2019événement" /></div>
+                  <div><label>Titre *</label><input value={form.title} onChange={e => setField('title', e.target.value)} placeholder="Titre de l’événement" /></div>
                   <div><label>Sous-titre</label><input value={form.sousTitre} onChange={e => setField('sousTitre', e.target.value)} placeholder="Optionnel" /></div>
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
                   <label>Description</label>
-                  <textarea rows={3} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="Description de l\u2019événement" />
+                  <textarea rows={3} value={form.description} onChange={e => setField('description', e.target.value)} placeholder="Description de l’événement" />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>

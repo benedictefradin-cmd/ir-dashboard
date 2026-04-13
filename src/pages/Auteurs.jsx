@@ -12,10 +12,10 @@ const emptyForm = { firstName: '', lastName: '', role: '', photo: '', bio: '', e
 const avatarColors = [COLORS.navy, COLORS.sky, COLORS.terra, COLORS.ochre, COLORS.green];
 
 const SORT_OPTIONS = [
-  { value: 'alpha', label: 'A \u2192 Z' },
-  { value: 'alpha-desc', label: 'Z \u2192 A' },
-  { value: 'pubs', label: 'Publications \u2193' },
-  { value: 'recent', label: 'R\u00e9cents d\u2019abord' },
+  { value: 'alpha', label: 'A → Z' },
+  { value: 'alpha-desc', label: 'Z → A' },
+  { value: 'pubs', label: 'Publications ↓' },
+  { value: 'recent', label: 'Récents d’abord' },
 ];
 
 export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setContenu, loading, toast, saveToSite, onTabChange }) {
@@ -62,7 +62,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     });
 
     return list;
-  }, [auteurs, debouncedSearch, sortBy]);
+  }, [auteurs, debouncedSearch, sortBy, articles]);
 
   const getDisplayName = (a) => {
     if (a.firstName && a.lastName) return `${a.firstName} ${a.lastName}`;
@@ -98,10 +98,10 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       (list || []).some(m => namesMatch(m.prenom, m.nom, auteur.firstName, auteur.lastName));
 
     if (matchInList(eq?.ca?.membres)) return 'Membre du CA';
-    if (matchInList(eq?.equipe_permanente?.membres)) return '\u00c9quipe permanente';
+    if (matchInList(eq?.equipe_permanente?.membres)) return 'Équipe permanente';
     if (eq?.directions) {
       for (const k of Object.keys(eq.directions)) {
-        if (k.endsWith('_membres') && matchInList(eq.directions[k])) return 'Direction d\u2019\u00e9tudes';
+        if (k.endsWith('_membres') && matchInList(eq.directions[k])) return 'Direction d’études';
       }
     }
     if (eq?.conseil_scientifique) {
@@ -147,7 +147,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     if (changed) {
       setContenu(updated);
       if (saveToSite) {
-        saveToSite('contenu', updated, `Sync photo \u00e9quipe : ${firstName} ${lastName}`).catch(() => {});
+        saveToSite('contenu', updated, `Sync photo équipe : ${firstName} ${lastName}`).catch(() => {});
       }
     }
   };
@@ -157,11 +157,11 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      toast('Veuillez s\u00e9lectionner une image (JPG, PNG, WebP)', 'error');
+      toast('Veuillez sélectionner une image (JPG, PNG, WebP)', 'error');
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      toast('La photo ne doit pas d\u00e9passer 2 Mo', 'error');
+      toast('La photo ne doit pas dépasser 2 Mo', 'error');
       return;
     }
     setPhotoFile(file);
@@ -203,12 +203,12 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.firstName.trim() || !form.lastName.trim()) {
-      toast('Le pr\u00e9nom et le nom sont requis', 'error');
+      toast('Le prénom et le nom sont requis', 'error');
       return;
     }
 
     const slug = `${form.firstName}-${form.lastName}`.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     let photoUrl = form.photo;
@@ -229,7 +229,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
         });
         const result = await githubUploadImage(ghPath, base64, `Photo auteur : ${form.firstName} ${form.lastName}`);
         photoUrl = result.url;
-        toast('Photo upload\u00e9e sur GitHub');
+        toast('Photo uploadée sur GitHub');
       } catch (err) {
         toast(`Erreur upload photo : ${err.message}`, 'error');
         setUploading(false);
@@ -237,7 +237,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       }
       setUploading(false);
     } else if (photoFile && !hasGitHub()) {
-      toast('Token GitHub non configur\u00e9 \u2014 photo non upload\u00e9e', 'error');
+      toast('Token GitHub non configuré — photo non uploadée', 'error');
       setUploading(false);
       return;
     }
@@ -262,11 +262,11 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     if (editId) {
       updatedList = auteurs.map(a => a.id === editId ? { ...a, ...auteurData } : a);
       setAuteurs(updatedList);
-      toast('Auteur mis \u00e0 jour');
+      toast('Auteur mis à jour');
     } else {
       updatedList = [...auteurs, auteurData];
       setAuteurs(updatedList);
-      toast('Auteur ajout\u00e9');
+      toast('Auteur ajouté');
     }
     setModalOpen(false);
 
@@ -274,7 +274,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     if (hasGitHub()) {
       try {
         await saveAuthorsToGitHub(updatedList);
-        toast('authors.json mis \u00e0 jour sur GitHub');
+        toast('authors.json mis à jour sur GitHub');
       } catch (err) {
         toast(`Erreur sync GitHub : ${err.message}`, 'error');
       }
@@ -283,7 +283,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
         try {
           await saveToSite('auteurs', updatedList.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
             id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
-          })), `Mise \u00e0 jour auteur : ${form.firstName} ${form.lastName}`);
+          })), `Mise à jour auteur : ${form.firstName} ${form.lastName}`);
         } catch { /* silent */ }
       }
     }
@@ -298,11 +298,11 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
   };
 
   const handleDelete = async (auteur) => {
-    if (!window.confirm(`Supprimer ${getDisplayName(auteur)} ? Cette action est irr\u00e9versible.`)) return;
+    if (!window.confirm(`Supprimer ${getDisplayName(auteur)} ? Cette action est irréversible.`)) return;
     const updatedList = auteurs.filter(a => a.id !== auteur.id);
     setAuteurs(updatedList);
     setModalOpen(false);
-    toast('Auteur supprim\u00e9');
+    toast('Auteur supprimé');
     if (hasGitHub()) {
       try { await saveAuthorsToGitHub(updatedList); } catch { /* silent */ }
       if (saveToSite) {
@@ -335,7 +335,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       <div className="page-header">
         <div>
           <h1>Auteurs</h1>
-          <p className="page-header-sub">{auteurs.length} auteur{auteurs.length !== 1 ? 's' : ''} enregistr\u00e9{auteurs.length !== 1 ? 's' : ''}</p>
+          <p className="page-header-sub">{auteurs.length} auteur{auteurs.length !== 1 ? 's' : ''} enregistré{auteurs.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex-center gap-8">
           <ServiceBadge service="notion" />
@@ -368,14 +368,14 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
           <div className="auteur-stat-divider" />
           <div className="auteur-stat">
             <span className="auteur-stat-value">{teamMembers}</span>
-            <span className="auteur-stat-label">Membres \u00e9quipe</span>
+            <span className="auteur-stat-label">Membres équipe</span>
           </div>
         </div>
 
         {/* Search + Sort */}
         <div className="auteur-toolbar">
           <div style={{ flex: 1 }}>
-            <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un auteur\u2026" />
+            <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un auteur…" />
           </div>
           <select
             className="auteur-sort-select"
@@ -391,7 +391,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
         {filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">&#128100;</div>
-            <p>Aucun auteur trouv\u00e9.</p>
+            <p>Aucun auteur trouvé.</p>
             {debouncedSearch && (
               <button className="btn btn-outline" style={{ marginTop: 12 }} onClick={() => setSearch('')}>
                 Effacer la recherche
@@ -445,7 +445,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
                         <span
                           className="badge badge-green"
                           onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('equipe'); }}
-                          title="Voir dans \u00c9quipe"
+                          title="Voir dans Équipe"
                           style={{ cursor: onTabChange ? 'pointer' : 'default' }}
                         >
                           {teamRole}
@@ -464,13 +464,13 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       </div>
 
       {modalOpen && (
-        <Modal onClose={() => setModalOpen(false)} title={editId ? 'Modifier l\u2019auteur' : 'Ajouter un auteur'} size="lg">
+        <Modal onClose={() => setModalOpen(false)} title={editId ? 'Modifier l’auteur' : 'Ajouter un auteur'} size="lg">
           <form onSubmit={handleSubmit}>
             {/* Photo preview at top of modal */}
             <div className="auteur-modal-header">
               <div className="auteur-modal-avatar">
                 {photoPreview ? (
-                  <img src={photoPreview} alt="Aper\u00e7u" />
+                  <img src={photoPreview} alt="Aperçu" />
                 ) : (
                   <div className="auteur-modal-initials" style={{ backgroundColor: COLORS.navy }}>
                     {form.firstName ? form.firstName.charAt(0).toUpperCase() : '?'}
@@ -490,8 +490,8 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
-                <label>Pr\u00e9nom *</label>
-                <input value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} placeholder="Pr\u00e9nom" required />
+                <label>Prénom *</label>
+                <input value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} placeholder="Prénom" required />
               </div>
               <div>
                 <label>Nom *</label>
@@ -500,7 +500,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
             </div>
             <div style={{ marginBottom: 16 }}>
               <label>Titre / Fonction *</label>
-              <input value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="Ex: Secr\u00e9taire g\u00e9n\u00e9rale de la CNCDH" required />
+              <input value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="Ex: Secrétaire générale de la CNCDH" required />
             </div>
             <div style={{ marginBottom: 16 }}>
               <label>Photo de l'auteur</label>
@@ -513,7 +513,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               />
               {photoPreview ? (
                 <div className="photo-upload-preview">
-                  <img src={photoPreview} alt="Aper\u00e7u" />
+                  <img src={photoPreview} alt="Aperçu" />
                   <div className="photo-upload-actions">
                     <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()}>
                       Changer
@@ -526,18 +526,18 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               ) : (
                 <div className="photo-upload-zone" onClick={() => fileInputRef.current?.click()}>
                   <span style={{ fontSize: 32, marginBottom: 4 }}>&#128247;</span>
-                  <span>Cliquez pour t\u00e9l\u00e9charger une photo</span>
-                  <span style={{ fontSize: 12, color: 'var(--text-light)' }}>JPG, PNG ou WebP \u2014 max 2 Mo</span>
+                  <span>Cliquez pour télécharger une photo</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-light)' }}>JPG, PNG ou WebP — max 2 Mo</span>
                 </div>
               )}
               {!hasGitHub() && (
                 <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
-                  Token GitHub requis pour stocker les photos (voir Param\u00e8tres)
+                  Token GitHub requis pour stocker les photos (voir Paramètres)
                 </p>
               )}
               {editingAuteur && getTeamRole(editingAuteur) && (
                 <p style={{ fontSize: 11, color: COLORS.green, marginTop: 4 }}>
-                  La photo sera synchronis\u00e9e avec la fiche \u00e9quipe ({getTeamRole(editingAuteur)})
+                  La photo sera synchronisée avec la fiche équipe ({getTeamRole(editingAuteur)})
                 </p>
               )}
             </div>
@@ -547,13 +547,13 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
                 value={form.bio}
                 onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 200) })}
                 rows={4}
-                placeholder="Courte biographie\u2026"
+                placeholder="Courte biographie…"
                 maxLength={200}
               />
               <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4 }}>{(form.bio || '').length} / 200</p>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label>Email (optionnel, non affich\u00e9)</label>
+              <label>Email (optionnel, non affiché)</label>
               <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@exemple.fr" />
             </div>
 
@@ -561,28 +561,28 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
             {editingAuteur && getTeamRole(editingAuteur) && (
               <div className="auteur-team-info">
                 <span className="badge badge-green" style={{ fontSize: 10 }}>{getTeamRole(editingAuteur)}</span>
-                <span style={{ fontSize: 12 }}>Cet auteur est aussi membre de l'\u00e9quipe.</span>
+                <span style={{ fontSize: 12 }}>Cet auteur est aussi membre de l'équipe.</span>
                 {onTabChange && (
                   <button type="button" className="btn btn-outline btn-sm" style={{ marginLeft: 'auto', fontSize: 11 }}
                     onClick={() => { setModalOpen(false); onTabChange('equipe'); }}>
-                    Voir dans \u00c9quipe
+                    Voir dans Équipe
                   </button>
                 )}
               </div>
             )}
 
-            {/* Publications li\u00e9es */}
+            {/* Publications liées */}
             {editId && (
               <div style={{ marginBottom: 16 }}>
-                <label style={{ fontWeight: 600 }}>Publications li\u00e9es ({linkedPubs.length})</label>
+                <label style={{ fontWeight: 600 }}>Publications liées ({linkedPubs.length})</label>
                 {linkedPubs.length === 0 ? (
-                  <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>Aucune publication li\u00e9e \u00e0 cet auteur.</p>
+                  <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>Aucune publication liée à cet auteur.</p>
                 ) : (
                   <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 8, border: '1px solid var(--border)', borderRadius: 8, padding: 8 }}>
                     {linkedPubs.map(pub => (
                       <div key={pub.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border-light)' }}>
                         <span className={`badge badge-${pub.status === 'published' ? 'green' : pub.status === 'ready' ? 'sky' : 'ochre'}`} style={{ fontSize: 10, flexShrink: 0 }}>
-                          {pub.status === 'published' ? 'Publi\u00e9' : pub.status === 'ready' ? 'Pr\u00eat' : 'Brouillon'}
+                          {pub.status === 'published' ? 'Publié' : pub.status === 'ready' ? 'Prêt' : 'Brouillon'}
                         </span>
                         <span style={{ fontSize: 13, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {pub.title}
@@ -611,7 +611,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               )}
               <button type="button" className="btn btn-outline" onClick={() => setModalOpen(false)} disabled={uploading}>Annuler</button>
               <button type="submit" className="btn btn-primary" disabled={uploading}>
-                {uploading ? 'Upload en cours\u2026' : editId ? 'Mettre \u00e0 jour' : 'Ajouter'}
+                {uploading ? 'Upload en cours…' : editId ? 'Mettre à jour' : 'Ajouter'}
               </button>
             </div>
           </form>

@@ -371,6 +371,14 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
 }
 
+/* Toggle switch */
+.toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-switch .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 22px; cursor: pointer; transition: background 0.2s; }
+.toggle-switch .toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.toggle-switch input:checked + .toggle-slider { background: var(--ochre); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
 .badge-sky { background: var(--sky-light); color: var(--sky); }
 .badge-green { background: var(--green-light); color: var(--green); }
 .badge-ochre { background: var(--ochre-light); color: #9A7B1A; }
@@ -883,7 +891,479 @@ label {
   padding: 20px;
 }
 
-/* ─── Author grid ───────────────────────────── */
+/* ─── Auteurs — Stats bar ──────────────────── */
+.auteur-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 24px;
+  margin-bottom: 16px;
+}
+.auteur-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+.auteur-stat-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.1;
+}
+.auteur-stat-label {
+  font-size: 11px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+.auteur-stat-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border);
+  margin: 0 8px;
+}
+
+/* ─── Auteurs — Toolbar ────────────────────── */
+.auteur-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.auteur-sort-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  min-width: 140px;
+}
+
+/* ─── Auteurs — Card v2 ────────────────────── */
+.auteur-card-v2 {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 20px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.auteur-card-v2:hover {
+  border-color: var(--sky);
+  box-shadow: 0 8px 24px rgba(74, 144, 217, 0.12);
+  transform: translateY(-2px);
+}
+.auteur-card-photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 14px;
+  position: relative;
+  flex-shrink: 0;
+  border: 3px solid var(--cream);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.auteur-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.auteur-card-initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 36px;
+  font-weight: 700;
+  font-family: 'Cormorant Garamond', serif;
+}
+.auteur-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+}
+.auteur-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--navy);
+  font-family: 'Cormorant Garamond', serif;
+  line-height: 1.2;
+}
+.auteur-card-role {
+  font-size: 12px;
+  color: var(--text-light);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+}
+.auteur-card-badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+.auteur-card-badges .badge {
+  font-size: 10px;
+}
+
+/* ─── Auteurs — Modal header ───────────────── */
+.auteur-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  margin: -4px -4px 20px;
+  background: linear-gradient(135deg, rgba(26, 39, 68, 0.04), rgba(74, 144, 217, 0.06));
+  border-radius: var(--radius);
+  border: 1px solid rgba(74, 144, 217, 0.12);
+}
+.auteur-modal-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid var(--sky);
+}
+.auteur-modal-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.auteur-modal-initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+/* ─── Auteurs — Team info ──────────────────── */
+.auteur-team-info {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: var(--green-light);
+  border-radius: 8px;
+  border: 1px solid rgba(45, 134, 89, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Auteurs — Danger outline button ──────── */
+.btn-danger-outline {
+  background: none;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Source Sans 3', sans-serif;
+}
+.btn-danger-outline:hover {
+  background: var(--danger-light);
+}
+
+/* ─── Equipe — Stats bar ───────────────────── */
+.equipe-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.equipe-stat-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Source Sans 3', sans-serif;
+}
+.equipe-stat-item:hover {
+  border-color: var(--sky);
+  box-shadow: var(--shadow-sm);
+}
+.equipe-stat-item.active {
+  border-color: var(--sky);
+  background: var(--sky-light);
+  box-shadow: 0 0 0 1px var(--sky);
+}
+.equipe-stat-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.equipe-stat-count {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+.equipe-stat-label {
+  font-size: 11px;
+  color: var(--text-light);
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ─── Equipe — Site banner ─────────────────── */
+.equipe-site-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(26, 35, 75, 0.04), rgba(74, 144, 226, 0.06));
+  border-radius: var(--radius);
+  border: 1px solid rgba(74, 144, 226, 0.15);
+  font-size: 13px;
+}
+
+/* ─── Equipe — Tab count badge ─────────────── */
+.equipe-tab-count {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(26, 35, 75, 0.08);
+}
+.tab-item.active .equipe-tab-count {
+  background: rgba(74, 144, 217, 0.15);
+  color: var(--sky);
+}
+
+/* ─── Equipe — Section content ─────────────── */
+.equipe-section-content {
+  animation: fadeIn 0.3s ease-out;
+}
+.equipe-section-desc {
+  color: var(--text-light);
+  font-size: 13px;
+  margin-bottom: 16px;
+  padding: 0 2px;
+}
+
+/* ─── Equipe — Member card ─────────────────── */
+.equipe-member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.equipe-member-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  transition: all 0.15s;
+}
+.equipe-member-card:hover {
+  border-color: var(--sky);
+  box-shadow: var(--shadow-sm);
+}
+.equipe-member-card-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.equipe-member-info {
+  flex: 1;
+  min-width: 0;
+}
+.equipe-member-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--navy);
+}
+.equipe-member-role {
+  font-size: 12px;
+  color: var(--text-light);
+}
+.equipe-member-badges {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.equipe-member-badges .badge {
+  font-size: 10px;
+}
+.equipe-member-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ─── Equipe — Reorder buttons ─────────────── */
+.equipe-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.equipe-reorder-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 9px;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: all 0.15s;
+  line-height: 1;
+  font-family: system-ui;
+}
+.equipe-reorder-btn:hover:not(:disabled) {
+  border-color: var(--sky);
+  color: var(--sky);
+  background: var(--sky-light);
+}
+.equipe-reorder-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+/* ─── Equipe — Avatar ──────────────────────── */
+.equipe-avatar {
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid var(--sky);
+}
+.equipe-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.equipe-avatar-placeholder {
+  background: var(--navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-family: 'Cormorant Garamond', serif;
+  border-color: var(--navy);
+}
+
+/* ─── Equipe — Publications preview ────────── */
+.equipe-member-pubs {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.equipe-member-pubs > label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.equipe-member-pubs-list {
+  max-height: 100px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+.equipe-member-pub-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+.equipe-member-pub-item .badge {
+  font-size: 9px;
+  flex-shrink: 0;
+}
+.equipe-member-pub-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Equipe — Direction card ──────────────── */
+.equipe-direction-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.equipe-direction-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.equipe-direction-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.equipe-direction-title {
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+.equipe-direction-title .badge {
+  font-size: 11px;
+}
+
+/* ─── Equipe — Add button ──────────────────── */
+.equipe-add-btn {
+  margin-top: 10px;
+}
+
+/* ─── Equipe — Author link section ─────────── */
+.equipe-author-link-section {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--cream);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+/* ─── Equipe — Footer actions ──────────────── */
+.equipe-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+/* ─── Author grid (legacy support) ─────────── */
 .author-card {
   background: var(--white);
   border: 1px solid var(--border);
@@ -916,6 +1396,18 @@ label {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* ─── Responsive — Auteurs & Equipe ────────── */
+@media (max-width: 768px) {
+  .auteur-stats-bar { padding: 10px 12px; }
+  .auteur-stat-value { font-size: 20px; }
+  .auteur-toolbar { flex-direction: column; }
+  .auteur-sort-select { width: 100%; }
+  .equipe-stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .equipe-member-actions { flex-direction: column; }
+  .equipe-member-card-main { flex-wrap: wrap; }
+  .auteur-card-photo { width: 72px; height: 72px; }
 }
 
 /* ─── Photo upload zone ────────────────────── */
