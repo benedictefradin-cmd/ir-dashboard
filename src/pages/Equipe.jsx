@@ -4,14 +4,6 @@ import Modal from '../components/shared/Modal';
 import { COLORS, resolvePhotoUrl, normalizeName, namesMatch, findPublicationsForAuthor, canonicalPhotoPath } from '../utils/constants';
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
 
-const SECTIONS = [
-  { id: 'ca', label: 'Conseil d\'administration' },
-  { id: 'directions', label: 'Directions d\'études' },
-  { id: 'conseil_scientifique', label: 'Conseil scientifique' },
-  { id: 'equipe_permanente', label: 'Équipe permanente' },
-  { id: 'page_settings', label: 'En-tête de page' },
-];
-
 const CS_CATEGORIES = [
   { id: 'droit', label: 'Droit & Institutions' },
   { id: 'economie', label: 'Économie' },
@@ -21,26 +13,140 @@ const CS_CATEGORIES = [
   { id: 'international', label: 'International' },
 ];
 
+const DIRECTION_THEMES = ['Écologie', 'Économie', 'Institutions', 'Social', 'International', 'Culture'];
+
 function slugify(prenom, nom) {
   return `${prenom}-${nom}`.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
+// ─── Shared avatar component ───
+function Avatar({ photo, prenom, nom, size = 44 }) {
+  const initials = (prenom || '?').charAt(0).toUpperCase();
+  if (photo) {
+    return (
+      <div style={{
+        width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+        border: `2px solid ${COLORS.sky}`,
+      }}>
+        <img
+          src={resolvePhotoUrl(photo)}
+          alt={`${prenom} ${nom}`}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.style.display = 'none'; }}
+        />
+      </div>
+    );
+  }
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', backgroundColor: COLORS.navy,
+      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.45, fontWeight: 700, fontFamily: "'Cormorant Garamond', serif", flexShrink: 0,
+    }}>
+      {initials}
+    </div>
+  );
+}
+
+// ─── Shared photo upload widget ───
+function PhotoUpload({ photo, onFileSelect, onRemove, fileInputRef, linkedInfo }) {
+  const [preview, setPreview] = useState(photo ? resolvePhotoUrl(photo) : null);
+
+  const handleSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    onFileSelect(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemove = () => {
+    setPreview(null);
+    onRemove();
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ fontWeight: 600, fontSize: 13 }}>Photo</label>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={handleSelect}
+        style={{ display: 'none' }}
+      />
+      {preview ? (
+        <div className="photo-upload-preview">
+          <img src={preview} alt="Aperçu" onError={(e) => { e.target.style.display = 'none'; }} />
+          <div className="photo-upload-actions">
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()}>
+              Changer
+            </button>
+            <button type="button" className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={handleRemove}>
+              Supprimer
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="photo-upload-zone" onClick={() => fileInputRef.current?.click()}>
+          <span style={{ fontSize: 32, marginBottom: 4 }}>&#128247;</span>
+          <span>Cliquez pour ajouter une photo</span>
+          <span style={{ fontSize: 12, color: 'var(--text-light)' }}>JPG, PNG ou WebP — max 2 Mo</span>
+        </div>
+      )}
+      {!hasGitHub() && (
+        <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
+          Token GitHub requis pour stocker les photos (voir Config)
+        </p>
+      )}
+      {linkedInfo && (
+        <p style={{ fontSize: 11, color: COLORS.green, marginTop: 4 }}>{linkedInfo}</p>
+      )}
+    </div>
+  );
+}
+
 export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, articles = [], toast, saveToSite, onTabChange }) {
   const [activeSection, setActiveSection] = useState('ca');
   const [saving, setSaving] = useState(false);
-  const [editingCA, setEditingCA] = useState(null);
-  const [caModal, setCaModal] = useState(false);
+
+  // Modal state for all sections
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalSection, setModalSection] = useState(null);   // 'ca', 'equipe_permanente', etc.
+  const [modalListKey, setModalListKey] = useState(null);    // e.g. 'membres', 'ecologie_membres'
+  const [editingIndex, setEditingIndex] = useState(null);    // null = add, number = edit
+  const [modalFields, setModalFields] = useState([]);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalHasPhoto, setModalHasPhoto] = useState(false);
+  const [modalHasAuthorLink, setModalHasAuthorLink] = useState(false);
 
   const equipe = contenu?.equipe || {};
 
-  // ─── Find linked author (by explicit ID or exact name match) ───
+  // ─── Counts for tabs ───
+  const countCA = (equipe?.ca?.membres || []).length;
+  const countDirections = DIRECTION_THEMES.reduce((sum, t) => {
+    const key = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return sum + (equipe?.directions?.[`${key}_membres`] || []).length;
+  }, 0);
+  const countCS = CS_CATEGORIES.reduce((sum, c) => sum + (equipe?.conseil_scientifique?.[`${c.id}_membres`] || []).length, 0);
+  const countPerm = (equipe?.equipe_permanente?.membres || []).length;
+
+  const SECTIONS = [
+    { id: 'ca', label: 'Conseil d\'administration', count: countCA },
+    { id: 'directions', label: 'Directions d\'études', count: countDirections },
+    { id: 'conseil_scientifique', label: 'Conseil scientifique', count: countCS },
+    { id: 'equipe_permanente', label: 'Équipe permanente', count: countPerm },
+    { id: 'page_settings', label: 'En-tête de page', count: null },
+  ];
+
+  // ─── Find linked author ───
   const findLinkedAuthor = (membre) => {
     if (!membre) return null;
-    if (membre.linkedAuthorId) {
-      return auteurs.find(a => a.id === membre.linkedAuthorId) || null;
-    }
+    if (membre.linkedAuthorId) return auteurs.find(a => a.id === membre.linkedAuthorId) || null;
     if (!membre.prenom || !membre.nom) return null;
     return auteurs.find(a => namesMatch(membre.prenom, membre.nom, a.firstName, a.lastName)) || null;
   };
@@ -62,13 +168,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
   };
 
   const handleTopChange = (key, value) => {
-    setContenu((prev) => ({
-      ...prev,
-      equipe: {
-        ...(prev?.equipe || {}),
-        [key]: value,
-      },
-    }));
+    setContenu((prev) => ({ ...prev, equipe: { ...(prev?.equipe || {}), [key]: value } }));
   };
 
   const handleSave = async () => {
@@ -84,7 +184,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     }
   };
 
-  // ─── Sync photo from CA member → linked author ───
+  // ─── Sync photo to linked author ───
   const syncPhotoToAuthor = async (authorId, photoPath) => {
     if (!authorId || !setAuteurs) return;
     const photoUrl = resolvePhotoUrl(photoPath);
@@ -104,27 +204,66 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     }
   };
 
-  // ─── CA Modal handlers ───
-  const openCAEdit = (index) => {
-    setEditingCA(index);
-    setCaModal(true);
+  // ─── Create author from member ───
+  const createAuthorFromMember = async (membre) => {
+    if (!setAuteurs) return null;
+    const slug = slugify(membre.prenom, membre.nom);
+    if (auteurs.find(a => a.id === slug)) {
+      toast('Un auteur avec ce nom existe déjà', 'error');
+      return null;
+    }
+    const newAuthor = {
+      id: slug, firstName: membre.prenom, lastName: membre.nom,
+      name: `${membre.prenom} ${membre.nom}`, role: membre.role || '', titre: membre.role || '',
+      bio: membre.description || '', photo: resolvePhotoUrl(membre.photo),
+      photoPath: membre.photo || '', publications: 0,
+    };
+    const updated = [...auteurs, newAuthor];
+    setAuteurs(updated);
+    if (hasGitHub()) {
+      try {
+        await saveAuthorsToGitHub(updated);
+        toast('Auteur créé et lié');
+      } catch (err) { toast(`Erreur création auteur : ${err.message}`, 'error'); }
+      if (saveToSite) {
+        try {
+          await saveToSite('auteurs', updated.map(({ id, firstName, lastName, role, bio, photo, photoPath: pp, publications }) => ({
+            id, firstName, lastName, role, bio, photo: pp || photo || '', publications: publications || 0,
+          })), `Création auteur depuis Équipe : ${membre.prenom} ${membre.nom}`);
+        } catch { /* silent */ }
+      }
+    }
+    return slug;
   };
 
-  const openCAAdd = () => {
-    setEditingCA(null);
-    setCaModal(true);
+  // ─── Open modal for editing/adding a member ───
+  const openMemberModal = ({ section, listKey, index, fields, title, hasPhoto = false, hasAuthorLink = false }) => {
+    setModalSection(section);
+    setModalListKey(listKey);
+    setEditingIndex(index);
+    setModalFields(fields);
+    setModalTitle(title);
+    setModalHasPhoto(hasPhoto);
+    setModalHasAuthorLink(hasAuthorLink);
+    setModalOpen(true);
   };
 
-  const getCAInitial = () => {
-    if (editingCA === null) return { prenom: '', nom: '', role: '', description: '', photo: '', linkedin: '', linkedAuthorId: '' };
-    return { ...(equipe?.ca?.membres || [])[editingCA] } || {};
+  const getModalInitial = () => {
+    if (editingIndex === null) {
+      const empty = {};
+      modalFields.forEach(f => { empty[f.key] = ''; });
+      if (modalHasPhoto) empty.photo = '';
+      if (modalHasAuthorLink) empty.linkedAuthorId = '';
+      return empty;
+    }
+    return { ...(equipe?.[modalSection]?.[modalListKey] || [])[editingIndex] } || {};
   };
 
-  const handleCASave = async (formData, photoFile) => {
-    const membres = [...(equipe?.ca?.membres || [])];
+  const handleModalSave = async (formData, photoFile) => {
+    const items = [...(equipe?.[modalSection]?.[modalListKey] || [])];
     let photoPath = formData.photo || '';
 
-    // Upload new photo if provided — always to canonical equipe/ path
+    // Upload photo if provided
     if (photoFile && hasGitHub()) {
       try {
         const ext = photoFile.name.split('.').pop().toLowerCase() || 'jpg';
@@ -148,341 +287,257 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
 
     const updatedMember = { ...formData, photo: photoPath };
 
-    if (editingCA !== null) {
-      membres[editingCA] = updatedMember;
+    if (editingIndex !== null) {
+      items[editingIndex] = updatedMember;
     } else {
-      membres.push(updatedMember);
+      items.push(updatedMember);
     }
 
-    handleChange('ca', 'membres', membres);
-    setCaModal(false);
+    handleChange(modalSection, modalListKey, items);
+    setModalOpen(false);
 
-    // Sync photo to linked author if photo changed
-    const linkedId = formData.linkedAuthorId || findLinkedAuthor(formData)?.id;
-    if (linkedId && photoPath) {
-      await syncPhotoToAuthor(linkedId, photoPath);
-      toast('Photo synchronisée avec l\'auteur');
-    }
-  };
-
-  // ─── Create author from CA member ───
-  const createAuthorFromCA = async (membre) => {
-    if (!setAuteurs) return null;
-    const slug = slugify(membre.prenom, membre.nom);
-    if (auteurs.find(a => a.id === slug)) {
-      toast('Un auteur avec ce nom existe déjà', 'error');
-      return null;
-    }
-    const newAuthor = {
-      id: slug,
-      firstName: membre.prenom,
-      lastName: membre.nom,
-      name: `${membre.prenom} ${membre.nom}`,
-      role: membre.role || '',
-      titre: membre.role || '',
-      bio: membre.description || '',
-      photo: resolvePhotoUrl(membre.photo),
-      photoPath: membre.photo || '',
-      publications: 0,
-    };
-    const updated = [...auteurs, newAuthor];
-    setAuteurs(updated);
-    if (hasGitHub()) {
-      try {
-        await saveAuthorsToGitHub(updated);
-        toast('Auteur créé et lié');
-      } catch (err) {
-        toast(`Erreur création auteur : ${err.message}`, 'error');
-      }
-      if (saveToSite) {
-        try {
-          await saveToSite('auteurs', updated.map(({ id, firstName, lastName, role, bio, photo, photoPath: pp, publications }) => ({
-            id, firstName, lastName, role, bio, photo: pp || photo || '', publications: publications || 0,
-          })), `Création auteur depuis Équipe : ${membre.prenom} ${membre.nom}`);
-        } catch { /* silent */ }
+    // Sync photo to linked author
+    if (modalHasAuthorLink && photoPath) {
+      const linkedId = formData.linkedAuthorId || findLinkedAuthor(formData)?.id;
+      if (linkedId) {
+        await syncPhotoToAuthor(linkedId, photoPath);
+        toast('Photo synchronisée avec l\'auteur');
       }
     }
-    return slug;
   };
 
-  // ─── Generic MemberList (directions, CS, permanent) ───
-  const MemberList = ({ section, listKey, fields, addLabel }) => {
-    const items = equipe?.[section]?.[listKey] || [];
-    const realItems = Array.isArray(items) ? items : [];
-
-    const update = (index, field, value) => {
-      const updated = [...realItems];
-      updated[index] = { ...updated[index], [field]: value };
-      handleChange(section, listKey, updated);
-    };
-
-    const add = () => {
-      const empty = {};
-      fields.forEach(f => { empty[f.key] = ''; });
-      handleChange(section, listKey, [...realItems, empty]);
-    };
-
-    const remove = (index) => {
-      handleChange(section, listKey, realItems.filter((_, i) => i !== index));
-    };
-
-    const move = (index, direction) => {
-      const updated = [...realItems];
-      const target = index + direction;
-      if (target < 0 || target >= updated.length) return;
-      [updated[index], updated[target]] = [updated[target], updated[index]];
-      handleChange(section, listKey, updated);
-    };
-
-    return (
-      <>
-        {realItems.map((item, i) => (
-          <div key={i} className="card mb-8" style={{ padding: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <button className="btn btn-outline btn-sm" onClick={() => move(i, -1)} disabled={i === 0} style={{ padding: '2px 6px', fontSize: 10 }}>{'\u25B2'}</button>
-                <button className="btn btn-outline btn-sm" onClick={() => move(i, 1)} disabled={i === realItems.length - 1} style={{ padding: '2px 6px', fontSize: 10 }}>{'\u25BC'}</button>
-              </div>
-              <span style={{ fontSize: 12, fontWeight: 600 }}>
-                {item.prenom || item.nom ? `${item.prenom || ''} ${item.nom || ''}`.trim() : `#${i + 1}`}
-              </span>
-              <button className="btn btn-outline btn-sm" style={{ marginLeft: 'auto', color: 'var(--danger)', fontSize: 11 }} onClick={() => remove(i)}>Supprimer</button>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8 }}>
-              {fields.map(f => (
-                <div key={f.key}>
-                  <label style={{ fontSize: 11 }}>{f.label}</label>
-                  {f.type === 'textarea' ? (
-                    <textarea value={item[f.key] || ''} onChange={(e) => update(i, f.key, e.target.value)} rows={3} placeholder={f.placeholder || ''} />
-                  ) : (
-                    <input value={item[f.key] || ''} onChange={(e) => update(i, f.key, e.target.value)} placeholder={f.placeholder || ''} />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-        <button className="btn btn-outline" style={{ marginTop: 4 }} onClick={add}>+ {addLabel || 'Ajouter un membre'}</button>
-      </>
-    );
+  // ─── Reorder / Delete helpers ───
+  const moveMember = (section, listKey, index, direction) => {
+    const items = [...(equipe?.[section]?.[listKey] || [])];
+    const target = index + direction;
+    if (target < 0 || target >= items.length) return;
+    [items[index], items[target]] = [items[target], items[index]];
+    handleChange(section, listKey, items);
   };
 
-  const memberFields = [
-    { key: 'prenom', label: 'Prénom', placeholder: 'Jean' },
-    { key: 'nom', label: 'Nom', placeholder: 'Dupont' },
-    { key: 'role', label: 'Rôle / Fonction', placeholder: 'Président' },
+  const deleteMember = (section, listKey, index, name) => {
+    if (!window.confirm(`Supprimer ${name} ?`)) return;
+    handleChange(section, listKey, (equipe?.[section]?.[listKey] || []).filter((_, i) => i !== index));
+  };
+
+  // ─── Shared field configs ───
+  const caFields = [
+    { key: 'prenom', label: 'Prénom *', placeholder: 'Jean', required: true },
+    { key: 'nom', label: 'Nom *', placeholder: 'Dupont', required: true },
+    { key: 'role', label: 'Rôle / Fonction', placeholder: 'Président, Secrétaire général…' },
     { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Bio courte…' },
-    { key: 'photo', label: 'Photo (chemin)', placeholder: 'assets/images/equipe/jean-dupont.jpg' },
     { key: 'linkedin', label: 'LinkedIn (URL)', placeholder: 'https://www.linkedin.com/in/…' },
   ];
 
-  // ─── CA Section ───
+  const fullMemberFields = [
+    { key: 'prenom', label: 'Prénom *', placeholder: 'Marie', required: true },
+    { key: 'nom', label: 'Nom *', placeholder: 'Martin', required: true },
+    { key: 'role', label: 'Rôle / Fonction', placeholder: 'Directrice des études' },
+    { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Bio courte…' },
+    { key: 'linkedin', label: 'LinkedIn (URL)', placeholder: 'https://www.linkedin.com/in/…' },
+  ];
+
+  const simpleMemberFields = [
+    { key: 'prenom', label: 'Prénom *', placeholder: 'Marie', required: true },
+    { key: 'nom', label: 'Nom *', placeholder: 'Martin', required: true },
+    { key: 'role', label: 'Rôle', placeholder: 'Directrice d\'études' },
+  ];
+
+  // ─── Visual member card (used across all sections) ───
+  const MemberCard = ({ membre, index, section, listKey, total, fields, hasPhoto = false, hasAuthorLink = false, cardTitle }) => {
+    const linked = hasAuthorLink ? findLinkedAuthor(membre) : null;
+    const pubs = linked ? getLinkedPublications(linked) : [];
+    const name = [membre.prenom, membre.nom].filter(Boolean).join(' ') || `#${index + 1}`;
+
+    return (
+      <div className="card mb-8" style={{ padding: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Reorder */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <button className="btn btn-outline btn-sm" onClick={() => moveMember(section, listKey, index, -1)}
+              disabled={index === 0} style={{ padding: '2px 6px', fontSize: 10 }}>{'\u25B2'}</button>
+            <button className="btn btn-outline btn-sm" onClick={() => moveMember(section, listKey, index, 1)}
+              disabled={index === total - 1} style={{ padding: '2px 6px', fontSize: 10 }}>{'\u25BC'}</button>
+          </div>
+
+          {/* Avatar */}
+          <Avatar photo={membre.photo} prenom={membre.prenom} nom={membre.nom} size={44} />
+
+          {/* Info */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{name}</div>
+            <div style={{ fontSize: 12, color: COLORS.textLight }}>{membre.role || '—'}</div>
+            <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+              {hasAuthorLink && linked && (
+                <span className="badge badge-green" style={{ fontSize: 10, cursor: onTabChange ? 'pointer' : 'default' }}
+                  onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('auteurs'); }}
+                  title="Voir la fiche auteur">
+                  Auteur lié ({pubs.length} pub{pubs.length !== 1 ? 's' : ''})
+                </span>
+              )}
+              {hasAuthorLink && !linked && (
+                <span className="badge badge-ochre" style={{ fontSize: 10 }}>Pas d'auteur lié</span>
+              )}
+              {membre.linkedin && (
+                <a href={membre.linkedin} target="_blank" rel="noopener noreferrer"
+                  className="badge badge-sky" style={{ fontSize: 10, textDecoration: 'none' }}
+                  onClick={e => e.stopPropagation()}>LinkedIn</a>
+              )}
+              {hasPhoto && membre.photo && (
+                <span className="badge badge-green" style={{ fontSize: 10 }}>Photo</span>
+              )}
+              {hasPhoto && !membre.photo && (
+                <span className="badge badge-ochre" style={{ fontSize: 10 }}>Pas de photo</span>
+              )}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+            <button className="btn btn-outline btn-sm" onClick={() => openMemberModal({
+              section, listKey, index, fields, hasPhoto, hasAuthorLink,
+              title: `Modifier — ${name}`,
+            })}>Modifier</button>
+            <button className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }}
+              onClick={() => deleteMember(section, listKey, index, name)}>Supprimer</button>
+          </div>
+        </div>
+
+        {/* Publications preview for linked authors */}
+        {linked && pubs.length > 0 && (
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-light)' }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: COLORS.textLight }}>Publications ({pubs.length})</label>
+            <div style={{ maxHeight: 100, overflowY: 'auto', marginTop: 4 }}>
+              {pubs.slice(0, 5).map(pub => (
+                <div key={pub.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 0', fontSize: 12 }}>
+                  <span className={`badge badge-${pub.status === 'published' ? 'green' : 'ochre'}`} style={{ fontSize: 9, flexShrink: 0 }}>
+                    {pub.status === 'published' ? 'Publié' : 'Brouillon'}
+                  </span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pub.title}</span>
+                </div>
+              ))}
+              {pubs.length > 5 && <div style={{ fontSize: 11, color: COLORS.textLight, marginTop: 2 }}>… et {pubs.length - 5} autre{pubs.length - 5 > 1 ? 's' : ''}</div>}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ─── Section: CA ───
   const renderCA = () => {
     const membres = equipe?.ca?.membres || [];
-
     return (
       <>
         <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 16 }}>
           Membres du Conseil d'administration — liés aux fiches auteurs pour synchroniser photos et publications.
         </p>
-
-        {membres.map((membre, i) => {
-          const linked = findLinkedAuthor(membre);
-          const pubs = linked ? getLinkedPublications(linked) : [];
-
-          return (
-            <div key={i} className="card mb-8" style={{ padding: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {/* Reorder */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <button className="btn btn-outline btn-sm" onClick={() => {
-                    const updated = [...membres];
-                    if (i > 0) [updated[i], updated[i - 1]] = [updated[i - 1], updated[i]];
-                    handleChange('ca', 'membres', updated);
-                  }} disabled={i === 0} style={{ padding: '2px 6px', fontSize: 10 }}>{'\u25B2'}</button>
-                  <button className="btn btn-outline btn-sm" onClick={() => {
-                    const updated = [...membres];
-                    if (i < membres.length - 1) [updated[i], updated[i + 1]] = [updated[i + 1], updated[i]];
-                    handleChange('ca', 'membres', updated);
-                  }} disabled={i === membres.length - 1} style={{ padding: '2px 6px', fontSize: 10 }}>{'\u25BC'}</button>
-                </div>
-
-                {/* Avatar */}
-                {membre.photo ? (
-                  <div style={{
-                    width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-                    border: `2px solid ${COLORS.sky}`,
-                  }}>
-                    <img
-                      src={resolvePhotoUrl(membre.photo)}
-                      alt={`${membre.prenom} ${membre.nom}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => { e.target.style.display = 'none'; }}
-                    />
-                  </div>
-                ) : (
-                  <div style={{
-                    width: 48, height: 48, borderRadius: '50%', backgroundColor: COLORS.navy,
-                    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 20, fontWeight: 700, fontFamily: "'Cormorant Garamond', serif", flexShrink: 0,
-                  }}>
-                    {(membre.prenom || '?').charAt(0).toUpperCase()}
-                  </div>
-                )}
-
-                {/* Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>
-                    {membre.prenom || ''} {membre.nom || ''}
-                  </div>
-                  <div style={{ fontSize: 12, color: COLORS.textLight }}>
-                    {membre.role || 'Membre du CA'}
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
-                    {linked ? (
-                      <span className="badge badge-green" style={{ fontSize: 10, cursor: onTabChange ? 'pointer' : 'default' }}
-                        onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('auteurs'); }}
-                        title="Voir la fiche auteur">
-                        Auteur lié ({pubs.length} pub{pubs.length !== 1 ? 's' : ''})
-                      </span>
-                    ) : (
-                      <span className="badge badge-ochre" style={{ fontSize: 10 }}>
-                        Pas d'auteur lié
-                      </span>
-                    )}
-                    {membre.linkedin && (
-                      <a href={membre.linkedin} target="_blank" rel="noopener noreferrer"
-                        className="badge badge-sky" style={{ fontSize: 10, textDecoration: 'none' }}
-                        onClick={e => e.stopPropagation()}>
-                        LinkedIn
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                  <button className="btn btn-outline btn-sm" onClick={() => openCAEdit(i)}>
-                    Modifier
-                  </button>
-                  <button className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }}
-                    onClick={() => {
-                      if (window.confirm(`Supprimer ${membre.prenom} ${membre.nom} du CA ?`)) {
-                        handleChange('ca', 'membres', membres.filter((_, j) => j !== i));
-                      }
-                    }}>
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-
-              {/* Publications preview */}
-              {linked && pubs.length > 0 && (
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-light)' }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: COLORS.textLight }}>
-                    Publications ({pubs.length})
-                  </label>
-                  <div style={{ maxHeight: 120, overflowY: 'auto', marginTop: 4 }}>
-                    {pubs.slice(0, 5).map(pub => (
-                      <div key={pub.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', fontSize: 12 }}>
-                        <span className={`badge badge-${pub.status === 'published' ? 'green' : 'ochre'}`} style={{ fontSize: 9, flexShrink: 0 }}>
-                          {pub.status === 'published' ? 'Publié' : 'Brouillon'}
-                        </span>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {pub.title}
-                        </span>
-                      </div>
-                    ))}
-                    {pubs.length > 5 && (
-                      <div style={{ fontSize: 11, color: COLORS.textLight, marginTop: 4 }}>
-                        … et {pubs.length - 5} autre{pubs.length - 5 > 1 ? 's' : ''}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        <button className="btn btn-outline" style={{ marginTop: 8 }} onClick={openCAAdd}>
-          + Ajouter un membre du CA
-        </button>
+        {membres.map((membre, i) => (
+          <MemberCard key={i} membre={membre} index={i} total={membres.length}
+            section="ca" listKey="membres" fields={caFields}
+            hasPhoto hasAuthorLink />
+        ))}
+        <button className="btn btn-outline" style={{ marginTop: 8 }} onClick={() => openMemberModal({
+          section: 'ca', listKey: 'membres', index: null, fields: caFields,
+          title: 'Ajouter un membre du CA', hasPhoto: true, hasAuthorLink: true,
+        })}>+ Ajouter un membre du CA</button>
       </>
     );
   };
 
+  // ─── Section: Directions ───
   const renderDirections = () => (
     <>
       <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 16 }}>
         Directions d'études thématiques — chaque direction a un titre, une description et une liste de membres.
       </p>
-      {['Écologie', 'Économie', 'Institutions', 'Social', 'International', 'Culture'].map(theme => {
+      {DIRECTION_THEMES.map(theme => {
         const key = theme.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const listKey = `${key}_membres`;
+        const membres = equipe?.directions?.[listKey] || [];
         return (
           <div key={theme} className="card mb-16" style={{ padding: 20 }}>
-            <h3 style={{ fontSize: 15, marginBottom: 8 }}>Direction — {theme}</h3>
+            <h3 style={{ fontSize: 15, marginBottom: 8 }}>
+              Direction — {theme}
+              <span className="badge badge-sky" style={{ marginLeft: 8, fontSize: 11 }}>{membres.length}</span>
+            </h3>
             <div style={{ marginBottom: 8 }}>
               <label style={{ fontSize: 12 }}>Titre de la direction</label>
-              <input
-                value={equipe?.directions?.[`${key}_titre`] || ''}
+              <input value={equipe?.directions?.[`${key}_titre`] || ''}
                 onChange={(e) => handleChange('directions', `${key}_titre`, e.target.value)}
-                placeholder={`Direction d'études ${theme}`}
-              />
+                placeholder={`Direction d'études ${theme}`} />
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={{ fontSize: 12 }}>Description</label>
-              <textarea
-                value={equipe?.directions?.[`${key}_description`] || ''}
+              <textarea value={equipe?.directions?.[`${key}_description`] || ''}
                 onChange={(e) => handleChange('directions', `${key}_description`, e.target.value)}
-                rows={3} placeholder="Cette direction travaille sur…"
-              />
+                rows={3} placeholder="Cette direction travaille sur…" />
             </div>
-            <label style={{ fontSize: 12, fontWeight: 600 }}>Membres de la direction</label>
-            <MemberList section="directions" listKey={`${key}_membres`} addLabel="Ajouter un membre"
-              fields={[
-                { key: 'prenom', label: 'Prénom', placeholder: 'Marie' },
-                { key: 'nom', label: 'Nom', placeholder: 'Martin' },
-                { key: 'role', label: 'Rôle', placeholder: 'Directrice d\'études' },
-              ]} />
+            <label style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, display: 'block' }}>Membres de la direction</label>
+            {membres.map((membre, i) => (
+              <MemberCard key={i} membre={membre} index={i} total={membres.length}
+                section="directions" listKey={listKey} fields={simpleMemberFields} />
+            ))}
+            <button className="btn btn-outline" style={{ marginTop: 4 }} onClick={() => openMemberModal({
+              section: 'directions', listKey, index: null, fields: simpleMemberFields,
+              title: `Ajouter un membre — ${theme}`,
+            })}>+ Ajouter un membre</button>
           </div>
         );
       })}
     </>
   );
 
+  // ─── Section: Conseil scientifique ───
   const renderConseilScientifique = () => (
     <>
       <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 16 }}>
         Membres du Conseil scientifique, organisés par domaine d'expertise.
       </p>
-      {CS_CATEGORIES.map(cat => (
-        <div key={cat.id} className="card mb-16" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 15, marginBottom: 8 }}>{cat.label}</h3>
-          <MemberList section="conseil_scientifique" listKey={`${cat.id}_membres`} addLabel="Ajouter un expert"
-            fields={[
-              { key: 'prenom', label: 'Prénom', placeholder: 'Pierre' },
-              { key: 'nom', label: 'Nom', placeholder: 'Durand' },
-              { key: 'role', label: 'Titre / Affiliation', placeholder: 'Professeur, Université de…' },
-              { key: 'description', label: 'Bio courte', type: 'textarea', placeholder: 'Spécialiste de…' },
-              { key: 'photo', label: 'Photo (chemin)', placeholder: 'assets/images/equipe/pierre-durand.jpg' },
-              { key: 'linkedin', label: 'LinkedIn (URL)', placeholder: 'https://www.linkedin.com/in/…' },
-            ]} />
-        </div>
-      ))}
+      {CS_CATEGORIES.map(cat => {
+        const listKey = `${cat.id}_membres`;
+        const membres = equipe?.conseil_scientifique?.[listKey] || [];
+        return (
+          <div key={cat.id} className="card mb-16" style={{ padding: 20 }}>
+            <h3 style={{ fontSize: 15, marginBottom: 8 }}>
+              {cat.label}
+              <span className="badge badge-sky" style={{ marginLeft: 8, fontSize: 11 }}>{membres.length}</span>
+            </h3>
+            {membres.map((membre, i) => (
+              <MemberCard key={i} membre={membre} index={i} total={membres.length}
+                section="conseil_scientifique" listKey={listKey} fields={fullMemberFields} hasPhoto />
+            ))}
+            <button className="btn btn-outline" style={{ marginTop: 4 }} onClick={() => openMemberModal({
+              section: 'conseil_scientifique', listKey, index: null, fields: fullMemberFields,
+              title: `Ajouter un expert — ${cat.label}`, hasPhoto: true,
+            })}>+ Ajouter un expert</button>
+          </div>
+        );
+      })}
     </>
   );
 
-  const renderEquipePermanente = () => (
-    <>
-      <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 16 }}>
-        Salariés et collaborateurs permanents de l'Institut.
-      </p>
-      <MemberList section="equipe_permanente" listKey="membres" addLabel="Ajouter un membre"
-        fields={memberFields} />
-    </>
-  );
+  // ─── Section: Équipe permanente ───
+  const renderEquipePermanente = () => {
+    const membres = equipe?.equipe_permanente?.membres || [];
+    return (
+      <>
+        <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 16 }}>
+          Salariés et collaborateurs permanents de l'Institut.
+        </p>
+        {membres.map((membre, i) => (
+          <MemberCard key={i} membre={membre} index={i} total={membres.length}
+            section="equipe_permanente" listKey="membres" fields={fullMemberFields} hasPhoto />
+        ))}
+        <button className="btn btn-outline" style={{ marginTop: 8 }} onClick={() => openMemberModal({
+          section: 'equipe_permanente', listKey: 'membres', index: null, fields: fullMemberFields,
+          title: 'Ajouter un membre permanent', hasPhoto: true,
+        })}>+ Ajouter un membre</button>
+      </>
+    );
+  };
 
+  // ─── Section: Page settings ───
   const renderPageSettings = () => (
     <>
       <div className="card mb-16" style={{ padding: 20 }}>
@@ -523,18 +578,38 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
           <ServiceBadge service="github" />
           {saveToSite && hasGitHub() && (
             <button className="btn btn-green" onClick={handleSave} disabled={saving}>
-              {saving ? 'Publication…' : 'Publier'}
+              {saving ? 'Publication…' : 'Publier sur le site'}
             </button>
           )}
         </div>
       </div>
 
       <div className="page-body">
+        {/* Live-site banner */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', marginBottom: 16,
+          background: 'linear-gradient(135deg, rgba(26, 35, 75, 0.06), rgba(74, 144, 226, 0.08))',
+          borderRadius: 10, border: '1px solid rgba(74, 144, 226, 0.2)', fontSize: 13,
+        }}>
+          <span style={{ fontSize: 18 }}>&#127760;</span>
+          <span>
+            <strong>Lié au site en ligne</strong> — Chaque modification publiée ici met à jour la page Équipe du site institut-rousseau.fr en temps réel.
+            Modifiez un membre, changez sa photo, cliquez « Publier » : c'est en ligne.
+          </span>
+        </div>
+
+        {/* Tabs with counts */}
         <div className="tab-group" style={{ flexWrap: 'wrap' }}>
           {SECTIONS.map((s) => (
             <button key={s.id} className={`tab-item${activeSection === s.id ? ' active' : ''}`}
               onClick={() => setActiveSection(s.id)}>
               {s.label}
+              {s.count !== null && (
+                <span style={{
+                  marginLeft: 6, padding: '1px 7px', borderRadius: 10, fontSize: 11, fontWeight: 600,
+                  backgroundColor: activeSection === s.id ? 'rgba(255,255,255,0.25)' : 'rgba(26,35,75,0.08)',
+                }}>{s.count}</span>
+              )}
             </button>
           ))}
         </div>
@@ -547,25 +622,32 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
 
         <div className="flex-wrap gap-8" style={{ marginTop: 24 }}>
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? 'Sauvegarde…' : 'Sauvegarder tout'}
+            {saving ? 'Sauvegarde…' : 'Publier sur le site'}
           </button>
+          <span style={{ fontSize: 12, color: COLORS.textLight, alignSelf: 'center' }}>
+            Les modifications seront visibles sur institut-rousseau.fr après publication.
+          </span>
         </div>
       </div>
 
-      {caModal && (
-        <Modal onClose={() => setCaModal(false)} title={editingCA !== null ? 'Modifier le membre du CA' : 'Ajouter un membre du CA'}>
-          <CAEditForm
-            key={editingCA ?? 'new'}
-            initial={getCAInitial()}
+      {/* ─── Unified member edit modal ─── */}
+      {modalOpen && (
+        <Modal onClose={() => setModalOpen(false)} title={modalTitle}>
+          <MemberEditForm
+            key={`${modalSection}-${modalListKey}-${editingIndex ?? 'new'}`}
+            initial={getModalInitial()}
+            fields={modalFields}
+            hasPhoto={modalHasPhoto}
+            hasAuthorLink={modalHasAuthorLink}
             auteurs={auteurs}
             findLinkedAuthor={findLinkedAuthor}
             getLinkedPublications={getLinkedPublications}
-            onSave={handleCASave}
-            onClose={() => setCaModal(false)}
-            onCreateAuthor={createAuthorFromCA}
+            onSave={handleModalSave}
+            onClose={() => setModalOpen(false)}
+            onCreateAuthor={createAuthorFromMember}
             onTabChange={onTabChange}
             toast={toast}
-            isEdit={editingCA !== null}
+            isEdit={editingIndex !== null}
           />
         </Modal>
       )}
@@ -573,8 +655,8 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
   );
 }
 
-// ─── CA Edit Form — fully self-contained state ───
-function CAEditForm({ initial, auteurs, findLinkedAuthor, getLinkedPublications, onSave, onClose, onCreateAuthor, onTabChange, toast, isEdit }) {
+// ─── Unified Member Edit Form ───
+function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, findLinkedAuthor, getLinkedPublications, onSave, onClose, onCreateAuthor, onTabChange, toast, isEdit }) {
   const [form, setForm] = useState({ ...initial });
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(initial.photo ? resolvePhotoUrl(initial.photo) : null);
@@ -582,28 +664,19 @@ function CAEditForm({ initial, auteurs, findLinkedAuthor, getLinkedPublications,
   const [creatingAuthor, setCreatingAuthor] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Resolve linked author (explicit ID > auto-detect by name)
+  // Author linking
   const effectiveLinked = useMemo(() => {
-    if (form.linkedAuthorId) {
-      return auteurs.find(a => a.id === form.linkedAuthorId) || null;
-    }
+    if (!hasAuthorLink) return null;
+    if (form.linkedAuthorId) return auteurs.find(a => a.id === form.linkedAuthorId) || null;
     return findLinkedAuthor(form);
-  }, [form.prenom, form.nom, form.linkedAuthorId, auteurs]);
+  }, [form.prenom, form.nom, form.linkedAuthorId, auteurs, hasAuthorLink]);
 
-  const autoDetected = !form.linkedAuthorId && effectiveLinked;
+  const autoDetected = hasAuthorLink && !form.linkedAuthorId && effectiveLinked;
   const effectivePubs = effectiveLinked ? getLinkedPublications(effectiveLinked) : [];
 
-  const handlePhotoSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      toast('Veuillez sélectionner une image (JPG, PNG, WebP)', 'error');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      toast('La photo ne doit pas dépasser 2 Mo', 'error');
-      return;
-    }
+  const handlePhotoSelect = (file) => {
+    if (!file.type.startsWith('image/')) { toast('Sélectionnez une image (JPG, PNG, WebP)', 'error'); return; }
+    if (file.size > 2 * 1024 * 1024) { toast('La photo ne doit pas dépasser 2 Mo', 'error'); return; }
     setPhotoFile(file);
     const reader = new FileReader();
     reader.onload = (ev) => setPhotoPreview(ev.target.result);
@@ -619,14 +692,16 @@ function CAEditForm({ initial, auteurs, findLinkedAuthor, getLinkedPublications,
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.prenom?.trim() || !form.nom?.trim()) {
-      toast('Le prénom et le nom sont requis', 'error');
-      return;
+    const required = fields.filter(f => f.required);
+    for (const f of required) {
+      if (!form[f.key]?.trim()) {
+        toast(`Le champ « ${f.label.replace(' *', '')} » est requis`, 'error');
+        return;
+      }
     }
     setUploading(true);
     const finalForm = { ...form };
-    // Auto-link if detected
-    if (!finalForm.linkedAuthorId && autoDetected) {
+    if (hasAuthorLink && !finalForm.linkedAuthorId && autoDetected) {
       finalForm.linkedAuthorId = autoDetected.id;
     }
     await onSave(finalForm, photoFile);
@@ -636,122 +711,118 @@ function CAEditForm({ initial, auteurs, findLinkedAuthor, getLinkedPublications,
   const handleCreateAuthor = async () => {
     setCreatingAuthor(true);
     const authorId = await onCreateAuthor(form);
-    if (authorId) {
-      setForm(f => ({ ...f, linkedAuthorId: authorId }));
-    }
+    if (authorId) setForm(f => ({ ...f, linkedAuthorId: authorId }));
     setCreatingAuthor(false);
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-        <div>
-          <label>Prénom *</label>
-          <input value={form.prenom || ''} onChange={e => setForm({ ...form, prenom: e.target.value })} placeholder="Prénom" required />
-        </div>
-        <div>
-          <label>Nom *</label>
-          <input value={form.nom || ''} onChange={e => setForm({ ...form, nom: e.target.value })} placeholder="Nom" required />
-        </div>
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <label>Rôle / Fonction</label>
-        <input value={form.role || ''} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="Président, Secrétaire général…" />
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <label>Description</label>
-        <textarea value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} placeholder="Bio courte…" />
-      </div>
+      {/* Grouped name fields on same row */}
+      {fields.some(f => f.key === 'prenom') && fields.some(f => f.key === 'nom') ? (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            {fields.filter(f => f.key === 'prenom' || f.key === 'nom').map(f => (
+              <div key={f.key}>
+                <label>{f.label}</label>
+                <input value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                  placeholder={f.placeholder} required={f.required} />
+              </div>
+            ))}
+          </div>
+          {fields.filter(f => f.key !== 'prenom' && f.key !== 'nom').map(f => (
+            <div key={f.key} style={{ marginBottom: 16 }}>
+              <label>{f.label}</label>
+              {f.type === 'textarea' ? (
+                <textarea value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                  rows={3} placeholder={f.placeholder} />
+              ) : (
+                <input value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                  placeholder={f.placeholder} />
+              )}
+            </div>
+          ))}
+        </>
+      ) : (
+        fields.map(f => (
+          <div key={f.key} style={{ marginBottom: 16 }}>
+            <label>{f.label}</label>
+            {f.type === 'textarea' ? (
+              <textarea value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                rows={3} placeholder={f.placeholder} />
+            ) : (
+              <input value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                placeholder={f.placeholder} required={f.required} />
+            )}
+          </div>
+        ))
+      )}
 
       {/* Photo upload */}
-      <div style={{ marginBottom: 16 }}>
-        <label>Photo</label>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={handlePhotoSelect}
-          style={{ display: 'none' }}
-        />
-        {photoPreview ? (
-          <div className="photo-upload-preview">
-            <img src={photoPreview} alt="Aperçu" onError={(e) => { e.target.style.display = 'none'; }} />
-            <div className="photo-upload-actions">
-              <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()}>
-                Changer
-              </button>
-              <button type="button" className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={removePhoto}>
-                Supprimer
-              </button>
+      {hasPhoto && (
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontWeight: 600, fontSize: 13 }}>Photo</label>
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => { if (e.target.files?.[0]) handlePhotoSelect(e.target.files[0]); }}
+            style={{ display: 'none' }} />
+          {photoPreview ? (
+            <div className="photo-upload-preview">
+              <img src={photoPreview} alt="Aperçu" onError={(e) => { e.target.style.display = 'none'; }} />
+              <div className="photo-upload-actions">
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()}>Changer</button>
+                <button type="button" className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={removePhoto}>Supprimer</button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="photo-upload-zone" onClick={() => fileInputRef.current?.click()}>
-            <span style={{ fontSize: 32, marginBottom: 4 }}>&#128247;</span>
-            <span>Cliquez pour télécharger une photo</span>
-            <span style={{ fontSize: 12, color: 'var(--text-light)' }}>JPG, PNG ou WebP — max 2 Mo</span>
-          </div>
-        )}
-        {!hasGitHub() && (
-          <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
-            Token GitHub requis pour stocker les photos (voir Config)
-          </p>
-        )}
-        {effectiveLinked && (
-          <p style={{ fontSize: 11, color: COLORS.green, marginTop: 4 }}>
-            La photo sera synchronisée avec la fiche auteur « {effectiveLinked.firstName} {effectiveLinked.lastName} »
-          </p>
-        )}
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <label>LinkedIn (URL)</label>
-        <input value={form.linkedin || ''} onChange={e => setForm({ ...form, linkedin: e.target.value })} placeholder="https://www.linkedin.com/in/…" />
-      </div>
-
-      {/* Author linking */}
-      <div style={{ marginBottom: 16, padding: 12, backgroundColor: 'var(--bg-alt, #f8f9fa)', borderRadius: 8, border: '1px solid var(--border)' }}>
-        <label style={{ fontWeight: 600, fontSize: 13 }}>Auteur lié</label>
-
-        {autoDetected && (
-          <div style={{ padding: '8px 0', fontSize: 12, color: COLORS.green }}>
-            Auteur détecté automatiquement : <strong>{autoDetected.firstName} {autoDetected.lastName}</strong>
-          </div>
-        )}
-
-        <select
-          value={form.linkedAuthorId || (autoDetected?.id || '')}
-          onChange={e => setForm({ ...form, linkedAuthorId: e.target.value })}
-          style={{ width: '100%', marginTop: 4 }}
-        >
-          <option value="">— Aucun auteur lié —</option>
-          {auteurs.map(a => (
-            <option key={a.id} value={a.id}>
-              {a.firstName} {a.lastName} ({a.publications || 0} pub{(a.publications || 0) !== 1 ? 's' : ''})
-            </option>
-          ))}
-        </select>
-
-        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-          {!effectiveLinked && form.prenom && form.nom && (
-            <button type="button" className="btn btn-outline btn-sm"
-              onClick={handleCreateAuthor} disabled={creatingAuthor}>
-              {creatingAuthor ? 'Création…' : `Créer « ${form.prenom} ${form.nom} » comme auteur`}
-            </button>
+          ) : (
+            <div className="photo-upload-zone" onClick={() => fileInputRef.current?.click()}>
+              <span style={{ fontSize: 32, marginBottom: 4 }}>&#128247;</span>
+              <span>Cliquez pour ajouter une photo</span>
+              <span style={{ fontSize: 12, color: 'var(--text-light)' }}>JPG, PNG ou WebP — max 2 Mo</span>
+            </div>
           )}
-          {effectiveLinked && onTabChange && (
-            <button type="button" className="btn btn-outline btn-sm"
-              onClick={() => { onClose(); onTabChange('auteurs'); }}>
-              Voir la fiche auteur
-            </button>
+          {!hasGitHub() && (
+            <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>Token GitHub requis pour stocker les photos (voir Config)</p>
+          )}
+          {effectiveLinked && (
+            <p style={{ fontSize: 11, color: COLORS.green, marginTop: 4 }}>
+              La photo sera synchronisée avec la fiche auteur « {effectiveLinked.firstName} {effectiveLinked.lastName} »
+            </p>
           )}
         </div>
-      </div>
+      )}
+
+      {/* Author linking */}
+      {hasAuthorLink && (
+        <div style={{ marginBottom: 16, padding: 12, backgroundColor: 'var(--bg-alt, #f8f9fa)', borderRadius: 8, border: '1px solid var(--border)' }}>
+          <label style={{ fontWeight: 600, fontSize: 13 }}>Auteur lié</label>
+          {autoDetected && (
+            <div style={{ padding: '8px 0', fontSize: 12, color: COLORS.green }}>
+              Auteur détecté automatiquement : <strong>{autoDetected.firstName} {autoDetected.lastName}</strong>
+            </div>
+          )}
+          <select value={form.linkedAuthorId || (autoDetected?.id || '')}
+            onChange={e => setForm({ ...form, linkedAuthorId: e.target.value })} style={{ width: '100%', marginTop: 4 }}>
+            <option value="">— Aucun auteur lié —</option>
+            {auteurs.map(a => (
+              <option key={a.id} value={a.id}>{a.firstName} {a.lastName} ({a.publications || 0} pub{(a.publications || 0) !== 1 ? 's' : ''})</option>
+            ))}
+          </select>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            {!effectiveLinked && form.prenom && form.nom && (
+              <button type="button" className="btn btn-outline btn-sm" onClick={handleCreateAuthor} disabled={creatingAuthor}>
+                {creatingAuthor ? 'Création…' : `Créer « ${form.prenom} ${form.nom} » comme auteur`}
+              </button>
+            )}
+            {effectiveLinked && onTabChange && (
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => { onClose(); onTabChange('auteurs'); }}>
+                Voir la fiche auteur
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Linked publications */}
-      {effectiveLinked && (
+      {hasAuthorLink && effectiveLinked && (
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontWeight: 600 }}>Publications liées ({effectivePubs.length})</label>
           {effectivePubs.length === 0 ? (
@@ -763,12 +834,8 @@ function CAEditForm({ initial, auteurs, findLinkedAuthor, getLinkedPublications,
                   <span className={`badge badge-${pub.status === 'published' ? 'green' : pub.status === 'ready' ? 'sky' : 'ochre'}`} style={{ fontSize: 10, flexShrink: 0 }}>
                     {pub.status === 'published' ? 'Publié' : pub.status === 'ready' ? 'Prêt' : 'Brouillon'}
                   </span>
-                  <span style={{ fontSize: 13, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {pub.title}
-                  </span>
-                  {pub.date && (
-                    <span style={{ fontSize: 11, color: COLORS.textLight, flexShrink: 0 }}>{pub.date}</span>
-                  )}
+                  <span style={{ fontSize: 13, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pub.title}</span>
+                  {pub.date && <span style={{ fontSize: 11, color: COLORS.textLight, flexShrink: 0 }}>{pub.date}</span>}
                 </div>
               ))}
             </div>
@@ -779,7 +846,7 @@ function CAEditForm({ initial, auteurs, findLinkedAuthor, getLinkedPublications,
       <div className="modal-footer">
         <button type="button" className="btn btn-outline" onClick={onClose} disabled={uploading}>Annuler</button>
         <button type="submit" className="btn btn-primary" disabled={uploading}>
-          {uploading ? 'Upload en cours…' : isEdit ? 'Mettre à jour' : 'Ajouter'}
+          {uploading ? 'En cours…' : isEdit ? 'Mettre à jour' : 'Ajouter'}
         </button>
       </div>
     </form>
