@@ -195,7 +195,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       bio: auteur.bio || '',
       email: auteur.email || '',
     });
-    setPhotoPreview(auteur.photo || null);
+    setPhotoPreview(auteur.photo ? resolvePhotoUrl(auteur.photo) : null);
     setPhotoFile(null);
     setModalOpen(true);
   };
@@ -413,7 +413,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
                   <div className="auteur-card-photo">
                     {auteur.photo ? (
                       <img
-                        src={auteur.photo}
+                        src={resolvePhotoUrl(auteur.photo)}
                         alt={getDisplayName(auteur)}
                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                       />
