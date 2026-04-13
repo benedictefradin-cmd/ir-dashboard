@@ -50,7 +50,7 @@
     "lastName": "Giraud",
     "role": "Économiste, directeur de recherche CNRS, Georgetown University",
     "bio": "Économiste, directeur de recherche au CNRS et professeur à Georgetown University.",
-    "photo": "",
+    "photo": "assets/images/equipe/gael-giraud.jpg",
     "publications": 3
   },
   {
@@ -77,7 +77,7 @@
     "lastName": "Boutiab",
     "role": "Chercheur",
     "bio": "Chercheur à l'Institut Rousseau, spécialiste de l'économie circulaire.",
-    "photo": "",
+    "photo": "assets/images/equipe/arthur-boutiab.png",
     "publications": 2
   },
   {
@@ -86,7 +86,7 @@
     "lastName": "Pujau",
     "role": "Chercheur",
     "bio": "Chercheur à l'Institut Rousseau, travaux sur la transition écologique et les obligations vertes.",
-    "photo": "",
+    "photo": "assets/images/equipe/simon-pujau.png",
     "publications": 3
   },
   {
@@ -149,7 +149,7 @@
     "lastName": "Voïta",
     "role": "Chercheur énergie et climat",
     "bio": "Chercheur spécialiste des questions énergétiques et climatiques.",
-    "photo": "",
+    "photo": "assets/images/equipe/thibaud-voita.jpg",
     "publications": 2
   },
   {
@@ -212,7 +212,7 @@
     "lastName": "Allouche",
     "role": "Chercheur",
     "bio": "Chercheur à l'Institut Rousseau.",
-    "photo": "",
+    "photo": "assets/images/equipe/jordan-allouche.png",
     "publications": 1
   },
   {
@@ -221,7 +221,7 @@
     "lastName": "Gault",
     "role": "Chercheur",
     "bio": "Chercheur à l'Institut Rousseau.",
-    "photo": "",
+    "photo": "assets/images/equipe/frantz-gault.png",
     "publications": 1
   },
   {
