@@ -219,11 +219,11 @@ export function findPublicationsForAuthor(auteur, articles) {
 
 /**
  * Génère un chemin canonique pour la photo d'une personne.
- * Toujours dans images/equipe/ pour garantir un seul fichier partagé.
+ * @param {'equipe' | 'auteurs'} folder — 'equipe' si membre de l'équipe, 'auteurs' sinon
  */
-export function canonicalPhotoPath(prenom, nom, extension = 'jpg') {
+export function canonicalPhotoPath(prenom, nom, extension = 'jpg', folder = 'equipe') {
   const slug = `${prenom}-${nom}`.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  return `assets/images/equipe/${slug}.${extension}`;
+  return `assets/images/${folder}/${slug}.${extension}`;
 }

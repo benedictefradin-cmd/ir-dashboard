@@ -184,7 +184,8 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       setUploading(true);
       try {
         const ext = photoFile.name.split('.').pop().toLowerCase() || 'jpg';
-        uploadedPath = canonicalPhotoPath(form.firstName, form.lastName, ext);
+        const folder = getTeamRole({ firstName: form.firstName, lastName: form.lastName }) ? 'equipe' : 'auteurs';
+        uploadedPath = canonicalPhotoPath(form.firstName, form.lastName, ext, folder);
         const ghPath = uploadedPath.replace('assets/', '');
         const base64 = await new Promise((resolve) => {
           const reader = new FileReader();
