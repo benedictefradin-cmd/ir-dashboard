@@ -23,7 +23,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
   const debouncedSearch = useDebounce(search, 150);
 
   const normalize = (str) =>
-    (str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const filtered = useMemo(() => {
     if (!debouncedSearch) return auteurs;
@@ -42,13 +42,19 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
     return a.name || '';
   };
 
-  const getPublicationCount = (auteur) => {
-    if (!articles?.length) return auteur.publications || 0;
+  // Get publications linked to an author (by name matching)
+  const getLinkedPublications = (auteur) => {
+    if (!articles?.length) return [];
     const name = getDisplayName(auteur).toLowerCase();
-    const count = articles.filter(art =>
+    if (!name) return [];
+    return articles.filter(art =>
       art.author && art.author.toLowerCase().includes(name)
-    ).length;
-    return count || auteur.publications || 0;
+    );
+  };
+
+  const getPublicationCount = (auteur) => {
+    const linked = getLinkedPublications(auteur);
+    return linked.length || auteur.publications || 0;
   };
 
   const getInitial = (a) => {
@@ -114,7 +120,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
     }
 
     const slug = `${form.firstName}-${form.lastName}`.toLowerCase()
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     let photoUrl = form.photo;
@@ -170,13 +176,22 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
     }
     setModalOpen(false);
 
-    // Persister dans authors.json via GitHub
+    // Persister dans authors.json via GitHub + sync vers le site
     if (hasGitHub()) {
       try {
         await saveAuthorsToGitHub(updatedList);
         toast('authors.json mis à jour sur GitHub');
       } catch (err) {
         toast(`Erreur sync GitHub : ${err.message}`, 'error');
+      }
+
+      // Sync auteurs.json sur le site repo
+      if (saveToSite) {
+        try {
+          await saveToSite('auteurs', updatedList.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
+            id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
+          })), `Mise à jour auteur : ${form.firstName} ${form.lastName}`);
+        } catch { /* silent — already toasted from saveToSite */ }
       }
     }
   };
@@ -189,8 +204,19 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
     toast('Auteur supprimé');
     if (hasGitHub()) {
       try { await saveAuthorsToGitHub(updatedList); } catch { /* silent */ }
+      if (saveToSite) {
+        try {
+          await saveToSite('auteurs', updatedList.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
+            id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
+          })), `Suppression auteur : ${getDisplayName(auteur)}`);
+        } catch { /* silent */ }
+      }
     }
   };
+
+  // Publications linked to the author being edited
+  const editingAuteur = editId ? auteurs.find(a => a.id === editId) : null;
+  const linkedPubs = editingAuteur ? getLinkedPublications(editingAuteur) : [];
 
   if (loading) {
     return (
@@ -286,7 +312,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
       </div>
 
       {modalOpen && (
-        <Modal onClose={() => setModalOpen(false)} title={editId ? 'Modifier l’auteur' : 'Ajouter un auteur'}>
+        <Modal onClose={() => setModalOpen(false)} title={editId ? 'Modifier l\u2019auteur' : 'Ajouter un auteur'}>
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
@@ -351,6 +377,33 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
               <label>Email (optionnel, non affiché)</label>
               <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@exemple.fr" />
             </div>
+
+            {/* Publications liées */}
+            {editId && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontWeight: 600 }}>Publications liées ({linkedPubs.length})</label>
+                {linkedPubs.length === 0 ? (
+                  <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>Aucune publication liée à cet auteur.</p>
+                ) : (
+                  <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 8, border: '1px solid var(--border)', borderRadius: 8, padding: 8 }}>
+                    {linkedPubs.map(pub => (
+                      <div key={pub.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border-light)' }}>
+                        <span className={`badge badge-${pub.status === 'published' ? 'green' : pub.status === 'ready' ? 'sky' : 'ochre'}`} style={{ fontSize: 10, flexShrink: 0 }}>
+                          {pub.status === 'published' ? 'Publié' : pub.status === 'ready' ? 'Prêt' : 'Brouillon'}
+                        </span>
+                        <span style={{ fontSize: 13, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {pub.title}
+                        </span>
+                        {pub.date && (
+                          <span style={{ fontSize: 11, color: COLORS.textLight, flexShrink: 0 }}>{pub.date}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="modal-footer">
               <button type="button" className="btn btn-outline" onClick={() => setModalOpen(false)} disabled={uploading}>Annuler</button>
               <button type="submit" className="btn btn-primary" disabled={uploading}>
