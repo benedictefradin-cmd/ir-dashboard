@@ -19,6 +19,9 @@ export default function Dashboard({
   toast,
   notionArticles = [],
   notionCounts = {},
+  socialPosts = [],
+  rapports = [],
+  extEvents = [],
 }) {
   const now = new Date();
   const thisMonth = now.getMonth();
@@ -177,6 +180,100 @@ export default function Dashboard({
               <button className="btn btn-sm btn-primary" onClick={() => onTabChange('articles')}>
                 Voir &rarr;
               </button>
+            </div>
+          );
+        })()}
+
+        {/* ── Prochaines échéances + Semaine en cours ── */}
+        {(() => {
+          const now = new Date();
+          // Collect all upcoming deadlines
+          const deadlines = [];
+          rapports.filter(r => r.status !== 'envoye' && r.deadline).forEach(r => {
+            const d = new Date(r.deadline);
+            if (d >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
+              deadlines.push({ type: 'rapport', label: `Rapport ${r.type} — ${r.fondation}`, date: r.deadline, color: COLORS.terra });
+          });
+          extEvents.filter(e => e.dateDebut && new Date(e.dateDebut) >= now && e.status !== 'decline').forEach(e => {
+            deadlines.push({ type: 'event', label: e.nom, date: e.dateDebut, color: COLORS.sky });
+          });
+          socialPosts.filter(p => p.date && new Date(p.date) >= now && p.status !== 'publie').forEach(p => {
+            deadlines.push({ type: 'post', label: `${p.platform} — ${(p.text || '').slice(0, 40)}`, date: p.date, color: COLORS.ochre });
+          });
+          deadlines.sort((a, b) => a.date.localeCompare(b.date));
+          const top5 = deadlines.slice(0, 5);
+
+          // Week calendar (Mon-Sun of current week)
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const dow = (today.getDay() + 6) % 7;
+          const monday = new Date(today); monday.setDate(today.getDate() - dow);
+          const weekDays = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(monday); d.setDate(monday.getDate() + i);
+            return d;
+          });
+          const postsByDate = {};
+          socialPosts.forEach(p => { const k = p.date?.slice(0, 10); if (k) (postsByDate[k] = postsByDate[k] || []).push(p); });
+          const evtByDate = {};
+          extEvents.forEach(e => { const k = e.dateDebut?.slice(0, 10); if (k) (evtByDate[k] = evtByDate[k] || []).push(e); });
+          const dayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+
+          if (top5.length === 0 && socialPosts.length === 0 && extEvents.length === 0) return null;
+
+          return (
+            <div className="grid grid-2 mb-16">
+              {/* Prochaines échéances */}
+              <div className="card fade-in" style={{ cursor: 'pointer' }} onClick={() => onTabChange('calendrier')}>
+                <h2 style={{ fontSize: 16, marginBottom: 12 }}>Prochaines échéances</h2>
+                {top5.length === 0 ? (
+                  <p style={{ color: COLORS.textLight, fontSize: 13 }}>Aucune échéance à venir</p>
+                ) : top5.map((dl, i) => {
+                  const daysLeft = Math.ceil((new Date(dl.date) - today) / (1000 * 60 * 60 * 24));
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0',
+                      borderBottom: i < top5.length - 1 ? `1px solid ${COLORS.border}` : 'none',
+                    }}>
+                      <div style={{ width: 4, height: 32, borderRadius: 2, background: dl.color, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, color: COLORS.navy, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dl.label}</p>
+                        <p style={{ fontSize: 11, color: COLORS.textLight, margin: 0 }}>{formatDateFr(dl.date)}</p>
+                      </div>
+                      <span style={{
+                        fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                        background: daysLeft <= 3 ? COLORS.dangerLight : daysLeft <= 7 ? COLORS.ochreLight : COLORS.greenLight,
+                        color: daysLeft <= 3 ? COLORS.danger : daysLeft <= 7 ? COLORS.ochre : COLORS.green,
+                      }}>
+                        {daysLeft === 0 ? "Aujourd'hui" : daysLeft === 1 ? 'Demain' : `J-${daysLeft}`}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Mini semaine */}
+              <div className="card fade-in">
+                <h2 style={{ fontSize: 16, marginBottom: 12 }}>Cette semaine</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, textAlign: 'center' }}>
+                  {weekDays.map((d, i) => {
+                    const key = d.toISOString().slice(0, 10);
+                    const isToday = key === today.toISOString().slice(0, 10);
+                    const posts = postsByDate[key] || [];
+                    const evts = evtByDate[key] || [];
+                    return (
+                      <div key={i} style={{
+                        padding: '6px 2px', borderRadius: 8,
+                        background: isToday ? COLORS.skyLight : 'transparent',
+                        border: isToday ? `2px solid ${COLORS.sky}` : `1px solid ${COLORS.border}`,
+                      }}>
+                        <div style={{ fontSize: 11, color: COLORS.textLight, fontWeight: 600 }}>{dayLabels[i]}</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: isToday ? COLORS.sky : COLORS.navy }}>{d.getDate()}</div>
+                        {posts.length > 0 && <div style={{ fontSize: 10, color: COLORS.ochre, marginTop: 2 }}>{posts.length} post{posts.length > 1 ? 's' : ''}</div>}
+                        {evts.length > 0 && <div style={{ fontSize: 10, color: COLORS.sky, marginTop: 1 }}>{evts.length} evt</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           );
         })()}

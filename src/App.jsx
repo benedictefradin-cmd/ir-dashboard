@@ -17,6 +17,7 @@ import Navigation from './pages/Navigation';
 import Equipe from './pages/Equipe';
 import Technique from './pages/Technique';
 import Sollicitations from './pages/Sollicitations';
+import Calendrier from './pages/Calendrier';
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
 import { fetchSollicitations } from './services/contact';
@@ -64,6 +65,11 @@ export default function App() {
   const [campaigns, setCampaigns] = useState([]);
   const [activity, setActivity] = useState(() => getActivity());
   const [contenu, setContenu] = useState({});
+
+  // Calendrier data (localStorage)
+  const [socialPosts, setSocialPostsRaw] = useState(() => loadLocal(LS_KEYS.socialPosts, []));
+  const [rapports, setRapportsRaw] = useState(() => loadLocal(LS_KEYS.rapportsFondations, []));
+  const [extEvents, setExtEventsRaw] = useState(() => loadLocal(LS_KEYS.extEvents, []));
 
   // Services
   const [services, setServices] = useState({ brevo: false, telegram: false, github: hasGitHub() });
@@ -185,12 +191,42 @@ export default function App() {
     }
   }, [toast]);
 
+  // Calendrier setters with localStorage persistence
+  const setSocialPosts = useCallback((updater) => {
+    setSocialPostsRaw(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveLocal(LS_KEYS.socialPosts, next);
+      return next;
+    });
+  }, []);
+  const setRapports = useCallback((updater) => {
+    setRapportsRaw(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveLocal(LS_KEYS.rapportsFondations, next);
+      return next;
+    });
+  }, []);
+  const setExtEvents = useCallback((updater) => {
+    setExtEventsRaw(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveLocal(LS_KEYS.extEvents, next);
+      return next;
+    });
+  }, []);
+
   // Computed badges
   const readyCount = (notionCounts.ready || 0) + articles.filter(a => a.status === 'ready').length;
   const badges = {
     dashboard: 0,
     articles: readyCount || articles.filter(a => a.status === 'review').length,
     evenements: 0,
+    calendrier: (() => {
+      const now = new Date(); now.setHours(0, 0, 0, 0);
+      const in7 = new Date(now); in7.setDate(in7.getDate() + 7);
+      const urgentRapports = rapports.filter(r => r.status !== 'envoye' && r.deadline && new Date(r.deadline) <= in7).length;
+      const weekEvents = extEvents.filter(e => e.status !== 'decline' && e.dateDebut && new Date(e.dateDebut) >= now && new Date(e.dateDebut) <= in7).length;
+      return urgentRapports + weekEvents;
+    })(),
     presse: 0,
     auteurs: 0,
     newsletter: subscribers.filter(s => s.status === 'pending').length,
@@ -234,6 +270,7 @@ export default function App() {
           campaigns={campaigns} activity={activity} loading={loading}
           onTabChange={changeTab} toast={toast}
           notionArticles={notionArticles} notionCounts={notionCounts}
+          socialPosts={socialPosts} rapports={rapports} extEvents={extEvents}
         />;
       case 'articles':
         return <Articles
@@ -245,10 +282,12 @@ export default function App() {
         />;
       case 'evenements':
         return <Evenements events={events} setEvents={setEvents} loading={loading} toast={toast} saveToSite={saveToSite} />;
+      case 'calendrier':
+        return <Calendrier socialPosts={socialPosts} setSocialPosts={setSocialPosts} rapports={rapports} setRapports={setRapports} extEvents={extEvents} setExtEvents={setExtEvents} toast={toast} />;
       case 'presse':
         return <Presse presse={presse} setPresse={setPresse} sollicitations={sollicitations} loading={loading} toast={toast} saveToSite={saveToSite} />;
       case 'auteurs':
-        return <Auteurs auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} loading={loading} toast={toast} saveToSite={saveToSite} />;
+        return <Auteurs auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} contenu={contenu} setContenu={setContenu} loading={loading} toast={toast} saveToSite={saveToSite} />;
       case 'newsletter':
         return <Newsletter subscribers={subscribers} setSubscribers={setSubscribers} campaigns={campaigns} loading={loading} connected={services.brevo} onRefresh={loadData} toast={toast} />;
       case 'messagerie':
@@ -264,7 +303,7 @@ export default function App() {
       case 'navigation':
         return <Navigation contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
       case 'equipe':
-        return <Equipe contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
+        return <Equipe contenu={contenu} setContenu={setContenu} auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} toast={toast} saveToSite={saveToSite} />;
       case 'technique':
         return <Technique toast={toast} />;
       case 'sollicitations':
@@ -282,6 +321,7 @@ export default function App() {
           campaigns={campaigns} activity={activity} loading={loading}
           onTabChange={changeTab} toast={toast}
           notionArticles={notionArticles} notionCounts={notionCounts}
+          socialPosts={socialPosts} rapports={rapports} extEvents={extEvents}
         />;
     }
   };

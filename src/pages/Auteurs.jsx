@@ -11,7 +11,7 @@ const emptyForm = { firstName: '', lastName: '', role: '', photo: '', bio: '', e
 
 const avatarColors = [COLORS.navy, COLORS.sky, COLORS.terra, COLORS.ochre, COLORS.green];
 
-export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast, saveToSite }) {
+export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setContenu, loading, toast, saveToSite }) {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -64,6 +64,90 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
   };
 
   const getAvatarColor = (index) => avatarColors[index % avatarColors.length];
+
+  // Check if an author is also a team member
+  const getTeamRole = (auteur) => {
+    if (!contenu?.equipe) return null;
+    const normName = (p, n) => `${p} ${n}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const target = normName(auteur.firstName, auteur.lastName);
+    if (!target) return null;
+
+    const eq = contenu.equipe;
+    // CA
+    const caMatch = (eq?.ca?.membres || []).find(m => normName(m.prenom, m.nom) === target);
+    if (caMatch) return 'Membre du CA';
+    // Permanents
+    const permMatch = (eq?.equipe_permanente?.membres || []).find(m => normName(m.prenom, m.nom) === target);
+    if (permMatch) return 'Équipe permanente';
+    // Directions
+    if (eq?.directions) {
+      for (const k of Object.keys(eq.directions)) {
+        if (k.endsWith('_membres')) {
+          const match = (eq.directions[k] || []).find(m => normName(m.prenom, m.nom) === target);
+          if (match) return 'Direction d\'études';
+        }
+      }
+    }
+    // CS
+    if (eq?.conseil_scientifique) {
+      for (const k of Object.keys(eq.conseil_scientifique)) {
+        if (k.endsWith('_membres')) {
+          const match = (eq.conseil_scientifique[k] || []).find(m => normName(m.prenom, m.nom) === target);
+          if (match) return 'Conseil scientifique';
+        }
+      }
+    }
+    return null;
+  };
+
+  // Sync photo to team members in contenu.equipe (CA, directions, CS, permanents)
+  const syncPhotoToEquipe = (firstName, lastName, photoPath) => {
+    if (!setContenu || !contenu?.equipe) return;
+    const normName = (p, n) => `${p} ${n}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const targetName = normName(firstName, lastName);
+    if (!targetName) return;
+
+    let changed = false;
+    const updated = JSON.parse(JSON.stringify(contenu));
+    const eq = updated.equipe;
+
+    // Helper: sync photo in a member list
+    const syncInList = (list) => {
+      if (!Array.isArray(list)) return;
+      list.forEach((m, i) => {
+        const mName = normName(m.prenom || '', m.nom || '');
+        if (mName === targetName && m.photo !== photoPath) {
+          list[i] = { ...m, photo: photoPath };
+          changed = true;
+        }
+      });
+    };
+
+    // CA
+    syncInList(eq?.ca?.membres);
+    // Équipe permanente
+    syncInList(eq?.equipe_permanente?.membres);
+    // Directions
+    if (eq?.directions) {
+      Object.keys(eq.directions).forEach(k => {
+        if (k.endsWith('_membres')) syncInList(eq.directions[k]);
+      });
+    }
+    // Conseil scientifique
+    if (eq?.conseil_scientifique) {
+      Object.keys(eq.conseil_scientifique).forEach(k => {
+        if (k.endsWith('_membres')) syncInList(eq.conseil_scientifique[k]);
+      });
+    }
+
+    if (changed) {
+      setContenu(updated);
+      // Also save contenu to site
+      if (saveToSite) {
+        saveToSite('contenu', updated, `Sync photo équipe : ${firstName} ${lastName}`).catch(() => {});
+      }
+    }
+  };
 
   const handlePhotoSelect = (e) => {
     const file = e.target.files?.[0];
@@ -194,6 +278,14 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
         } catch { /* silent — already toasted from saveToSite */ }
       }
     }
+
+    // Sync photo to team members if photo changed
+    if (photoUrl) {
+      const photoPath = photoUrl.startsWith('http')
+        ? `assets/images/auteurs/${slug}.${(photoFile?.name || 'jpg').split('.').pop()}`
+        : photoUrl;
+      syncPhotoToEquipe(form.firstName, form.lastName, photoPath);
+    }
   };
 
   const handleDelete = async (auteur, e) => {
@@ -261,6 +353,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
           <div className="grid grid-3 grid-mobile-2">
             {filtered.map((auteur, i) => {
               const pubCount = getPublicationCount(auteur);
+              const teamRole = getTeamRole(auteur);
               return (
                 <div
                   className="author-card"
@@ -292,9 +385,16 @@ export default function Auteurs({ auteurs, setAuteurs, articles, loading, toast,
                       {auteur.role || auteur.titre}
                     </p>
                   )}
-                  <span className="badge badge-sky">
-                    {pubCount} publication{pubCount !== 1 ? 's' : ''}
-                  </span>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <span className="badge badge-sky">
+                      {pubCount} publication{pubCount !== 1 ? 's' : ''}
+                    </span>
+                    {teamRole && (
+                      <span className="badge badge-green" style={{ fontSize: 10 }}>
+                        {teamRole}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ marginTop: 10 }}>
                     <button
                       className="btn btn-outline btn-sm"

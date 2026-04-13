@@ -28,6 +28,7 @@ export const NAV_ITEMS = [
   { key: 'separator-1', type: 'separator' },
   { key: 'articles', label: 'Publications', icon: '\u{1F4C4}' },
   { key: 'evenements', label: 'Événements', icon: '\u{1F4C5}' },
+  { key: 'calendrier', label: 'Calendrier', icon: '\u{1F5D3}' },
   { key: 'presse', label: 'Presse', icon: '\u{1F4F0}' },
   { key: 'auteurs', label: 'Auteurs', icon: '\u{1F465}' },
   { key: 'separator-2', type: 'separator' },
@@ -151,6 +152,9 @@ export const LS_KEYS = {
   telegramChatId: 'tg-chat-id',
   telegramChannelId: 'tg-channel-id',
   sidebarCollapsed: 'sidebar-collapsed',
+  socialPosts: 'social-posts',
+  rapportsFondations: 'rapports-fondations',
+  extEvents: 'ext-events',
   vercelDeployHook: 'vercel-deploy-hook',
   contactAuthToken: 'contact-auth-token',
 };
