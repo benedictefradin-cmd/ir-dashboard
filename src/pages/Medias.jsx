@@ -8,10 +8,12 @@ import useDebounce from '../hooks/useDebounce';
 
 const MEDIA_FOLDERS = [
   { id: 'all', label: 'Tous' },
+  { id: 'images/equipe', label: 'Équipe' },
   { id: 'images/auteurs', label: 'Auteurs' },
   { id: 'images/publications', label: 'Publications' },
   { id: 'images/evenements', label: 'Événements' },
   { id: 'images/partenaires', label: 'Partenaires' },
+  { id: 'images/librairie', label: 'Librairie' },
   { id: 'images/site', label: 'Site' },
   { id: 'documents', label: 'Documents (PDF)' },
 ];
@@ -41,7 +43,7 @@ export default function Medias({ toast }) {
       const ghToken = loadLocal('ir_github_token', '') || import.meta.env.VITE_GITHUB_TOKEN || '';
       const ghOwner = loadLocal('ir_github_owner', '') || import.meta.env.VITE_GITHUB_OWNER || 'benedictefradin-cmd';
       const ghRepo = loadLocal('ir_github_site_repo', '') || import.meta.env.VITE_GITHUB_SITE_REPO || 'institut-rousseau';
-      const folders = ['images/auteurs', 'images/publications', 'images/evenements', 'images/partenaires', 'images/site', 'documents'];
+      const folders = ['images/equipe', 'images/auteurs', 'images/publications', 'images/evenements', 'images/partenaires', 'images/librairie', 'images/site', 'documents'];
       const results = [];
 
       for (const folder of folders) {
