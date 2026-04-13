@@ -134,7 +134,7 @@ export default function Calendrier({ socialPosts, setSocialPosts, rapports, setR
           <RapportsFondations rapports={rapports} setRapports={setRapports} toast={toast} />
         )}
         {subTab === 'extevents' && (
-          <EvenementsExterieurs extEvents={extEvents} setExtEvents={setExtEvents} toast={toast} />
+          <EvenementsExterieurs extEvents={extEvents} setExtEvents={setExtEvents} siteEvents={events} toast={toast} />
         )}
       </div>
     </>
@@ -661,7 +661,7 @@ function RapportsFondations({ rapports, setRapports, toast }) {
 // ═══════════════════════════════════════════════════════════
 // A3 — ÉVÉNEMENTS EXTÉRIEURS
 // ═══════════════════════════════════════════════════════════
-function EvenementsExterieurs({ extEvents, setExtEvents, toast }) {
+function EvenementsExterieurs({ extEvents, setExtEvents, siteEvents = [], toast }) {
   const [showForm, setShowForm] = useState(false);
   const [editingEvt, setEditingEvt] = useState(null);
   const [viewMode, setViewMode] = useState('liste');
@@ -674,8 +674,32 @@ function EvenementsExterieurs({ extEvents, setExtEvents, toast }) {
   };
   const [form, setForm] = useState(emptyForm);
 
+  // Fusionner les événements du site marqués "externe" avec les extEvents locaux
+  const siteExterneEvents = useMemo(() =>
+    siteEvents.filter(e => e.externe).map(e => ({
+      id: e.id,
+      nom: e.title || e.nom || '',
+      dateDebut: e.date || '',
+      dateFin: '',
+      lieu: e.lieu || '',
+      organisateur: e.partenaire || '',
+      thematique: '',
+      typeEvt: e.type || '',
+      pertinence: 3,
+      status: e.status === 'confirme' ? 'confirme' : e.status === 'annule' ? 'decline' : 'repere',
+      quiYVa: (e.intervenants || []).map(i => i.name).filter(Boolean),
+      notes: e.description || '',
+      _fromSite: true,
+    }))
+  , [siteEvents]);
+
+  const allExtEvents = useMemo(() => [...extEvents, ...siteExterneEvents], [extEvents, siteExterneEvents]);
+
   const openAdd = () => { setForm(emptyForm); setEditingEvt(null); setShowForm(true); };
-  const openEdit = (evt) => { setForm({ ...evt }); setEditingEvt(evt); setShowForm(true); };
+  const openEdit = (evt) => {
+    if (evt._fromSite) { toast('Cet événement se modifie dans l\'onglet Événements', 'info'); return; }
+    setForm({ ...evt }); setEditingEvt(evt); setShowForm(true);
+  };
 
   const handleSave = () => {
     if (!form.nom.trim()) { toast('Veuillez renseigner le nom', 'error'); return; }
@@ -695,11 +719,11 @@ function EvenementsExterieurs({ extEvents, setExtEvents, toast }) {
 
   // Filtrage & tri
   const filtered = useMemo(() => {
-    let items = [...extEvents];
+    let items = [...allExtEvents];
     if (filterTheme !== 'all') items = items.filter(e => e.thematique === filterTheme);
     if (filterMonth !== 'all') items = items.filter(e => e.dateDebut?.slice(5, 7) === filterMonth);
     return items.sort((a, b) => (a.dateDebut || '').localeCompare(b.dateDebut || ''));
-  }, [extEvents, filterTheme, filterMonth]);
+  }, [allExtEvents, filterTheme, filterMonth]);
 
   // Mini-calendrier : mois avec événements
   const now = new Date();
@@ -708,9 +732,9 @@ function EvenementsExterieurs({ extEvents, setExtEvents, toast }) {
   const calDays = getMonthDays(calYear, calMonth);
   const evtDatesSet = useMemo(() => {
     const set = new Set();
-    extEvents.forEach(e => { if (e.dateDebut) set.add(e.dateDebut.slice(0, 10)); });
+    allExtEvents.forEach(e => { if (e.dateDebut) set.add(e.dateDebut.slice(0, 10)); });
     return set;
-  }, [extEvents]);
+  }, [allExtEvents]);
 
   const prevMonth = () => { if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); } else setCalMonth(m => m - 1); };
   const nextMonth = () => { if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); } else setCalMonth(m => m + 1); };
@@ -721,10 +745,10 @@ function EvenementsExterieurs({ extEvents, setExtEvents, toast }) {
     <>
       {/* Stats */}
       <div className="grid grid-4 mb-16">
-        <StatsCard label="Total" value={extEvents.length} sub="événements" accentColor={COLORS.navy} />
-        <StatsCard label="À venir" value={extEvents.filter(e => e.dateDebut && new Date(e.dateDebut) >= now && e.status !== 'decline').length} sub="confirmés ou repérés" accentColor={COLORS.sky} />
-        <StatsCard label="Confirmés" value={extEvents.filter(e => e.status === 'confirme').length} sub="participation" accentColor={COLORS.green} />
-        <StatsCard label="Cette semaine" value={extEvents.filter(e => { const d = daysUntil(e.dateDebut); return d >= 0 && d <= 7 && e.status !== 'decline'; }).length} sub="prochainement" accentColor={COLORS.ochre} />
+        <StatsCard label="Total" value={allExtEvents.length} sub="événements" accentColor={COLORS.navy} />
+        <StatsCard label="À venir" value={allExtEvents.filter(e => e.dateDebut && new Date(e.dateDebut) >= now && e.status !== 'decline').length} sub="confirmés ou repérés" accentColor={COLORS.sky} />
+        <StatsCard label="Confirmés" value={allExtEvents.filter(e => e.status === 'confirme').length} sub="participation" accentColor={COLORS.green} />
+        <StatsCard label="Cette semaine" value={allExtEvents.filter(e => { const d = daysUntil(e.dateDebut); return d >= 0 && d <= 7 && e.status !== 'decline'; }).length} sub="prochainement" accentColor={COLORS.ochre} />
       </div>
 
       {/* Filtres + toggle */}
@@ -765,7 +789,8 @@ function EvenementsExterieurs({ extEvents, setExtEvents, toast }) {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2, flexWrap: 'wrap' }}>
                   {evt.lieu && <span style={{ fontSize: 12, color: COLORS.textLight }}>📍 {evt.lieu}</span>}
                   {evt.organisateur && <span style={{ fontSize: 12, color: COLORS.textLight }}>par {evt.organisateur}</span>}
-                  <span className="badge badge-navy" style={{ fontSize: 10 }}>{evt.thematique}</span>
+                  {evt.thematique ? <span className="badge badge-navy" style={{ fontSize: 10 }}>{evt.thematique}</span>
+                    : evt.typeEvt ? <span className="badge badge-ochre" style={{ fontSize: 10 }}>{evt.typeEvt}</span> : null}
                   <span style={{ fontSize: 12, color: COLORS.ochre, letterSpacing: 1 }}>{stars(evt.pertinence)}</span>
                 </div>
                 {evt.quiYVa?.length > 0 && (
@@ -775,8 +800,9 @@ function EvenementsExterieurs({ extEvents, setExtEvents, toast }) {
                 )}
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+                {evt._fromSite && <span className="badge badge-sky" style={{ fontSize: 10 }}>Site IR</span>}
                 <span className={`badge ${EXT_STATUSES[evt.status]?.badgeClass || 'badge-gray'}`}>{EXT_STATUSES[evt.status]?.label || evt.status}</span>
-                <button className="btn btn-outline btn-sm" style={{ color: COLORS.danger }} onClick={(e) => { e.stopPropagation(); handleDelete(evt.id); }}>✕</button>
+                {!evt._fromSite && <button className="btn btn-outline btn-sm" style={{ color: COLORS.danger }} onClick={(e) => { e.stopPropagation(); handleDelete(evt.id); }}>✕</button>}
               </div>
             </div>
           ))}

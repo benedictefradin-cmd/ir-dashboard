@@ -139,6 +139,7 @@ export function normalizeEvents(events) {
     lienConcours: e.lienConcours || '',
     status: e.status || 'confirme',
     externe: e.externe || false,
+    periode: e.periode || '',
   }));
 }
 

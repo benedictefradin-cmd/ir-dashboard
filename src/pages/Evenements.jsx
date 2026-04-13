@@ -29,6 +29,7 @@ const emptyForm = {
   inscriptions: 0,
   status: 'confirme',
   externe: false,
+  periode: '',
 };
 
 const statusDot = (status, isPast) => {
@@ -51,7 +52,7 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
 
   // Stats
   const stats = useMemo(() => {
-    const aVenir = events.filter(e => isFuture(e.date) && e.status !== 'annule').length;
+    const aVenir = events.filter(e => (isFuture(e.date) || (!e.date && e.status === 'en_preparation')) && e.status !== 'annule').length;
     const passes = events.filter(e => !isFuture(e.date)).length;
     const enPrep = events.filter(e => e.status === 'en_preparation').length;
     return { aVenir, passes, enPrep };
@@ -60,12 +61,13 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
   // Filtrage + tri : futurs d'abord, puis passés
   const sorted = useMemo(() => {
     let list = events;
-    if (statusFilter === 'a_venir') list = list.filter(e => isFuture(e.date) && e.status !== 'annule');
+    if (statusFilter === 'a_venir') list = list.filter(e => (isFuture(e.date) || (!e.date && e.status === 'en_preparation')) && e.status !== 'annule');
     else if (statusFilter === 'passe') list = list.filter(e => !isFuture(e.date));
     else if (statusFilter !== 'all') list = list.filter(e => e.status === statusFilter);
     const futurs = list.filter(e => isFuture(e.date)).sort((a, b) => new Date(a.date) - new Date(b.date));
-    const passes = list.filter(e => !isFuture(e.date)).sort((a, b) => new Date(b.date) - new Date(a.date));
-    return [...futurs, ...passes];
+    const sansDate = list.filter(e => !e.date && e.status !== 'passe');
+    const passes = list.filter(e => !isFuture(e.date) && (e.date || e.status === 'passe')).sort((a, b) => new Date(b.date) - new Date(a.date));
+    return [...futurs, ...sansDate, ...passes];
   }, [events, statusFilter]);
 
   // Form helpers
@@ -92,13 +94,15 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
       lienConcours: evt.lienConcours || '', inscriptions: evt.inscriptions || 0,
       status: evt.status || 'confirme',
       externe: evt.externe || false,
+      periode: evt.periode || '',
     });
     setShowForm(true);
   };
 
   const saveEvent = () => {
     if (!form.title) return toast('Le titre est requis', 'error');
-    if (!form.date) return toast('La date est requise', 'error');
+    if (!form.date && form.status !== 'en_preparation') return toast('La date est requise', 'error');
+    if (!form.date && !form.periode) return toast('Indiquez au moins une période (ex: Septembre 2026)', 'error');
     const cleanIntervenants = form.intervenants.filter(i => i.name.trim());
     if (editingEvt) {
       setEvents(prev => prev.map(e => e.id === editingEvt.id ? { ...e, ...form, intervenants: cleanIntervenants } : e));
@@ -131,8 +135,8 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
     setPublishingId('all');
     try {
       if (hasGitHub() && saveToSite) {
-        const cleanEvents = events.map(({ id, date, type, title, sousTitre, lieu, intervenants, partenaire, description, lienInscription, status, externe }) => ({
-          id, date, type, title, sousTitre, lieu, intervenants: (intervenants || []).filter(i => i.name), partenaire, description, lienInscription, status, externe: externe || false,
+        const cleanEvents = events.map(({ id, date, type, title, sousTitre, lieu, intervenants, partenaire, description, lienInscription, status, externe, periode }) => ({
+          id, date, type, title, sousTitre, lieu, intervenants: (intervenants || []).filter(i => i.name), partenaire, description, lienInscription, status, externe: externe || false, ...(periode ? { periode } : {}),
         }));
         await saveToSite('events', cleanEvents, 'Mise à jour événements depuis le back-office');
         toast('Événements publiés sur le site');
@@ -244,9 +248,16 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
             {(formMode === 'template' && !editingEvt) && (
               <div style={{ fontSize: 15, lineHeight: 2.4, color: COLORS.navy }}>
                 <p>
-                  Le{' '}
-                  <input type="date" value={form.date} onChange={e => setField('date', e.target.value)}
-                    style={{ display: 'inline-block', width: 160, padding: '4px 8px', fontSize: 14 }} />{', '}
+                  {form.status === 'en_preparation' ? <>
+                    Prévu pour{' '}
+                    <input value={form.periode} onChange={e => setField('periode', e.target.value)}
+                      placeholder="ex: Septembre 2026"
+                      style={{ display: 'inline-block', width: 200, padding: '4px 8px', fontSize: 14 }} />{', '}
+                  </> : <>
+                    Le{' '}
+                    <input type="date" value={form.date} onChange={e => setField('date', e.target.value)}
+                      style={{ display: 'inline-block', width: 160, padding: '4px 8px', fontSize: 14 }} />{', '}
+                  </>}
                   <select value={form.type} onChange={e => setField('type', e.target.value)}
                     style={{ display: 'inline-block', width: 140, padding: '4px 8px', fontSize: 14 }}>
                     {EVT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -307,7 +318,11 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
             {(formMode === 'classique' || editingEvt) && (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-                  <div><label>Date *</label><input type="date" value={form.date} onChange={e => setField('date', e.target.value)} /></div>
+                  {form.status === 'en_preparation' ? (
+                    <div><label>Période</label><input value={form.periode} onChange={e => setField('periode', e.target.value)} placeholder="ex: Septembre 2026, Rentrée 2026" /></div>
+                  ) : (
+                    <div><label>Date *</label><input type="date" value={form.date} onChange={e => setField('date', e.target.value)} /></div>
+                  )}
                   <div><label>Type</label>
                     <select value={form.type} onChange={e => setField('type', e.target.value)}>
                       {EVT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -384,13 +399,15 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
 
               return (
                 <div key={evt.id} className="card" style={{ display: 'flex', gap: 16, padding: 16, opacity: past ? 0.5 : 1 }}>
-                  {/* Date */}
+                  {/* Date ou période */}
                   <div style={{ minWidth: 70, textAlign: 'center', padding: '8px 4px', borderRight: '2px solid var(--border)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    {d && <>
+                    {d ? <>
                       <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--navy)', lineHeight: 1 }}>{d.getDate()}</span>
                       <span style={{ fontSize: 12, textTransform: 'uppercase', color: 'var(--text-light)', marginTop: 2 }}>{d.toLocaleDateString('fr-FR', { month: 'short' })}</span>
                       <span style={{ fontSize: 12, color: 'var(--text-light)' }}>{d.getFullYear()}</span>
-                    </>}
+                    </> : evt.periode ? (
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ochre)', lineHeight: 1.3 }}>{evt.periode}</span>
+                    ) : null}
                   </div>
 
                   {/* Contenu */}
@@ -455,7 +472,7 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
               </span>
             </div>
             <time style={{ fontSize: 14, color: COLORS.sky, fontWeight: 600 }}>
-              {formatDateFr(previewEvt.date)}
+              {previewEvt.date ? formatDateFr(previewEvt.date) : previewEvt.periode || ''}
             </time>
             <h2 style={{ fontSize: 24, margin: '8px 0 4px', fontFamily: "'Cormorant Garamond', serif", color: COLORS.navy }}>
               {previewEvt.title}
