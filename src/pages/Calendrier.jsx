@@ -311,19 +311,22 @@ function SocialMediaCalendar({ posts, setPosts, events = [], toast, onTabChange 
                 >
                   <span className="cal-day-num">{day}</span>
                   <div className="cal-cell-posts">
-                    {/* Événements IR en premier */}
-                    {cellEvents.slice(0, maxItems).map(evt => (
-                      <div
-                        key={evt.id || evt.slug}
-                        className="cal-post-chip"
-                        style={{ borderLeftColor: COLORS.sky, background: COLORS.skyLight }}
-                        onClick={(e) => { e.stopPropagation(); onTabChange?.('evenements'); }}
-                        title={evt.titre || evt.title}
-                      >
-                        <span style={{ marginRight: 2 }}>📅</span>
-                        <span className="cal-chip-text">{(evt.titre || evt.title || 'Événement')?.slice(0, 28)}</span>
-                      </div>
-                    ))}
+                    {/* Événements IR / extérieurs */}
+                    {cellEvents.slice(0, maxItems).map(evt => {
+                      const isExterne = evt.externe;
+                      return (
+                        <div
+                          key={evt.id || evt.slug}
+                          className="cal-post-chip"
+                          style={{ borderLeftColor: isExterne ? COLORS.ochre : COLORS.sky, background: isExterne ? '#FFF3E0' : COLORS.skyLight }}
+                          onClick={(e) => { e.stopPropagation(); onTabChange?.('evenements'); }}
+                          title={evt.titre || evt.title}
+                        >
+                          <span style={{ marginRight: 2 }}>{isExterne ? '🔗' : '📅'}</span>
+                          <span className="cal-chip-text">{(evt.titre || evt.title || 'Événement')?.slice(0, 28)}</span>
+                        </div>
+                      );
+                    })}
                     {/* Posts social media */}
                     {cellPosts.slice(0, Math.max(0, maxItems - cellEvents.length)).map(p => {
                       const pl = platformObj(p.platform);
@@ -358,24 +361,29 @@ function SocialMediaCalendar({ posts, setPosts, events = [], toast, onTabChange 
           {upcomingPosts.length === 0 && monthEvents.length === 0 && (
             <p style={{ color: COLORS.textLight, padding: 20, textAlign: 'center' }}>Rien de prévu pour {MONTH_NAMES[month].toLowerCase()} {year}</p>
           )}
-          {/* Événements IR */}
-          {monthEvents.map(evt => (
-            <div key={evt.id || evt.slug} className="cal-list-row" onClick={() => onTabChange?.('evenements')}>
-              <div style={{ width: 4, borderRadius: 4, background: COLORS.sky, alignSelf: 'stretch', flexShrink: 0 }} />
-              <div style={{ minWidth: 80, fontSize: 13, color: COLORS.textLight }}>
-                {formatDateShort(evt.date)}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                  <span className="badge badge-sky" style={{ fontSize: 10 }}>📅 Événement IR</span>
-                  {evt.type && <span style={{ fontSize: 12, color: COLORS.textLight }}>{evt.type}</span>}
+          {/* Événements IR / extérieurs */}
+          {monthEvents.map(evt => {
+            const isExterne = evt.externe;
+            return (
+              <div key={evt.id || evt.slug} className="cal-list-row" onClick={() => onTabChange?.('evenements')}>
+                <div style={{ width: 4, borderRadius: 4, background: isExterne ? COLORS.ochre : COLORS.sky, alignSelf: 'stretch', flexShrink: 0 }} />
+                <div style={{ minWidth: 80, fontSize: 13, color: COLORS.textLight }}>
+                  {formatDateShort(evt.date)}
                 </div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: COLORS.navy, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.titre || evt.title}</p>
-                {(evt.lieu || evt.location) && <p style={{ fontSize: 12, color: COLORS.textLight, margin: '2px 0 0' }}>📍 {evt.lieu || evt.location}</p>}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <span className={`badge ${isExterne ? 'badge-ochre' : 'badge-sky'}`} style={{ fontSize: 10 }}>
+                      {isExterne ? '🔗 Extérieur' : '📅 Événement IR'}
+                    </span>
+                    {evt.type && <span style={{ fontSize: 12, color: COLORS.textLight }}>{evt.type}</span>}
+                  </div>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: COLORS.navy, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.titre || evt.title}</p>
+                  {(evt.lieu || evt.location) && <p style={{ fontSize: 12, color: COLORS.textLight, margin: '2px 0 0' }}>📍 {evt.lieu || evt.location}</p>}
+                </div>
+                <span className="badge badge-navy" style={{ flexShrink: 0 }}>Voir →</span>
               </div>
-              <span className="badge badge-navy" style={{ flexShrink: 0 }}>Voir →</span>
-            </div>
-          ))}
+            );
+          })}
           {/* Posts social media */}
           {upcomingPosts.map(p => {
             const pl = platformObj(p.platform);

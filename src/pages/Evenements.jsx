@@ -28,6 +28,7 @@ const emptyForm = {
   lienConcours: '',
   inscriptions: 0,
   status: 'confirme',
+  externe: false,
 };
 
 const statusDot = (status, isPast) => {
@@ -90,6 +91,7 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
       partenaire: evt.partenaire || '', lienInscription: evt.lienInscription || '',
       lienConcours: evt.lienConcours || '', inscriptions: evt.inscriptions || 0,
       status: evt.status || 'confirme',
+      externe: evt.externe || false,
     });
     setShowForm(true);
   };
@@ -307,6 +309,13 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
                   </div>
                 </div>
 
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                  <label style={{ margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <input type="checkbox" checked={form.externe} onChange={e => setField('externe', e.target.checked)} />
+                    Événement extérieur (non organisé par l'IR)
+                  </label>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 16 }}>
                   <div><label>Titre *</label><input value={form.title} onChange={e => setField('title', e.target.value)} placeholder="Titre de l\u2019événement" /></div>
                   <div><label>Sous-titre</label><input value={form.sousTitre} onChange={e => setField('sousTitre', e.target.value)} placeholder="Optionnel" /></div>
@@ -384,6 +393,7 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                       <span className="badge badge-navy" style={{ fontSize: 11 }}>{evt.type || 'Événement'}</span>
+                      {evt.externe && <span className="badge badge-ochre" style={{ fontSize: 10 }}>Extérieur</span>}
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: dotColor }}>
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor, display: 'inline-block' }} />
                         {past && evt.status !== 'annule' ? 'Passé' : statusCfg.label}

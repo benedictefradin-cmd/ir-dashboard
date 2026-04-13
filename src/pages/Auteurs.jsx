@@ -11,8 +11,16 @@ const emptyForm = { firstName: '', lastName: '', role: '', photo: '', bio: '', e
 
 const avatarColors = [COLORS.navy, COLORS.sky, COLORS.terra, COLORS.ochre, COLORS.green];
 
+const SORT_OPTIONS = [
+  { value: 'alpha', label: 'A \u2192 Z' },
+  { value: 'alpha-desc', label: 'Z \u2192 A' },
+  { value: 'pubs', label: 'Publications \u2193' },
+  { value: 'recent', label: 'R\u00e9cents d\u2019abord' },
+];
+
 export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setContenu, loading, toast, saveToSite, onTabChange }) {
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('alpha');
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ ...emptyForm });
@@ -23,16 +31,38 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
   const debouncedSearch = useDebounce(search, 150);
 
   const filtered = useMemo(() => {
-    if (!debouncedSearch) return auteurs;
-    const q = normalizeName(debouncedSearch);
-    return auteurs.filter(a =>
-      normalizeName(a.firstName).includes(q) ||
-      normalizeName(a.lastName).includes(q) ||
-      normalizeName(a.name).includes(q) ||
-      normalizeName(a.role).includes(q) ||
-      normalizeName(a.titre).includes(q)
-    );
-  }, [auteurs, debouncedSearch]);
+    let list = [...auteurs];
+
+    // Filter
+    if (debouncedSearch) {
+      const q = normalizeName(debouncedSearch);
+      list = list.filter(a =>
+        normalizeName(a.firstName).includes(q) ||
+        normalizeName(a.lastName).includes(q) ||
+        normalizeName(a.name).includes(q) ||
+        normalizeName(a.role).includes(q) ||
+        normalizeName(a.titre).includes(q)
+      );
+    }
+
+    // Sort
+    list.sort((a, b) => {
+      switch (sortBy) {
+        case 'alpha':
+          return (a.lastName || '').localeCompare(b.lastName || '', 'fr');
+        case 'alpha-desc':
+          return (b.lastName || '').localeCompare(a.lastName || '', 'fr');
+        case 'pubs':
+          return (getPublicationCount(b) - getPublicationCount(a)) || (a.lastName || '').localeCompare(b.lastName || '', 'fr');
+        case 'recent':
+          return (auteurs.indexOf(b) - auteurs.indexOf(a));
+        default:
+          return 0;
+      }
+    });
+
+    return list;
+  }, [auteurs, debouncedSearch, sortBy]);
 
   const getDisplayName = (a) => {
     if (a.firstName && a.lastName) return `${a.firstName} ${a.lastName}`;
@@ -54,8 +84,13 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
 
   const getAvatarColor = (index) => avatarColors[index % avatarColors.length];
 
+  // Stats
+  const totalPubs = useMemo(() => auteurs.reduce((sum, a) => sum + getPublicationCount(a), 0), [auteurs, articles]);
+  const withPhoto = useMemo(() => auteurs.filter(a => a.photo).length, [auteurs]);
+  const teamMembers = useMemo(() => auteurs.filter(a => getTeamRole(a)).length, [auteurs, contenu]);
+
   // ─── Team membership detection ───
-  const getTeamRole = (auteur) => {
+  function getTeamRole(auteur) {
     if (!contenu?.equipe) return null;
     const eq = contenu.equipe;
 
@@ -63,10 +98,10 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       (list || []).some(m => namesMatch(m.prenom, m.nom, auteur.firstName, auteur.lastName));
 
     if (matchInList(eq?.ca?.membres)) return 'Membre du CA';
-    if (matchInList(eq?.equipe_permanente?.membres)) return 'Équipe permanente';
+    if (matchInList(eq?.equipe_permanente?.membres)) return '\u00c9quipe permanente';
     if (eq?.directions) {
       for (const k of Object.keys(eq.directions)) {
-        if (k.endsWith('_membres') && matchInList(eq.directions[k])) return 'Direction d\'études';
+        if (k.endsWith('_membres') && matchInList(eq.directions[k])) return 'Direction d\u2019\u00e9tudes';
       }
     }
     if (eq?.conseil_scientifique) {
@@ -75,7 +110,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       }
     }
     return null;
-  };
+  }
 
   // ─── Sync photo to all matching team members in contenu.equipe ───
   const syncPhotoToEquipe = (firstName, lastName, photoPath) => {
@@ -112,7 +147,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     if (changed) {
       setContenu(updated);
       if (saveToSite) {
-        saveToSite('contenu', updated, `Sync photo équipe : ${firstName} ${lastName}`).catch(() => {});
+        saveToSite('contenu', updated, `Sync photo \u00e9quipe : ${firstName} ${lastName}`).catch(() => {});
       }
     }
   };
@@ -122,11 +157,11 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      toast('Veuillez sélectionner une image (JPG, PNG, WebP)', 'error');
+      toast('Veuillez s\u00e9lectionner une image (JPG, PNG, WebP)', 'error');
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      toast('La photo ne doit pas dépasser 2 Mo', 'error');
+      toast('La photo ne doit pas d\u00e9passer 2 Mo', 'error');
       return;
     }
     setPhotoFile(file);
@@ -168,7 +203,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.firstName.trim() || !form.lastName.trim()) {
-      toast('Le prénom et le nom sont requis', 'error');
+      toast('Le pr\u00e9nom et le nom sont requis', 'error');
       return;
     }
 
@@ -179,7 +214,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     let photoUrl = form.photo;
     let uploadedPath = null;
 
-    // Upload photo to GitHub — canonical equipe/ path shared with team members
+    // Upload photo to GitHub
     if (photoFile && hasGitHub()) {
       setUploading(true);
       try {
@@ -194,7 +229,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
         });
         const result = await githubUploadImage(ghPath, base64, `Photo auteur : ${form.firstName} ${form.lastName}`);
         photoUrl = result.url;
-        toast('Photo uploadée sur GitHub');
+        toast('Photo upload\u00e9e sur GitHub');
       } catch (err) {
         toast(`Erreur upload photo : ${err.message}`, 'error');
         setUploading(false);
@@ -202,7 +237,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       }
       setUploading(false);
     } else if (photoFile && !hasGitHub()) {
-      toast('Token GitHub non configuré — photo non uploadée', 'error');
+      toast('Token GitHub non configur\u00e9 \u2014 photo non upload\u00e9e', 'error');
       setUploading(false);
       return;
     }
@@ -220,7 +255,6 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       publications: editId ? (auteurs.find(a => a.id === editId)?.publications || 0) : 0,
     };
 
-    // Detect if photo actually changed
     const oldAuteur = editId ? auteurs.find(a => a.id === editId) : null;
     const photoChanged = oldAuteur ? oldAuteur.photo !== photoUrl : !!photoUrl;
 
@@ -228,11 +262,11 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     if (editId) {
       updatedList = auteurs.map(a => a.id === editId ? { ...a, ...auteurData } : a);
       setAuteurs(updatedList);
-      toast('Auteur mis à jour');
+      toast('Auteur mis \u00e0 jour');
     } else {
       updatedList = [...auteurs, auteurData];
       setAuteurs(updatedList);
-      toast('Auteur ajouté');
+      toast('Auteur ajout\u00e9');
     }
     setModalOpen(false);
 
@@ -240,7 +274,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     if (hasGitHub()) {
       try {
         await saveAuthorsToGitHub(updatedList);
-        toast('authors.json mis à jour sur GitHub');
+        toast('authors.json mis \u00e0 jour sur GitHub');
       } catch (err) {
         toast(`Erreur sync GitHub : ${err.message}`, 'error');
       }
@@ -249,7 +283,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
         try {
           await saveToSite('auteurs', updatedList.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
             id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
-          })), `Mise à jour auteur : ${form.firstName} ${form.lastName}`);
+          })), `Mise \u00e0 jour auteur : ${form.firstName} ${form.lastName}`);
         } catch { /* silent */ }
       }
     }
@@ -263,12 +297,12 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     }
   };
 
-  const handleDelete = async (auteur, e) => {
-    e.stopPropagation();
-    if (!window.confirm(`Supprimer ${getDisplayName(auteur)} ?`)) return;
+  const handleDelete = async (auteur) => {
+    if (!window.confirm(`Supprimer ${getDisplayName(auteur)} ? Cette action est irr\u00e9versible.`)) return;
     const updatedList = auteurs.filter(a => a.id !== auteur.id);
     setAuteurs(updatedList);
-    toast('Auteur supprimé');
+    setModalOpen(false);
+    toast('Auteur supprim\u00e9');
     if (hasGitHub()) {
       try { await saveAuthorsToGitHub(updatedList); } catch { /* silent */ }
       if (saveToSite) {
@@ -301,7 +335,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       <div className="page-header">
         <div>
           <h1>Auteurs</h1>
-          <p className="page-header-sub">{auteurs.length} auteur{auteurs.length !== 1 ? 's' : ''}</p>
+          <p className="page-header-sub">{auteurs.length} auteur{auteurs.length !== 1 ? 's' : ''} enregistr\u00e9{auteurs.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex-center gap-8">
           <ServiceBadge service="notion" />
@@ -315,14 +349,54 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       </div>
 
       <div className="page-body">
-        <div className="mb-20">
-          <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un auteur…" />
+        {/* Stats bar */}
+        <div className="auteur-stats-bar">
+          <div className="auteur-stat">
+            <span className="auteur-stat-value">{auteurs.length}</span>
+            <span className="auteur-stat-label">Auteurs</span>
+          </div>
+          <div className="auteur-stat-divider" />
+          <div className="auteur-stat">
+            <span className="auteur-stat-value">{totalPubs}</span>
+            <span className="auteur-stat-label">Publications</span>
+          </div>
+          <div className="auteur-stat-divider" />
+          <div className="auteur-stat">
+            <span className="auteur-stat-value">{withPhoto}</span>
+            <span className="auteur-stat-label">Avec photo</span>
+          </div>
+          <div className="auteur-stat-divider" />
+          <div className="auteur-stat">
+            <span className="auteur-stat-value">{teamMembers}</span>
+            <span className="auteur-stat-label">Membres \u00e9quipe</span>
+          </div>
+        </div>
+
+        {/* Search + Sort */}
+        <div className="auteur-toolbar">
+          <div style={{ flex: 1 }}>
+            <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un auteur\u2026" />
+          </div>
+          <select
+            className="auteur-sort-select"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+          >
+            {SORT_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
         </div>
 
         {filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">&#128100;</div>
-            <p>Aucun auteur trouvé.</p>
+            <p>Aucun auteur trouv\u00e9.</p>
+            {debouncedSearch && (
+              <button className="btn btn-outline" style={{ marginTop: 12 }} onClick={() => setSearch('')}>
+                Effacer la recherche
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-3 grid-mobile-2">
@@ -331,58 +405,56 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               const teamRole = getTeamRole(auteur);
               return (
                 <div
-                  className="author-card"
+                  className="auteur-card-v2"
                   key={auteur.id}
                   onClick={() => openEdit(auteur)}
-                  style={{ cursor: 'pointer' }}
                 >
-                  {auteur.photo ? (
-                    <div className="author-avatar">
-                      <img src={auteur.photo} alt={getDisplayName(auteur)} />
-                    </div>
-                  ) : (
+                  {/* Photo or initial */}
+                  <div className="auteur-card-photo">
+                    {auteur.photo ? (
+                      <img
+                        src={auteur.photo}
+                        alt={getDisplayName(auteur)}
+                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                      />
+                    ) : null}
                     <div
-                      className="author-avatar"
+                      className="auteur-card-initials"
                       style={{
                         backgroundColor: getAvatarColor(i),
-                        color: '#fff',
-                        fontSize: 32,
-                        fontFamily: "'Cormorant Garamond', serif",
-                        fontWeight: 700,
+                        display: auteur.photo ? 'none' : 'flex',
                       }}
                     >
                       {getInitial(auteur)}
                     </div>
-                  )}
-                  <h3 style={{ fontSize: 16, marginBottom: 4 }}>{getDisplayName(auteur)}</h3>
-                  {(auteur.role || auteur.titre) && (
-                    <p style={{ fontSize: 13, color: COLORS.textLight, marginBottom: 8 }}>
-                      {auteur.role || auteur.titre}
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <span className="badge badge-sky">
-                      {pubCount} publication{pubCount !== 1 ? 's' : ''}
-                    </span>
-                    {teamRole && (
-                      <span
-                        className="badge badge-green"
-                        style={{ fontSize: 10, cursor: onTabChange ? 'pointer' : 'default' }}
-                        onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('equipe'); }}
-                        title="Voir dans Équipe"
-                      >
-                        {teamRole}
-                      </span>
-                    )}
                   </div>
-                  <div style={{ marginTop: 10 }}>
-                    <button
-                      className="btn btn-outline btn-sm"
-                      style={{ color: 'var(--danger)', fontSize: 12 }}
-                      onClick={(e) => handleDelete(auteur, e)}
-                    >
-                      Supprimer
-                    </button>
+
+                  {/* Info */}
+                  <div className="auteur-card-body">
+                    <h3 className="auteur-card-name">{getDisplayName(auteur)}</h3>
+                    {(auteur.role || auteur.titre) && (
+                      <p className="auteur-card-role">{auteur.role || auteur.titre}</p>
+                    )}
+                    <div className="auteur-card-badges">
+                      {pubCount > 0 && (
+                        <span className="badge badge-sky">
+                          {pubCount} pub{pubCount !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {teamRole && (
+                        <span
+                          className="badge badge-green"
+                          onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('equipe'); }}
+                          title="Voir dans \u00c9quipe"
+                          style={{ cursor: onTabChange ? 'pointer' : 'default' }}
+                        >
+                          {teamRole}
+                        </span>
+                      )}
+                      {!auteur.photo && (
+                        <span className="badge badge-ochre">Pas de photo</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -392,12 +464,34 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       </div>
 
       {modalOpen && (
-        <Modal onClose={() => setModalOpen(false)} title={editId ? 'Modifier l\u2019auteur' : 'Ajouter un auteur'}>
+        <Modal onClose={() => setModalOpen(false)} title={editId ? 'Modifier l\u2019auteur' : 'Ajouter un auteur'} size="lg">
           <form onSubmit={handleSubmit}>
+            {/* Photo preview at top of modal */}
+            <div className="auteur-modal-header">
+              <div className="auteur-modal-avatar">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="Aper\u00e7u" />
+                ) : (
+                  <div className="auteur-modal-initials" style={{ backgroundColor: COLORS.navy }}>
+                    {form.firstName ? form.firstName.charAt(0).toUpperCase() : '?'}
+                  </div>
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'Cormorant Garamond', serif", color: COLORS.navy }}>
+                  {form.firstName || form.lastName ? `${form.firstName} ${form.lastName}`.trim() : 'Nouvel auteur'}
+                </div>
+                {form.role && <div style={{ fontSize: 13, color: COLORS.textLight, marginTop: 2 }}>{form.role}</div>}
+                {editingAuteur && getTeamRole(editingAuteur) && (
+                  <span className="badge badge-green" style={{ fontSize: 10, marginTop: 6 }}>{getTeamRole(editingAuteur)}</span>
+                )}
+              </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
-                <label>Prénom *</label>
-                <input value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} placeholder="Prénom" required />
+                <label>Pr\u00e9nom *</label>
+                <input value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} placeholder="Pr\u00e9nom" required />
               </div>
               <div>
                 <label>Nom *</label>
@@ -406,7 +500,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
             </div>
             <div style={{ marginBottom: 16 }}>
               <label>Titre / Fonction *</label>
-              <input value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="Ex: Secrétaire générale de la CNCDH" required />
+              <input value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="Ex: Secr\u00e9taire g\u00e9n\u00e9rale de la CNCDH" required />
             </div>
             <div style={{ marginBottom: 16 }}>
               <label>Photo de l'auteur</label>
@@ -419,7 +513,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               />
               {photoPreview ? (
                 <div className="photo-upload-preview">
-                  <img src={photoPreview} alt="Aperçu" />
+                  <img src={photoPreview} alt="Aper\u00e7u" />
                   <div className="photo-upload-actions">
                     <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()}>
                       Changer
@@ -432,18 +526,18 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               ) : (
                 <div className="photo-upload-zone" onClick={() => fileInputRef.current?.click()}>
                   <span style={{ fontSize: 32, marginBottom: 4 }}>&#128247;</span>
-                  <span>Cliquez pour télécharger une photo</span>
-                  <span style={{ fontSize: 12, color: 'var(--text-light)' }}>JPG, PNG ou WebP — max 2 Mo</span>
+                  <span>Cliquez pour t\u00e9l\u00e9charger une photo</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-light)' }}>JPG, PNG ou WebP \u2014 max 2 Mo</span>
                 </div>
               )}
               {!hasGitHub() && (
                 <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
-                  Token GitHub requis pour stocker les photos (voir Paramètres)
+                  Token GitHub requis pour stocker les photos (voir Param\u00e8tres)
                 </p>
               )}
               {editingAuteur && getTeamRole(editingAuteur) && (
                 <p style={{ fontSize: 11, color: COLORS.green, marginTop: 4 }}>
-                  La photo sera synchronisée avec la fiche équipe ({getTeamRole(editingAuteur)})
+                  La photo sera synchronis\u00e9e avec la fiche \u00e9quipe ({getTeamRole(editingAuteur)})
                 </p>
               )}
             </div>
@@ -453,42 +547,42 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
                 value={form.bio}
                 onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 200) })}
                 rows={4}
-                placeholder="Courte biographie…"
+                placeholder="Courte biographie\u2026"
                 maxLength={200}
               />
               <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4 }}>{(form.bio || '').length} / 200</p>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label>Email (optionnel, non affiché)</label>
+              <label>Email (optionnel, non affich\u00e9)</label>
               <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@exemple.fr" />
             </div>
 
             {/* Team membership info */}
             {editingAuteur && getTeamRole(editingAuteur) && (
-              <div style={{ marginBottom: 16, padding: 10, backgroundColor: COLORS.greenLight, borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="auteur-team-info">
                 <span className="badge badge-green" style={{ fontSize: 10 }}>{getTeamRole(editingAuteur)}</span>
-                <span style={{ fontSize: 12 }}>Cet auteur est aussi membre de l'équipe.</span>
+                <span style={{ fontSize: 12 }}>Cet auteur est aussi membre de l'\u00e9quipe.</span>
                 {onTabChange && (
                   <button type="button" className="btn btn-outline btn-sm" style={{ marginLeft: 'auto', fontSize: 11 }}
                     onClick={() => { setModalOpen(false); onTabChange('equipe'); }}>
-                    Voir dans Équipe
+                    Voir dans \u00c9quipe
                   </button>
                 )}
               </div>
             )}
 
-            {/* Publications liées */}
+            {/* Publications li\u00e9es */}
             {editId && (
               <div style={{ marginBottom: 16 }}>
-                <label style={{ fontWeight: 600 }}>Publications liées ({linkedPubs.length})</label>
+                <label style={{ fontWeight: 600 }}>Publications li\u00e9es ({linkedPubs.length})</label>
                 {linkedPubs.length === 0 ? (
-                  <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>Aucune publication liée à cet auteur.</p>
+                  <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>Aucune publication li\u00e9e \u00e0 cet auteur.</p>
                 ) : (
                   <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 8, border: '1px solid var(--border)', borderRadius: 8, padding: 8 }}>
                     {linkedPubs.map(pub => (
                       <div key={pub.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border-light)' }}>
                         <span className={`badge badge-${pub.status === 'published' ? 'green' : pub.status === 'ready' ? 'sky' : 'ochre'}`} style={{ fontSize: 10, flexShrink: 0 }}>
-                          {pub.status === 'published' ? 'Publié' : pub.status === 'ready' ? 'Prêt' : 'Brouillon'}
+                          {pub.status === 'published' ? 'Publi\u00e9' : pub.status === 'ready' ? 'Pr\u00eat' : 'Brouillon'}
                         </span>
                         <span style={{ fontSize: 13, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {pub.title}
@@ -504,9 +598,20 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
             )}
 
             <div className="modal-footer">
+              {editId && (
+                <button
+                  type="button"
+                  className="btn btn-danger-outline"
+                  onClick={() => handleDelete(editingAuteur)}
+                  disabled={uploading}
+                  style={{ marginRight: 'auto' }}
+                >
+                  Supprimer cet auteur
+                </button>
+              )}
               <button type="button" className="btn btn-outline" onClick={() => setModalOpen(false)} disabled={uploading}>Annuler</button>
               <button type="submit" className="btn btn-primary" disabled={uploading}>
-                {uploading ? 'Upload en cours…' : editId ? 'Mettre à jour' : 'Ajouter'}
+                {uploading ? 'Upload en cours\u2026' : editId ? 'Mettre \u00e0 jour' : 'Ajouter'}
               </button>
             </div>
           </form>
