@@ -190,7 +190,73 @@ export default {
           return json(data);
         }
 
+        // ─── GET /api/telegram/messages ─── (lecture bot updates)
+        if (path === '/api/telegram/messages' && request.method === 'GET') {
+          const limit = url.searchParams.get('limit') || 20;
+          const resp = await fetch(
+            `https://api.telegram.org/bot${botToken}/getUpdates?limit=${limit}&allowed_updates=["message","channel_post"]`
+          );
+          const data = await resp.json();
+          if (!resp.ok || !data.ok) {
+            return json({ error: data.description || 'Erreur Telegram getUpdates' }, resp.status);
+          }
+          const messages = (data.result || []).map(u => {
+            const m = u.message || u.channel_post || {};
+            return {
+              id: u.update_id,
+              from: m.from?.first_name || m.chat?.title || 'Inconnu',
+              fromId: m.from?.id || m.chat?.id || null,
+              text: m.text || m.caption || '',
+              date: m.date ? new Date(m.date * 1000).toISOString() : null,
+              type: u.channel_post ? 'channel' : 'private',
+            };
+          }).reverse();
+          return json({ messages });
+        }
+
         return json({ error: 'Route Telegram inconnue' }, 404);
+      }
+
+      // ═══════════════════════════════════════════
+      // CALENDAR (Worker KV — réutilise CONTACT_SUBMISSIONS avec préfixe)
+      // ═══════════════════════════════════════════
+
+      if (path.startsWith('/api/calendar/')) {
+        if (!env.CONTACT_SUBMISSIONS) {
+          return json({ error: 'KV non configuré' }, 503);
+        }
+
+        // Auth — mêmes règles que sollicitations
+        if (env.CONTACT_AUTH_TOKEN) {
+          const auth = request.headers.get('Authorization') || '';
+          const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+          if (token !== env.CONTACT_AUTH_TOKEN) {
+            return json({ error: 'Non autorisé' }, 401);
+          }
+        }
+
+        const type = path.split('/api/calendar/')[1];
+        const allowedTypes = ['socialPosts', 'rapports', 'extEvents'];
+        if (!allowedTypes.includes(type)) {
+          return json({ error: `Type inconnu. Attendu : ${allowedTypes.join(', ')}` }, 400);
+        }
+
+        const kvKey = `calendar:${type}`;
+
+        if (request.method === 'GET') {
+          const raw = await env.CONTACT_SUBMISSIONS.get(kvKey);
+          const items = raw ? JSON.parse(raw) : [];
+          return json({ items });
+        }
+
+        if (request.method === 'PUT') {
+          const body = await request.json();
+          const items = Array.isArray(body.items) ? body.items : [];
+          await env.CONTACT_SUBMISSIONS.put(kvKey, JSON.stringify(items));
+          return json({ success: true, count: items.length });
+        }
+
+        return json({ error: 'Méthode non supportée' }, 405);
       }
 
       // ═══════════════════════════════════════════
@@ -783,8 +849,101 @@ export default {
             brevo: !!env.BREVO_API_KEY,
             telegram: !!env.TELEGRAM_BOT_TOKEN,
             github: true,
+            translate: !!(env.DEEPL_API_KEY || env.ANTHROPIC_API_KEY),
           },
         });
+      }
+
+      // ═══════════════════════════════════════════
+      // TRANSLATE — DeepL (préféré) ou Anthropic (fallback)
+      // ═══════════════════════════════════════════
+
+      if (path === '/api/translate' && request.method === 'POST') {
+        const body = await request.json();
+        const { title = '', summary = '', content = '', from = 'fr', to } = body;
+        if (!to) return json({ error: 'Langue cible (to) requise' }, 400);
+
+        // ── DeepL ──
+        if (env.DEEPL_API_KEY) {
+          const deeplUrl = env.DEEPL_API_KEY.endsWith(':fx')
+            ? 'https://api-free.deepl.com/v2/translate'
+            : 'https://api.deepl.com/v2/translate';
+          const texts = [title, summary, content];
+          const params = new URLSearchParams();
+          texts.forEach(t => params.append('text', t || ''));
+          params.append('source_lang', from.toUpperCase());
+          params.append('target_lang', to.toUpperCase());
+          params.append('tag_handling', 'html');
+          const resp = await fetch(deeplUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `DeepL-Auth-Key ${env.DEEPL_API_KEY}`,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString(),
+          });
+          if (!resp.ok) {
+            const errText = await resp.text();
+            return json({ error: `DeepL : ${resp.status} ${errText.slice(0, 200)}` }, resp.status);
+          }
+          const data = await resp.json();
+          const [tTitle, tSummary, tContent] = data.translations || [];
+          return json({
+            title: tTitle?.text || '',
+            summary: tSummary?.text || '',
+            content: tContent?.text || '',
+            provider: 'deepl',
+          });
+        }
+
+        // ── Anthropic (fallback) ──
+        if (env.ANTHROPIC_API_KEY) {
+          const langNames = { en: 'English', de: 'German', es: 'Spanish', fr: 'French', it: 'Italian' };
+          const targetName = langNames[to] || to;
+          const sourceName = langNames[from] || from;
+          const prompt = `Translate the following article from ${sourceName} to ${targetName}.
+Return ONLY a valid JSON object with keys "title", "summary", "content".
+Preserve HTML tags in "content" exactly. Do not add any commentary.
+
+Input:
+{"title": ${JSON.stringify(title)}, "summary": ${JSON.stringify(summary)}, "content": ${JSON.stringify(content)}}`;
+          const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': env.ANTHROPIC_API_KEY,
+              'anthropic-version': '2023-06-01',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 8192,
+              messages: [{ role: 'user', content: prompt }],
+            }),
+          });
+          if (!resp.ok) {
+            const errText = await resp.text();
+            return json({ error: `Anthropic : ${resp.status} ${errText.slice(0, 200)}` }, resp.status);
+          }
+          const data = await resp.json();
+          const text = data.content?.[0]?.text || '';
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) return json({ error: 'Réponse LLM non-JSON' }, 502);
+          try {
+            const parsed = JSON.parse(jsonMatch[0]);
+            return json({
+              title: parsed.title || '',
+              summary: parsed.summary || '',
+              content: parsed.content || '',
+              provider: 'anthropic',
+            });
+          } catch (e) {
+            return json({ error: `Parsing JSON : ${e.message}` }, 502);
+          }
+        }
+
+        return json({
+          error: 'Traduction non configurée. Ajoutez DEEPL_API_KEY ou ANTHROPIC_API_KEY en secret Worker.',
+        }, 503);
       }
 
       // ═══════════════════════════════════════════

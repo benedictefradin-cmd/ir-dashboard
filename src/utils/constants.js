@@ -167,8 +167,9 @@ L’Institut Rousseau`,
 export const SITE_LANGUAGES = [
   { code: 'fr', label: 'Français', flag: '🇫🇷', isSource: true },
   { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
   { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'it', label: 'Italiano', flag: '🇮🇹' },
 ];
 
 export const TARGET_LANGUAGES = SITE_LANGUAGES.filter(l => !l.isSource);
@@ -178,17 +179,16 @@ export const SOURCE_LANGUAGE = SITE_LANGUAGES.find(l => l.isSource);
 export const LS_PREFIX = 'ir-dash-';
 export const LS_KEYS = {
   activeTab: 'active-tab',
-  operator: 'operator',
   workerUrl: 'worker-url',
   telegramBotToken: 'tg-bot-token',
   telegramChatId: 'tg-chat-id',
   telegramChannelId: 'tg-channel-id',
-  sidebarCollapsed: 'sidebar-collapsed',
   socialPosts: 'social-posts',
   rapportsFondations: 'rapports-fondations',
   extEvents: 'ext-events',
   vercelDeployHook: 'vercel-deploy-hook',
   contactAuthToken: 'contact-auth-token',
+  messageHistory: 'message-history',
 };
 
 // ─── Config par défaut ──────────────────────────────

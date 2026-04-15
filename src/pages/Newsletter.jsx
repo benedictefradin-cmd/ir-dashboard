@@ -8,6 +8,7 @@ import { SkeletonCard, SkeletonTable } from '../components/shared/SkeletonLoader
 import { formatDateFr } from '../utils/formatters';
 import { COLORS, SUB_STATUSES, SOURCES } from '../utils/constants';
 import useDebounce from '../hooks/useDebounce';
+import { addContact as brevoAddContact, updateContact as brevoUpdateContact } from '../services/brevo';
 
 export default function Newsletter({ subscribers, setSubscribers, campaigns, loading, connected, onRefresh, toast }) {
   const [search, setSearch] = useState('');
@@ -45,15 +46,29 @@ export default function Newsletter({ subscribers, setSubscribers, campaigns, loa
   }, [subscribers, statusFilter, debouncedSearch]);
 
   // ─── Actions ──────────────────────────────────
-  const changeStatus = (id, newStatus) => {
+  const changeStatus = async (id, newStatus) => {
+    const target = subscribers.find(s => s.id === id);
     setSubscribers(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
     const labels = { added: 'ajouté', rejected: 'refusé', pending: 'remis en attente' };
-    toast(`Contact ${labels[newStatus] || newStatus}`);
+    if (connected && target?.email) {
+      try {
+        await brevoUpdateContact(target.email, { STATUS: newStatus });
+        toast(`Contact ${labels[newStatus] || newStatus}`);
+      } catch (err) {
+        // Rollback en cas d'échec
+        setSubscribers(prev => prev.map(s => s.id === id ? { ...s, status: target.status } : s));
+        toast(`Erreur Brevo : ${err.message}`, 'error');
+      }
+    } else {
+      toast(`Contact ${labels[newStatus] || newStatus}`);
+    }
   };
 
-  const addSubscriber = () => {
+  const addSubscriber = async () => {
     if (!newSub.name || !newSub.email) return toast('Remplissez tous les champs', 'error');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSub.email)) return toast('Email invalide', 'error');
+    const [firstName, ...lastParts] = newSub.name.trim().split(' ');
+    const lastName = lastParts.join(' ');
     const entry = {
       id: Date.now(),
       name: newSub.name,
@@ -62,6 +77,13 @@ export default function Newsletter({ subscribers, setSubscribers, campaigns, loa
       status: 'pending',
       source: newSub.source,
     };
+    if (connected) {
+      try {
+        await brevoAddContact({ email: newSub.email, firstName, lastName, source: newSub.source });
+      } catch (err) {
+        return toast(`Erreur Brevo : ${err.message}`, 'error');
+      }
+    }
     setSubscribers(prev => [entry, ...prev]);
     setNewSub({ name: '', email: '', source: 'Site web' });
     setShowAdd(false);

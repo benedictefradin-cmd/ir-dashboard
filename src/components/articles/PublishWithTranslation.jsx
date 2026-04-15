@@ -26,6 +26,7 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
 
   const [publishing, setPublishing] = useState(false);
   const [allDone, setAllDone] = useState(false);
+  const [translateDisabled, setTranslateDisabled] = useState(false);
 
   // Vérifier si toutes les traductions sont terminées
   useEffect(() => {
@@ -62,6 +63,8 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
           }));
         })
         .catch(err => {
+          const isConfigMissing = /non configur/i.test(err.message);
+          if (isConfigMissing) setTranslateDisabled(true);
           setTranslations(prev => ({
             ...prev,
             [lang.code]: {
@@ -103,7 +106,7 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
   // Publier — retourner l'article final avec toutes les traductions
   const handlePublish = async () => {
     const hasErrors = Object.values(translations).some(t => t.status === 'error');
-    if (hasErrors) {
+    if (hasErrors && !translateDisabled) {
       toast('Certaines traductions ont échoué — corrigez ou réessayez', 'error');
       return;
     }
@@ -149,13 +152,15 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
   const totalCount = TARGET_LANGUAGES.length;
 
   return (
-    <Modal title="Publication multilingue" onClose={onClose} size="lg">
+    <Modal title={translateDisabled ? 'Publication' : 'Publication multilingue'} onClose={onClose} size="lg">
       <div style={{ marginBottom: 16 }}>
         <p style={{ fontSize: 15, color: 'var(--navy)', marginBottom: 8 }}>
           <strong>{article.fr.title}</strong>
         </p>
         <p style={{ fontSize: 13, color: 'var(--text-light)' }}>
-          Traduction automatique en cours vers {totalCount} langue{totalCount > 1 ? 's' : ''}…
+          {translateDisabled
+            ? 'Traduction automatique non configurée — publication en français uniquement. Ajoutez DEEPL_API_KEY ou ANTHROPIC_API_KEY au Worker pour activer le multilingue.'
+            : `Traduction automatique en cours vers ${totalCount} langue${totalCount > 1 ? 's' : ''}…`}
         </p>
       </div>
 
@@ -212,9 +217,13 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
         <button
           className="btn btn-primary"
           onClick={handlePublish}
-          disabled={!allDone || publishing || successCount < totalCount}
+          disabled={!allDone || publishing || (!translateDisabled && successCount < totalCount)}
         >
-          {publishing ? 'Publication…' : `Publier (${totalCount + 1} langues)`}
+          {publishing
+            ? 'Publication…'
+            : translateDisabled
+              ? 'Publier (FR seul)'
+              : `Publier (${totalCount + 1} langues)`}
         </button>
       </div>
     </Modal>

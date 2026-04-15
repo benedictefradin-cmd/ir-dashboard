@@ -49,12 +49,27 @@ export function githubGetImageDataUrl(path) {
   if (imageCache.has(path)) return imageCache.get(path);
 
   const p = (async () => {
-    const res = await fetch(`${GITHUB_API}/${path}`, {
+    // L'API /contents ne retourne PAS le champ `content` pour les fichiers > 1 Mo.
+    // On récupère d'abord les métadonnées (sha + size), puis on bascule sur
+    // l'API /git/blobs/{sha} pour les gros fichiers.
+    const metaRes = await fetch(`${GITHUB_API}/${path}`, {
       headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' },
     });
-    if (!res.ok) throw new Error(handleHttpError(res.status));
-    const data = await res.json();
-    const base64 = (data.content || '').replace(/\n/g, '');
+    if (!metaRes.ok) throw new Error(handleHttpError(metaRes.status));
+    const meta = await metaRes.json();
+
+    let base64 = (meta.content || '').replace(/\n/g, '');
+    if (!base64 && meta.sha) {
+      // Fichier > 1 Mo : passer par l'API blobs
+      const blobUrl = `https://api.github.com/repos/${GITHUB_REPO}/git/blobs/${meta.sha}`;
+      const blobRes = await fetch(blobUrl, {
+        headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' },
+      });
+      if (!blobRes.ok) throw new Error(handleHttpError(blobRes.status));
+      const blob = await blobRes.json();
+      base64 = (blob.content || '').replace(/\n/g, '');
+    }
+
     const ext = (path.split('.').pop() || 'jpg').toLowerCase();
     const mime = ext === 'png' ? 'image/png'
       : ext === 'webp' ? 'image/webp'
@@ -195,6 +210,40 @@ export async function saveAuthorsToGitHub(authors) {
   if (!res.ok) throw new Error(handleHttpError(res.status));
   const data = await res.json();
   return data.content?.sha || null;
+}
+
+/**
+ * Met à jour le fichier `assets/js/publications-i18n.js` du site pour ajouter/remplacer
+ * l'entrée d'un slug avec ses traductions.
+ *
+ * Le fichier source utilise une syntaxe JS (clés non-quotées), donc on l'évalue avec `new Function`
+ * pour extraire `window.PUB_I18N`, on merge, puis on réécrit en JSON strict (toujours du JS valide).
+ *
+ * @param {string} slug - Slug de la publication
+ * @param {Object} entry - { title_en, title_es, title_de, title_it, description_en, ..., body_en, ... }
+ */
+export async function updatePublicationsI18n(slug, entry) {
+  const path = 'assets/js/publications-i18n.js';
+  const file = await githubGetFile(path);
+
+  // Isoler l'objet : extrait tout après `window.PUB_I18N =` et avant le `;` final.
+  const match = file.content.match(/window\.PUB_I18N\s*=\s*([\s\S]*?);\s*$/);
+  if (!match) throw new Error('Format inattendu dans publications-i18n.js');
+
+  // Évalue la syntaxe JS (clés non-quotées tolérées) pour obtenir l'objet.
+  const obj = new Function(`return (${match[1]});`)();
+
+  // Ne garde que les champs définis (évite d'écraser avec des undefined).
+  obj[slug] = { ...(obj[slug] || {}), ...Object.fromEntries(Object.entries(entry).filter(([, v]) => v !== undefined && v !== null && v !== '')) };
+
+  const header = `/* ============================================
+   Publications i18n — EN/ES/DE/IT translations
+   for titles, descriptions and bodies
+   ============================================ */
+`;
+  const newContent = `${header}window.PUB_I18N = ${JSON.stringify(obj, null, 2)};\n`;
+
+  return githubPutFile(path, newContent, file.sha, `Traductions publication : ${slug}`);
 }
 
 /**

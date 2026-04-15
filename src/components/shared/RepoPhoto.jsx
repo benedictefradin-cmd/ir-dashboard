@@ -1,15 +1,20 @@
+import { useState, useEffect } from 'react';
 import usePhoto from '../../hooks/usePhoto';
 
 /**
  * <img> qui charge automatiquement une photo du repo site (privé) via l'API
- * GitHub authentifiée. Si `photo` est vide ou échoue, affiche le fallback
- * (children) — typiquement les initiales.
+ * GitHub authentifiée. Si `photo` est vide, échoue à fetch, ou si l'image
+ * elle-même ne peut pas être rendue par le navigateur, affiche le fallback
+ * (typiquement les initiales).
  */
 export default function RepoPhoto({ photo, alt, className, style, fallback, onLoadedChange }) {
-  const { url, loading, error } = usePhoto(photo);
+  const { url } = usePhoto(photo);
+  const [imgError, setImgError] = useState(false);
 
-  if (!url) {
-    // Pas d'URL (vide, en chargement, ou erreur) → afficher le fallback
+  // Reset l'état d'erreur dès que l'URL change
+  useEffect(() => { setImgError(false); }, [url]);
+
+  if (!url || imgError) {
     return fallback || null;
   }
 
@@ -20,7 +25,7 @@ export default function RepoPhoto({ photo, alt, className, style, fallback, onLo
       className={className}
       style={style}
       onLoad={() => onLoadedChange && onLoadedChange(true)}
-      onError={() => onLoadedChange && onLoadedChange(false)}
+      onError={() => { setImgError(true); onLoadedChange && onLoadedChange(false); }}
     />
   );
 }

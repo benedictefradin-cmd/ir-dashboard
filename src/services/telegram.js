@@ -10,6 +10,11 @@ export async function sendChannelMessage(text) {
   return api.post('/api/telegram/send-channel', { text });
 }
 
+export async function fetchMessages(limit = 20) {
+  const res = await api.get(`/api/telegram/messages?limit=${limit}`);
+  return res.messages || [];
+}
+
 export async function testConnection() {
   return sendMessage(null, '✅ Connexion Telegram vérifiée depuis le back-office Institut Rousseau.');
 }

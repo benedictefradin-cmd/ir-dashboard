@@ -24,6 +24,7 @@ const PagesSite = lazy(() => import('./pages/PagesSite'));
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
 import { fetchSollicitations } from './services/contact';
+import { fetchAllCalendar, saveCalendar } from './services/calendar';
 import { fetchAllSiteData, normalizePublications, normalizeEvents, normalizePresse, normalizeAuteurs, saveSiteData } from './services/siteData';
 import { hasGitHub } from './services/github';
 import { loadLocal, saveLocal } from './utils/localStorage';
@@ -166,6 +167,16 @@ export default function App() {
       console.warn('[App] Erreur chargement sollicitations :', err.message);
     }
 
+    // Charger le calendrier depuis le Worker (KV) — fallback localStorage si échec
+    try {
+      const cal = await fetchAllCalendar();
+      if (Array.isArray(cal.socialPosts)) setSocialPostsRaw(cal.socialPosts);
+      if (Array.isArray(cal.rapports)) setRapportsRaw(cal.rapports);
+      if (Array.isArray(cal.extEvents)) setExtEventsRaw(cal.extEvents);
+    } catch (err) {
+      console.warn('[App] Erreur chargement calendrier KV, fallback localStorage :', err.message);
+    }
+
     // Charger les contacts Brevo et vérifier les services
     try {
       const health = await checkHealth();
@@ -174,9 +185,11 @@ export default function App() {
         if (health.services.brevo) {
           try {
             const contactsData = await fetchContacts();
-            if (contactsData?.length) setSubscribers(contactsData);
+            const contacts = contactsData?.contacts || [];
+            if (contacts.length) setSubscribers(contacts);
             const campaignsData = await fetchCampaigns();
-            if (campaignsData?.length) setCampaigns(campaignsData);
+            const campaignsList = campaignsData?.campaigns || [];
+            if (campaignsList.length) setCampaigns(campaignsList);
           } catch { /* brevo non disponible */ }
         }
       }
@@ -194,28 +207,40 @@ export default function App() {
     }
   }, [toast]);
 
-  // Calendrier setters with localStorage persistence
+  // Calendrier setters : localStorage (cache offline) + KV (persist multi-machines)
+  const calendarSaveTimers = useRef({});
+  const persistCalendar = useCallback((type, items) => {
+    clearTimeout(calendarSaveTimers.current[type]);
+    calendarSaveTimers.current[type] = setTimeout(() => {
+      saveCalendar(type, items).catch(err => {
+        console.warn(`[App] KV sync ${type} :`, err.message);
+      });
+    }, 1200);
+  }, []);
   const setSocialPosts = useCallback((updater) => {
     setSocialPostsRaw(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
       saveLocal(LS_KEYS.socialPosts, next);
+      persistCalendar('socialPosts', next);
       return next;
     });
-  }, []);
+  }, [persistCalendar]);
   const setRapports = useCallback((updater) => {
     setRapportsRaw(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
       saveLocal(LS_KEYS.rapportsFondations, next);
+      persistCalendar('rapports', next);
       return next;
     });
-  }, []);
+  }, [persistCalendar]);
   const setExtEvents = useCallback((updater) => {
     setExtEventsRaw(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
       saveLocal(LS_KEYS.extEvents, next);
+      persistCalendar('extEvents', next);
       return next;
     });
-  }, []);
+  }, [persistCalendar]);
 
   // Computed badges
   const readyCount = (notionCounts.ready || 0) + articles.filter(a => a.status === 'ready').length;

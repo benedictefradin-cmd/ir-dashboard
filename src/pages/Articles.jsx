@@ -8,7 +8,7 @@ import MultiSelect from '../components/shared/MultiSelect';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
 import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL, TARGET_LANGUAGES } from '../utils/constants';
-import { hasGitHub, insertHtmlInPage, formatDateSite } from '../services/github';
+import { hasGitHub, insertHtmlInPage, formatDateSite, updatePublicationsI18n } from '../services/github';
 import { fetchArticleContent, updateArticleStatus, hasNotion } from '../services/notion';
 import { loadLocal } from '../utils/localStorage';
 import useDebounce from '../hooks/useDebounce';
@@ -738,6 +738,23 @@ export default function Articles({
                       await insertHtmlInPage('publications.html', cardHtml, `Ajout publication : ${finalArticle.fr.title}`);
                     } else {
                       throw new Error('GitHub non configuré — renseigne le token dans Paramètres');
+                    }
+
+                    // 1b. Mettre à jour publications-i18n.js avec les traductions
+                    if (hasGitHub() && (finalArticle.translatedLangs || []).length > 0) {
+                      const i18nEntry = {};
+                      for (const langCode of finalArticle.translatedLangs) {
+                        const t = finalArticle[langCode];
+                        if (!t) continue;
+                        if (t.title) i18nEntry[`title_${langCode}`] = t.title;
+                        if (t.summary) i18nEntry[`description_${langCode}`] = t.summary;
+                        if (t.content) i18nEntry[`body_${langCode}`] = t.content;
+                      }
+                      try {
+                        await updatePublicationsI18n(slug, i18nEntry);
+                      } catch (i18nErr) {
+                        toast(`Publication OK mais traductions non sauvegardées : ${i18nErr.message}`, 'error');
+                      }
                     }
 
                     // 2. Mettre à jour Notion si applicable

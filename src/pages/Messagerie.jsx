@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
-import { EMAIL_TEMPLATES, COLORS } from '../utils/constants';
+import { EMAIL_TEMPLATES, COLORS, LS_KEYS } from '../utils/constants';
+import { loadLocal, saveLocal } from '../utils/localStorage';
 import { sendBulkEmail } from '../services/brevo';
-import { sendMessage, sendChannelMessage } from '../services/telegram';
+import { sendMessage, sendChannelMessage, fetchMessages } from '../services/telegram';
 
 export default function Messagerie({ subscribers = [], presse = [], auteurs = [], events = [], services, toast }) {
   const [channel, setChannel] = useState('email');
@@ -13,7 +14,41 @@ export default function Messagerie({ subscribers = [], presse = [], auteurs = []
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState(() => loadLocal(LS_KEYS.messageHistory, []));
+  const [inbox, setInbox] = useState([]);
+  const [inboxLoading, setInboxLoading] = useState(false);
+
+  // Charger boîte de réception Telegram quand Telegram est connecté
+  useEffect(() => {
+    if (!services?.telegram) return;
+    let cancelled = false;
+    const load = async () => {
+      setInboxLoading(true);
+      try {
+        const msgs = await fetchMessages(30);
+        if (!cancelled) setInbox(msgs);
+      } catch {
+        // silencieux — le bouton Rafraîchir reste dispo
+      } finally {
+        if (!cancelled) setInboxLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [services?.telegram]);
+
+  const refreshInbox = async () => {
+    setInboxLoading(true);
+    try {
+      const msgs = await fetchMessages(30);
+      setInbox(msgs);
+      toast('Boîte Telegram rafraîchie');
+    } catch (err) {
+      toast(`Erreur Telegram : ${err.message}`, 'error');
+    } finally {
+      setInboxLoading(false);
+    }
+  };
 
   // Compter les destinataires par segment
   const activeSubscribers = useMemo(
@@ -116,15 +151,20 @@ export default function Messagerie({ subscribers = [], presse = [], auteurs = []
         }
       }
 
-      setHistory(prev => [{
-        id: Date.now(),
-        channel,
-        subject: channel === 'email' ? subject : '',
-        body: body.slice(0, 100),
-        recipients: channel === 'email' ? recipientCount : 1,
-        date: new Date().toISOString(),
-        status: 'sent',
-      }, ...prev]);
+      setHistory(prev => {
+        const entry = {
+          id: Date.now(),
+          channel,
+          subject: channel === 'email' ? subject : '',
+          body: body.slice(0, 100),
+          recipients: channel === 'email' ? recipientCount : 1,
+          date: new Date().toISOString(),
+          status: 'sent',
+        };
+        const next = [entry, ...prev].slice(0, 100);
+        saveLocal(LS_KEYS.messageHistory, next);
+        return next;
+      });
 
       setSubject('');
       setBody('');
@@ -241,6 +281,32 @@ export default function Messagerie({ subscribers = [], presse = [], auteurs = []
                     Telegram non connecté — les envois seront simulés
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Boîte de réception Telegram */}
+            {(channel === 'telegram-channel' || channel === 'telegram-private') && services?.telegram && (
+              <div className="msg-panel">
+                <div className="msg-panel-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Reçus sur le bot</span>
+                  <button className="btn btn-outline btn-sm" onClick={refreshInbox} disabled={inboxLoading}>
+                    {inboxLoading ? '…' : '↻'}
+                  </button>
+                </div>
+                {inbox.length === 0 && !inboxLoading && (
+                  <p className="msg-panel-desc">Aucun message reçu.</p>
+                )}
+                {inbox.slice(0, 8).map(m => (
+                  <div key={m.id} className="msg-history-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
+                      <span className={`badge ${m.type === 'channel' ? 'badge-green' : 'badge-sky'}`}>{m.from}</span>
+                      <span className="msg-history-meta" style={{ marginLeft: 'auto' }}>
+                        {m.date ? new Date(m.date).toLocaleString('fr-FR') : ''}
+                      </span>
+                    </div>
+                    {m.text && <div style={{ fontSize: 13, color: 'var(--text)' }}>{m.text.slice(0, 120)}{m.text.length > 120 ? '…' : ''}</div>}
+                  </div>
+                ))}
               </div>
             )}
 
