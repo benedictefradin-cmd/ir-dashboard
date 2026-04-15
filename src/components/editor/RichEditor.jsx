@@ -31,7 +31,7 @@ export default function RichEditor({ value, onChange, title, author, date, place
       }),
       Image.configure({ inline: false, allowBase64: true }),
       Link.configure({ openOnClick: false, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } }),
-      Placeholder.configure({ placeholder: placeholder || '\u00c9crivez votre article ici\u2026' }),
+      Placeholder.configure({ placeholder: placeholder || 'Écrivez votre article ici…' }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Underline,
       TextStyle,

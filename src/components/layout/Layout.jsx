@@ -101,7 +101,7 @@ export default function Layout({
               <input
                 type="text"
                 className="global-search-input"
-                placeholder="Rechercher partout\u2026 (\u2318K)"
+                placeholder="Rechercher partout… (⌘K)"
                 value={globalSearch}
                 onChange={e => { setGlobalSearch(e.target.value); setShowSearchResults(true); }}
                 onFocus={() => setShowSearchResults(true)}

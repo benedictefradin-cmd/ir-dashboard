@@ -648,7 +648,7 @@ export default function Articles({
                 onChange={(html) => setForm(f => ({ ...f, content: html }))}
                 title={form.title}
                 author={form.author}
-                placeholder="\u00c9crivez votre article ici\u2026"
+                placeholder="Écrivez votre article ici…"
               />
             </div>
 
