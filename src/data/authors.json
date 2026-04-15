@@ -4,8 +4,9 @@
     "firstName": "Nicolas",
     "lastName": "Dufrêne",
     "role": "Président-directeur, économiste, haut fonctionnaire",
-    "bio": "Directeur général de l'Institut Rousseau, haut fonctionnaire et économiste spécialiste des questions monétaires et de dette publique.",
     "photo": "assets/images/equipe/nicolas-dufrene.png",
+    "bio": "Directeur général de l'Institut Rousseau, haut fonctionnaire et économiste spécialiste des questions monétaires et de dette publique.",
+    "email": "",
     "publications": 15
   },
   {
@@ -13,8 +14,9 @@
     "firstName": "Beverley",
     "lastName": "Toudic",
     "role": "Présidente adjointe, chercheuse en droit constitutionnel",
-    "bio": "Directrice adjointe de l'Institut Rousseau, chercheuse en droit constitutionnel.",
     "photo": "assets/images/equipe/beverley-toudic.png",
+    "bio": "\nhfhfhfhfh",
+    "email": "",
     "publications": 5
   },
   {
@@ -22,8 +24,9 @@
     "firstName": "Marine",
     "lastName": "Yzquierdo",
     "role": "Avocate en droit de l'environnement",
-    "bio": "Avocate spécialiste du droit de l'environnement, contributrice régulière aux travaux de l'Institut.",
     "photo": "assets/images/auteurs/marine-yzquierdo.png",
+    "bio": "Avocate spécialiste du droit de l'environnement, contributrice régulière aux travaux de l'Institut.",
+    "email": "",
     "publications": 3
   },
   {
@@ -31,8 +34,9 @@
     "firstName": "Chloé",
     "lastName": "Ridel",
     "role": "Haut fonctionnaire, présidente de Mieux Voter",
-    "bio": "Haut fonctionnaire et présidente de l'association Mieux Voter, spécialiste des questions démocratiques.",
     "photo": "assets/images/equipe/chloe-ridel.jpg",
+    "bio": "Haut fonctionnaire et présidente de l'association Mieux Voter, spécialiste des questions démocratiques.",
+    "email": "",
     "publications": 4
   },
   {
@@ -40,8 +44,9 @@
     "firstName": "Guillaume",
     "lastName": "Kerlero de Rosbo",
     "role": "Directeur des études écologiques, ingénieur AgroParisTech/Mines",
-    "bio": "Directeur des études écologiques de l'Institut Rousseau, ingénieur AgroParisTech et Mines de Paris, coordinateur du rapport Road to Net Zero.",
     "photo": "assets/images/equipe/guillaume-kerlero-de-rosbo.png",
+    "bio": "Directeur des études écologiques de l'Institut Rousseau, ingénieur AgroParisTech et Mines de Paris, coordinateur du rapport Road to Net Zero.",
+    "email": "",
     "publications": 8
   },
   {
@@ -49,8 +54,9 @@
     "firstName": "Gaël",
     "lastName": "Giraud",
     "role": "Économiste, directeur de recherche CNRS, Georgetown University",
-    "bio": "Économiste, directeur de recherche au CNRS et professeur à Georgetown University.",
     "photo": "assets/images/equipe/gael-giraud.jpg",
+    "bio": "Économiste, directeur de recherche au CNRS et professeur à Georgetown University.",
+    "email": "",
     "publications": 3
   },
   {
@@ -58,8 +64,9 @@
     "firstName": "Robert",
     "lastName": "Bell",
     "role": "Professor of Management, Brooklyn College (CUNY)",
-    "bio": "Professeur de management à Brooklyn College (City University of New York), spécialiste des majors pétrolières.",
     "photo": "assets/images/auteurs/robert-bell.png",
+    "bio": "Professeur de management à Brooklyn College (City University of New York), spécialiste des majors pétrolières.",
+    "email": "",
     "publications": 5
   },
   {
@@ -67,8 +74,9 @@
     "firstName": "Ophélie",
     "lastName": "Coelho",
     "role": "Chercheuse, géopolitique du numérique",
-    "bio": "Chercheuse spécialiste de la géopolitique du numérique et de la souveraineté technologique.",
     "photo": "",
+    "bio": "Chercheuse spécialiste de la géopolitique du numérique et de la souveraineté technologique.",
+    "email": "",
     "publications": 3
   },
   {
@@ -76,8 +84,9 @@
     "firstName": "Arthur",
     "lastName": "Boutiab",
     "role": "Chercheur",
-    "bio": "Chercheur à l'Institut Rousseau, spécialiste de l'économie circulaire.",
     "photo": "assets/images/equipe/arthur-boutiab.png",
+    "bio": "Chercheur à l'Institut Rousseau, spécialiste de l'économie circulaire.",
+    "email": "",
     "publications": 2
   },
   {
@@ -85,8 +94,9 @@
     "firstName": "Simon",
     "lastName": "Pujau",
     "role": "Chercheur",
-    "bio": "Chercheur à l'Institut Rousseau, travaux sur la transition écologique et les obligations vertes.",
     "photo": "assets/images/equipe/simon-pujau.png",
+    "bio": "Chercheur à l'Institut Rousseau, travaux sur la transition écologique et les obligations vertes.",
+    "email": "",
     "publications": 3
   },
   {
@@ -94,8 +104,9 @@
     "firstName": "Pierre",
     "lastName": "Micheletti",
     "role": "Médecin, ancien président de Médecins du Monde",
-    "bio": "Médecin et ancien président de Médecins du Monde, spécialiste de l'aide humanitaire internationale.",
     "photo": "assets/images/auteurs/pierre-micheletti.png",
+    "bio": "Médecin et ancien président de Médecins du Monde, spécialiste de l'aide humanitaire internationale.",
+    "email": "",
     "publications": 4
   },
   {
@@ -103,8 +114,9 @@
     "firstName": "Paul",
     "lastName": "Montjotin",
     "role": "Enseignant, spécialiste des questions sociales",
-    "bio": "Enseignant et chercheur spécialiste des questions sociales et du temps de travail.",
     "photo": "assets/images/auteurs/paul-montjotin.png",
+    "bio": "Enseignant et chercheur spécialiste des questions sociales et du temps de travail.",
+    "email": "",
     "publications": 2
   },
   {
@@ -112,8 +124,9 @@
     "firstName": "Anaïs",
     "lastName": "Voy-Gillis",
     "role": "Docteure en géographie, spécialiste réindustrialisation",
-    "bio": "Docteure en géographie, spécialiste des questions de réindustrialisation et de souveraineté industrielle.",
     "photo": "assets/images/equipe/anais-voy-gillis.jpg",
+    "bio": "Docteure en géographie, spécialiste des questions de réindustrialisation et de souveraineté industrielle.",
+    "email": "",
     "publications": 2
   },
   {
@@ -121,8 +134,9 @@
     "firstName": "Pierre",
     "lastName": "Gilbert",
     "role": "Consultant en prospective climatique, auteur",
-    "bio": "Consultant en prospective climatique et auteur, spécialiste des questions de capture et stockage du CO2.",
     "photo": "assets/images/equipe/pierre-gilbert.jpg",
+    "bio": "Consultant en prospective climatique et auteur, spécialiste des questions de capture et stockage du CO2.",
+    "email": "",
     "publications": 2
   },
   {
@@ -130,8 +144,9 @@
     "firstName": "Nathan",
     "lastName": "Sperber",
     "role": "Post-doctorant, Université Fudan (Shanghai)",
-    "bio": "Post-doctorant à l'Université Fudan de Shanghai, chercheur en économie politique.",
     "photo": "assets/images/equipe/nathan-sperber.jpg",
+    "bio": "Post-doctorant à l'Université Fudan de Shanghai, chercheur en économie politique.",
+    "email": "",
     "publications": 1
   },
   {
@@ -139,8 +154,9 @@
     "firstName": "Ano",
     "lastName": "Kuhanathan",
     "role": "Économiste, doctorat Paris-Dauphine, NEOMA",
-    "bio": "Économiste, docteur de l'Université Paris-Dauphine et enseignant à NEOMA Business School.",
     "photo": "assets/images/equipe/ano-kuhanathan.jpg",
+    "bio": "Économiste, docteur de l'Université Paris-Dauphine et enseignant à NEOMA Business School.",
+    "email": "",
     "publications": 3
   },
   {
@@ -148,8 +164,9 @@
     "firstName": "Thibaud",
     "lastName": "Voïta",
     "role": "Chercheur énergie et climat",
-    "bio": "Chercheur spécialiste des questions énergétiques et climatiques.",
     "photo": "assets/images/equipe/thibaud-voita.jpg",
+    "bio": "Chercheur spécialiste des questions énergétiques et climatiques.",
+    "email": "",
     "publications": 2
   },
   {
@@ -157,8 +174,9 @@
     "firstName": "Augustin",
     "lastName": "Rogy",
     "role": "Chercheur",
-    "bio": "Chercheur à l'Institut Rousseau.",
     "photo": "",
+    "bio": "Chercheur à l'Institut Rousseau.",
+    "email": "",
     "publications": 1
   },
   {
@@ -166,8 +184,9 @@
     "firstName": "Émilie",
     "lastName": "Fabre",
     "role": "Chercheuse",
-    "bio": "Chercheuse à l'Institut Rousseau.",
     "photo": "",
+    "bio": "Chercheuse à l'Institut Rousseau.",
+    "email": "",
     "publications": 1
   },
   {
@@ -175,8 +194,9 @@
     "firstName": "Matthieu",
     "lastName": "Caron",
     "role": "Juriste, maître de conférences",
-    "bio": "Juriste et maître de conférences, spécialiste du droit constitutionnel.",
     "photo": "",
+    "bio": "Juriste et maître de conférences, spécialiste du droit constitutionnel.",
+    "email": "",
     "publications": 1
   },
   {
@@ -184,8 +204,9 @@
     "firstName": "Alain",
     "lastName": "Grandjean",
     "role": "Économiste",
-    "bio": "Économiste, co-fondateur de Carbone 4.",
     "photo": "",
+    "bio": "Économiste, co-fondateur de Carbone 4.",
+    "email": "",
     "publications": 1
   },
   {
@@ -193,8 +214,9 @@
     "firstName": "Julien",
     "lastName": "Lefournier",
     "role": "Financier",
-    "bio": "Financier, spécialiste des marchés et de la finance verte.",
     "photo": "",
+    "bio": "Financier, spécialiste des marchés et de la finance verte.",
+    "email": "",
     "publications": 1
   },
   {
@@ -202,8 +224,9 @@
     "firstName": "Léa",
     "lastName": "Falco",
     "role": "Chercheuse",
-    "bio": "Chercheuse et activiste pour la transition écologique.",
     "photo": "",
+    "bio": "Chercheuse et activiste pour la transition écologique.",
+    "email": "",
     "publications": 1
   },
   {
@@ -211,8 +234,9 @@
     "firstName": "Jordan",
     "lastName": "Allouche",
     "role": "Chercheur",
-    "bio": "Chercheur à l'Institut Rousseau.",
     "photo": "assets/images/equipe/jordan-allouche.png",
+    "bio": "Chercheur à l'Institut Rousseau.",
+    "email": "",
     "publications": 1
   },
   {
@@ -220,8 +244,9 @@
     "firstName": "Frantz",
     "lastName": "Gault",
     "role": "Chercheur",
-    "bio": "Chercheur à l'Institut Rousseau.",
     "photo": "assets/images/equipe/frantz-gault.png",
+    "bio": "Chercheur à l'Institut Rousseau.",
+    "email": "",
     "publications": 1
   },
   {
@@ -229,8 +254,9 @@
     "firstName": "Emilie",
     "lastName": "Lory",
     "role": "Secrétaire Générale",
-    "bio": "Secrétaire Générale de l'Institut Rousseau.",
     "photo": "assets/images/equipe/emilie-lory.jpg",
+    "bio": "Secrétaire Générale de l'Institut Rousseau.",
+    "email": "",
     "publications": 0
   },
   {
@@ -238,8 +264,9 @@
     "firstName": "Gabriel",
     "lastName": "Butin",
     "role": "Trésorier",
-    "bio": "Trésorier de l'Institut Rousseau.",
     "photo": "assets/images/equipe/gabriel-butin.png",
+    "bio": "Trésorier de l'Institut Rousseau.",
+    "email": "",
     "publications": 0
   },
   {
@@ -247,8 +274,9 @@
     "firstName": "Nathan",
     "lastName": "Combet",
     "role": "Co-directeur des études économiques",
-    "bio": "Co-directeur des études économiques de l'Institut Rousseau.",
     "photo": "assets/images/equipe/nathan-combet.png",
+    "bio": "Co-directeur des études économiques de l'Institut Rousseau.",
+    "email": "",
     "publications": 0
   },
   {
@@ -256,8 +284,9 @@
     "firstName": "Marie-Bénédicte",
     "lastName": "Fradin",
     "role": "Directrice des Relations Publiques et Partenariales",
-    "bio": "Directrice des Relations Publiques et Partenariales de l'Institut Rousseau.",
     "photo": "assets/images/equipe/marie-benedicte-fradin.jpg",
+    "bio": "Directrice des Relations Publiques et Partenariales de l'Institut Rousseau.",
+    "email": "",
     "publications": 0
   },
   {
@@ -265,8 +294,9 @@
     "firstName": "Arnaud",
     "lastName": "Iss",
     "role": "Directeur des études internationales et Europe",
-    "bio": "Directeur des études internationales et Europe de l'Institut Rousseau.",
     "photo": "assets/images/equipe/arnaud-iss.png",
+    "bio": "Directeur des études internationales et Europe de l'Institut Rousseau.",
+    "email": "",
     "publications": 0
   },
   {
@@ -274,8 +304,9 @@
     "firstName": "Gabriel",
     "lastName": "Malek",
     "role": "Co-directeur des études économiques",
-    "bio": "Co-directeur des études économiques de l'Institut Rousseau.",
     "photo": "assets/images/equipe/gabriel-malek.png",
+    "bio": "Co-directeur des études économiques de l'Institut Rousseau.",
+    "email": "",
     "publications": 0
   },
   {
@@ -283,8 +314,9 @@
     "firstName": "Philippe",
     "lastName": "Moutenet",
     "role": "Directeur des études sur les affaires sociales",
-    "bio": "Directeur des études sur les affaires sociales de l'Institut Rousseau.",
     "photo": "assets/images/equipe/philippe-moutenet.png",
+    "bio": "Directeur des études sur les affaires sociales de l'Institut Rousseau.",
+    "email": "",
     "publications": 0
   },
   {
@@ -292,8 +324,9 @@
     "firstName": "Dorian",
     "lastName": "Guinard",
     "role": "Membre du Conseil scientifique — Droit & Institutions",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Droit & Institutions.",
     "photo": "assets/images/equipe/dorian-guinard.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Droit & Institutions.",
+    "email": "",
     "publications": 0
   },
   {
@@ -301,8 +334,9 @@
     "firstName": "Magali",
     "lastName": "Lafourcade",
     "role": "Membre du Conseil scientifique — Droit & Institutions",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Droit & Institutions.",
     "photo": "assets/images/equipe/magali-lafourcade.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Droit & Institutions.",
+    "email": "",
     "publications": 0
   },
   {
@@ -310,8 +344,9 @@
     "firstName": "Benjamin",
     "lastName": "Morel",
     "role": "Membre du Conseil scientifique — Droit & Institutions",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Droit & Institutions.",
     "photo": "assets/images/equipe/benjamin-morel.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Droit & Institutions.",
+    "email": "",
     "publications": 0
   },
   {
@@ -319,8 +354,9 @@
     "firstName": "Nicolas",
     "lastName": "Desquinado",
     "role": "Membre du Conseil scientifique — Économie",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
     "photo": "assets/images/equipe/nicolas-desquinado.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
+    "email": "",
     "publications": 0
   },
   {
@@ -328,8 +364,9 @@
     "firstName": "César",
     "lastName": "Dugast",
     "role": "Membre du Conseil scientifique — Économie",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
     "photo": "assets/images/equipe/cesar-dugast.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
+    "email": "",
     "publications": 0
   },
   {
@@ -337,8 +374,9 @@
     "firstName": "Rémi",
     "lastName": "Lataste",
     "role": "Membre du Conseil scientifique — Économie",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
     "photo": "assets/images/equipe/remi-lataste.png",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
+    "email": "",
     "publications": 0
   },
   {
@@ -346,8 +384,9 @@
     "firstName": "Léa",
     "lastName": "Lugassy",
     "role": "Membre du Conseil scientifique — Économie",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
     "photo": "assets/images/equipe/lea-lugassy.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
+    "email": "",
     "publications": 0
   },
   {
@@ -355,8 +394,9 @@
     "firstName": "Jean-François",
     "lastName": "Ponsot",
     "role": "Membre du Conseil scientifique — Économie",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
     "photo": "assets/images/equipe/jean-francois-ponsot.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
+    "email": "",
     "publications": 0
   },
   {
@@ -364,8 +404,9 @@
     "firstName": "Pavlina",
     "lastName": "Tcherneva",
     "role": "Membre du Conseil scientifique — Économie",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
     "photo": "assets/images/equipe/pavlina-tcherneva.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Économie.",
+    "email": "",
     "publications": 0
   },
   {
@@ -373,8 +414,9 @@
     "firstName": "Antoine",
     "lastName": "Cargoet",
     "role": "Membre du Conseil scientifique — Idées & Société",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
     "photo": "assets/images/equipe/antoine-cargoet.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
+    "email": "",
     "publications": 0
   },
   {
@@ -382,8 +424,9 @@
     "firstName": "Mahaut",
     "lastName": "Chaudouët-Delmas",
     "role": "Membre du Conseil scientifique — Idées & Société",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
     "photo": "assets/images/equipe/mahaut-chaudouet-delmas.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
+    "email": "",
     "publications": 0
   },
   {
@@ -391,8 +434,9 @@
     "firstName": "Fabien",
     "lastName": "Escalona",
     "role": "Membre du Conseil scientifique — Idées & Société",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
     "photo": "assets/images/equipe/fabien-escalona.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
+    "email": "",
     "publications": 0
   },
   {
@@ -400,8 +444,79 @@
     "firstName": "Hervé",
     "lastName": "Le Bras",
     "role": "Membre du Conseil scientifique — Idées & Société",
-    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
     "photo": "assets/images/equipe/herve-le-bras.jpg",
+    "bio": "Membre du Conseil scientifique de l'Institut Rousseau, domaine Idées & Société.",
+    "email": "",
+    "publications": 0
+  },
+  {
+    "id": "philippe-ramos",
+    "firstName": "Philippe",
+    "lastName": "Ramos",
+    "role": "Directeur Général et co-fondateur d'INUA PROD",
+    "photo": "assets/images/equipe/philippe-ramos-v2.jpg",
+    "bio": "Directeur Général et co-fondateur d'INUA PROD.",
+    "email": "",
+    "publications": 0
+  },
+  {
+    "id": "louis-hervier-blondel",
+    "firstName": "Louis",
+    "lastName": "Hervier Blondel",
+    "role": "",
+    "photo": "assets/images/auteurs/louis-hervier-blondel.jpg",
+    "bio": "",
+    "email": "",
+    "publications": 0
+  },
+  {
+    "id": "valentin-chevallier",
+    "firstName": "Valentin",
+    "lastName": "Chevallier",
+    "role": "",
+    "photo": "assets/images/auteurs/valentin-chevallier.jpg",
+    "bio": "",
+    "email": "",
+    "publications": 0
+  },
+  {
+    "id": "kelly-berriat",
+    "firstName": "Kelly",
+    "lastName": "Berriat",
+    "role": "",
+    "photo": "",
+    "bio": "",
+    "email": "",
+    "publications": 0
+  },
+  {
+    "id": "christian-nicol",
+    "firstName": "Christian",
+    "lastName": "Nicol",
+    "role": "Cadre bancaire, militant écologiste, conseiller municipal",
+    "photo": "assets/images/auteurs/christian-nicol.jpg",
+    "bio": "Christian Nicol est cadre dans une banque, militant écologiste et conseiller municipal en charge du Développement Durable d'Elancourt.",
+    "email": "",
+    "publications": 0
+  },
+  {
+    "id": "rene-dosiere",
+    "firstName": "René",
+    "lastName": "Dosière",
+    "role": "",
+    "photo": "",
+    "bio": "",
+    "email": "",
+    "publications": 0
+  },
+  {
+    "id": "institut-rousseau",
+    "firstName": "Institut",
+    "lastName": "Rousseau",
+    "role": "Publications collectives de l'Institut",
+    "photo": "assets/images/logo.svg",
+    "bio": "Publications rédigées collectivement ou attribuées à l'institut dans son ensemble.",
+    "email": "",
     "publications": 0
   }
 ]
