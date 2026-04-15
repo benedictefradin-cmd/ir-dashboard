@@ -1,24 +1,26 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import './styles.css';
 import Layout from './components/layout/Layout';
-import Dashboard from './pages/Dashboard';
-import Articles from './pages/Articles';
-import Newsletter from './pages/Newsletter';
-import Messagerie from './pages/Messagerie';
-import Settings from './pages/Settings';
-import Evenements from './pages/Evenements';
-import Presse from './pages/Presse';
-import Auteurs from './pages/Auteurs';
-import Contenu from './pages/Contenu';
-import Accueil from './pages/Accueil';
-import SEO from './pages/SEO';
-import Medias from './pages/Medias';
-import Navigation from './pages/Navigation';
-import Equipe from './pages/Equipe';
-import Technique from './pages/Technique';
-import Sollicitations from './pages/Sollicitations';
-import Calendrier from './pages/Calendrier';
-import PagesSite from './pages/PagesSite';
+
+// ─── Lazy-loaded pages ─────────────────────────────
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Articles = lazy(() => import('./pages/Articles'));
+const Newsletter = lazy(() => import('./pages/Newsletter'));
+const Messagerie = lazy(() => import('./pages/Messagerie'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Evenements = lazy(() => import('./pages/Evenements'));
+const Presse = lazy(() => import('./pages/Presse'));
+const Profils = lazy(() => import('./pages/Profils'));
+const Contenu = lazy(() => import('./pages/Contenu'));
+const Accueil = lazy(() => import('./pages/Accueil'));
+const SEO = lazy(() => import('./pages/SEO'));
+const Medias = lazy(() => import('./pages/Medias'));
+const Navigation = lazy(() => import('./pages/Navigation'));
+const Equipe = lazy(() => import('./pages/Equipe'));
+const Technique = lazy(() => import('./pages/Technique'));
+const Sollicitations = lazy(() => import('./pages/Sollicitations'));
+const Calendrier = lazy(() => import('./pages/Calendrier'));
+const PagesSite = lazy(() => import('./pages/PagesSite'));
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
 import { fetchSollicitations } from './services/contact';
@@ -229,7 +231,7 @@ export default function App() {
       return urgentRapports + weekEvents;
     })(),
     presse: 0,
-    auteurs: 0,
+    profils: 0,
     newsletter: subscribers.filter(s => s.status === 'pending').length,
     messagerie: 0,
     contenu: 0,
@@ -288,8 +290,8 @@ export default function App() {
         return <Calendrier socialPosts={socialPosts} setSocialPosts={setSocialPosts} rapports={rapports} setRapports={setRapports} extEvents={extEvents} setExtEvents={setExtEvents} events={events} toast={toast} onTabChange={changeTab} />;
       case 'presse':
         return <Presse presse={presse} setPresse={setPresse} sollicitations={sollicitations} loading={loading} toast={toast} saveToSite={saveToSite} />;
-      case 'auteurs':
-        return <Auteurs auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} contenu={contenu} setContenu={setContenu} loading={loading} toast={toast} saveToSite={saveToSite} onTabChange={changeTab} />;
+      case 'profils':
+        return <Profils auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} contenu={contenu} setContenu={setContenu} loading={loading} toast={toast} saveToSite={saveToSite} onTabChange={changeTab} />;
       case 'newsletter':
         return <Newsletter subscribers={subscribers} setSubscribers={setSubscribers} campaigns={campaigns} loading={loading} connected={services.brevo} onRefresh={loadData} toast={toast} />;
       case 'messagerie':
@@ -343,7 +345,9 @@ export default function App() {
       subscribers={subscribers}
       sollicitations={sollicitations}
     >
-      {renderPage()}
+      <Suspense fallback={<div className="page-body" style={{ textAlign: 'center', padding: 60, color: 'var(--text-light)' }}>Chargement…</div>}>
+        {renderPage()}
+      </Suspense>
     </Layout>
   );
 }

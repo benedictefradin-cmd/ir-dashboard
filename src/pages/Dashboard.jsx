@@ -137,22 +137,47 @@ export default function Dashboard({
           />
         </div>
 
-        {/* ── Actions rapides ────────────────────── */}
-        <div className="card mb-16 fade-in" style={{ padding: '14px 20px' }}>
-          <div className="flex-wrap" style={{ gap: 8, alignItems: 'center' }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: COLORS.navy, marginRight: 8 }}>Actions rapides</span>
-            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('articles')}>+ Nouveau article</button>
-            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('evenements')}>+ Nouvel événement</button>
-            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('presse')}>+ Retombée presse</button>
-            <button className="btn btn-outline btn-sm" onClick={() => onTabChange('newsletter')}>Envoyer newsletter</button>
-            <button className="btn btn-outline btn-sm" onClick={handleRebuild} disabled={rebuilding}>
-              {rebuilding ? 'Rebuild…' : 'Rebuild site'}
-            </button>
-            {newSollCount > 0 && (
-              <button className="btn btn-sky btn-sm" onClick={() => onTabChange('sollicitations')}>
-                {newSollCount} sollicitation{newSollCount > 1 ? 's' : ''} en attente
+        {/* ── Trend chart + Actions rapides ────────── */}
+        <div className="grid grid-2 mb-16">
+          <div className="card fade-in">
+            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Publications (6 derniers mois)</h2>
+            <PublicationSparkline articles={articles} />
+          </div>
+          <div className="card fade-in">
+            <h2 style={{ fontSize: 16, marginBottom: 12 }}>Actions rapides</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              <button className="quick-action-btn" onClick={() => onTabChange('articles')}>
+                <span style={{ fontSize: 20 }}>{'\u{1F4DD}'}</span>
+                <span style={{ fontSize: 12 }}>Nouvel article</span>
               </button>
-            )}
+              <button className="quick-action-btn" onClick={() => onTabChange('evenements')}>
+                <span style={{ fontSize: 20 }}>{'\u{1F4C5}'}</span>
+                <span style={{ fontSize: 12 }}>Nouvel événement</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => onTabChange('presse')}>
+                <span style={{ fontSize: 20 }}>{'\u{1F4F0}'}</span>
+                <span style={{ fontSize: 12 }}>Retombée presse</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => onTabChange('newsletter')}>
+                <span style={{ fontSize: 20 }}>{'\u{2709}\ufe0f'}</span>
+                <span style={{ fontSize: 12 }}>Newsletter</span>
+              </button>
+              <button className="quick-action-btn" onClick={handleRebuild} disabled={rebuilding}>
+                <span style={{ fontSize: 20 }}>{'\u{1F680}'}</span>
+                <span style={{ fontSize: 12 }}>{rebuilding ? 'Rebuild…' : 'Rebuild site'}</span>
+              </button>
+              {newSollCount > 0 ? (
+                <button className="quick-action-btn" onClick={() => onTabChange('sollicitations')} style={{ borderColor: COLORS.terra, color: COLORS.terra }}>
+                  <span style={{ fontSize: 20 }}>{'\u{1F4EC}'}</span>
+                  <span style={{ fontSize: 12 }}>{newSollCount} en attente</span>
+                </button>
+              ) : (
+                <button className="quick-action-btn" onClick={() => onTabChange('calendrier')}>
+                  <span style={{ fontSize: 20 }}>{'\u{1F5D3}\ufe0f'}</span>
+                  <span style={{ fontSize: 12 }}>Calendrier</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -363,5 +388,43 @@ export default function Dashboard({
         )}
       </div>
     </>
+  );
+}
+
+// ─── Sparkline SVG ───────────────────────────────────
+function PublicationSparkline({ articles }) {
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const label = d.toLocaleDateString('fr-FR', { month: 'short' });
+    const count = articles.filter(a => {
+      const ad = new Date(a.date);
+      return ad.getMonth() === d.getMonth() && ad.getFullYear() === d.getFullYear();
+    }).length;
+    months.push({ label, count });
+  }
+  const max = Math.max(...months.map(m => m.count), 1);
+  const w = 280, h = 100, pad = 20;
+  const stepX = (w - pad * 2) / Math.max(months.length - 1, 1);
+  const points = months.map((m, i) => ({
+    x: pad + i * stepX,
+    y: h - pad - ((m.count / max) * (h - pad * 2)),
+    ...m,
+  }));
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+  const areaD = pathD + ` L${points[points.length-1].x},${h-pad} L${points[0].x},${h-pad} Z`;
+  return (
+    <svg viewBox={`0 0 ${w} ${h + 20}`} style={{ width: '100%', height: 'auto' }}>
+      <path d={areaD} fill="var(--sky)" opacity="0.08" />
+      <path d={pathD} fill="none" stroke="var(--sky)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {points.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy={p.y} r="4" fill="var(--white)" stroke="var(--sky)" strokeWidth="2" />
+          <text x={p.x} y={p.y - 10} textAnchor="middle" fill="var(--navy)" fontSize="11" fontWeight="600" fontFamily="Source Sans 3, sans-serif">{p.count}</text>
+          <text x={p.x} y={h + 12} textAnchor="middle" fill="var(--text-light)" fontSize="10" fontFamily="Source Sans 3, sans-serif">{p.label}</text>
+        </g>
+      ))}
+    </svg>
   );
 }

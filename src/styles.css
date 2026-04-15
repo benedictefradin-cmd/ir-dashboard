@@ -15,7 +15,7 @@
   --white: #ffffff;
   --border: #E5E7EB;
   --text: #1a2744;
-  --text-light: #6B7280;
+  --text-light: #4B5563;
   --danger: #DC2626;
   --danger-light: #FEE2E2;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
@@ -761,6 +761,7 @@ label {
 .topbar-left {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -1563,26 +1564,28 @@ label {
 }
 
 .quick-action-btn {
-  font-family: 'Source Sans 3', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.15s;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  background: var(--white);
+  padding: 14px 8px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Source Sans 3', sans-serif;
   color: var(--navy);
+  transition: all 0.15s ease;
 }
-
-.quick-action-btn:hover {
+.quick-action-btn:hover:not(:disabled) {
+  background: var(--sky-light);
   border-color: var(--sky);
   color: var(--sky);
-  background: var(--sky-light);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(74,144,217,0.12);
 }
+.quick-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ─── Responsive extras ─────────────────────── */
 @media (max-width: 1024px) {

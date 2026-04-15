@@ -38,7 +38,7 @@ export const NAV_GROUPS = [
       { key: 'articles', label: 'Publications', icon: '\u{1F4C4}' },
       { key: 'evenements', label: 'Événements', icon: '\u{1F4C5}' },
       { key: 'presse', label: 'Presse', icon: '\u{1F4F0}' },
-      { key: 'auteurs', label: 'Auteurs', icon: '\u{1F465}' },
+      { key: 'profils', label: 'Profils', icon: '\u{1F465}' },
     ],
   },
   {

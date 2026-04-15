@@ -40,7 +40,7 @@ export default function Messagerie({ subscribers = [], presse = [], auteurs = []
     { key: 'all_subscribers', label: 'Abonnés newsletter', count: activeSubscribers.length, icon: '📬' },
     { key: 'all', label: 'Tous les contacts', count: subscribers.length, icon: '👥' },
     { key: 'presse', label: 'Contacts presse', count: presseContacts.length, icon: '📰' },
-    { key: 'auteurs', label: 'Auteurs', count: auteursContacts.length, icon: '✍️' },
+    { key: 'auteurs', label: 'Profils', count: auteursContacts.length, icon: '✍️' },
     { key: 'evenement', label: 'Inscrits événements', count: eventInscrits.length, icon: '🎤' },
   ];
 

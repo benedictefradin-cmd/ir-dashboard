@@ -57,7 +57,7 @@ export default function AuthorPicker({ authors = [], selected = [], onChange, mu
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher un auteur…"
+          placeholder="Rechercher un profil…"
           className="author-picker-input"
         />
       </div>
@@ -124,7 +124,7 @@ export default function AuthorPicker({ authors = [], selected = [], onChange, mu
               +
             </div>
             <div className="author-picker-info">
-              <span className="author-picker-name" style={{ color: COLORS.textLight }}>Ajouter un auteur</span>
+              <span className="author-picker-name" style={{ color: COLORS.textLight }}>Ajouter un profil</span>
             </div>
           </div>
         )}
@@ -132,7 +132,7 @@ export default function AuthorPicker({ authors = [], selected = [], onChange, mu
 
       {filtered.length === 0 && !onAddNew && (
         <p style={{ color: COLORS.textLight, fontSize: 13, textAlign: 'center', padding: 16 }}>
-          Aucun auteur trouvé
+          Aucun profil trouvé
         </p>
       )}
     </div>

@@ -14,6 +14,7 @@ import { loadLocal } from '../utils/localStorage';
 import useDebounce from '../hooks/useDebounce';
 import ARTICLE_TEMPLATES from '../data/articleTemplates';
 import PublishWithTranslation from '../components/articles/PublishWithTranslation';
+import RichEditor from '../components/editor/RichEditor';
 
 // ─── Notion status mapping ─────────────────────────
 const NOTION_STATUS_MAP = {
@@ -642,7 +643,13 @@ export default function Articles({
 
             <div style={{ marginBottom: 16 }}>
               <label>Contenu</label>
-              <textarea rows={8} value={form.content} onChange={e => setForm({ ...form, content: e.target.value })} />
+              <RichEditor
+                value={form.content}
+                onChange={(html) => setForm(f => ({ ...f, content: html }))}
+                title={form.title}
+                author={form.author}
+                placeholder="\u00c9crivez votre article ici\u2026"
+              />
             </div>
 
             <div className="modal-footer">
@@ -707,7 +714,7 @@ export default function Articles({
         {publishFlow && (
           <Modal
             title={
-              publishFlow.step === 1 ? 'Publier — Étape 1/3 : Sélection de l’auteur' :
+              publishFlow.step === 1 ? 'Publier — Étape 1/3 : Sélection du profil' :
               publishFlow.step === 2 ? 'Publier — Étape 2/3 : Prévisualisation' :
               'Publier — Étape 3/3 : Confirmation'
             }
@@ -720,7 +727,7 @@ export default function Articles({
                 <div key={s} className={`publish-step${publishFlow.step === s ? ' active' : ''}${publishFlow.step > s ? ' done' : ''}`}>
                   <span className="publish-step-num">{publishFlow.step > s ? '✓' : s}</span>
                   <span className="publish-step-label">
-                    {s === 1 ? 'Auteur' : s === 2 ? 'Prévisualisation' : 'Publication'}
+                    {s === 1 ? 'Profil' : s === 2 ? 'Prévisualisation' : 'Publication'}
                   </span>
                 </div>
               ))}
@@ -730,14 +737,14 @@ export default function Articles({
             {publishFlow.step === 1 && (
               <div>
                 <p style={{ fontSize: 14, color: COLORS.textLight, marginBottom: 16 }}>
-                  Sélectionnez le ou les auteur(s) de « <strong>{publishFlow.article.title}</strong> »
+                  Sélectionnez le ou les profil(s) auteur de « <strong>{publishFlow.article.title}</strong> »
                 </p>
                 <AuthorPicker
                   authors={auteurs}
                   selected={selectedAuthors}
                   onChange={setSelectedAuthors}
                   multiple={true}
-                  onAddNew={() => toast('Utilisez la page Auteurs pour ajouter un auteur')}
+                  onAddNew={() => toast('Utilisez la page Profils pour ajouter un profil')}
                 />
                 <div className="modal-footer">
                   <button className="btn btn-outline" onClick={closePublishFlow}>Annuler</button>

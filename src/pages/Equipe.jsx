@@ -151,7 +151,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     if (!setAuteurs) return null;
     const slug = slugify(membre.prenom, membre.nom);
     if (auteurs.find(a => a.id === slug)) {
-      toast('Un auteur avec ce nom existe déjà', 'error');
+      toast('Un profil avec ce nom existe déjà', 'error');
       return null;
     }
     const newAuthor = {
@@ -165,8 +165,8 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     if (hasGitHub()) {
       try {
         await saveAuthorsToGitHub(updated);
-        toast('Auteur créé et lié');
-      } catch (err) { toast(`Erreur création auteur : ${err.message}`, 'error'); }
+        toast('Profil créé et lié');
+      } catch (err) { toast(`Erreur création profil : ${err.message}`, 'error'); }
       if (saveToSite) {
         try {
           await saveToSite('auteurs', updated.map(({ id, firstName, lastName, role, bio, photo, photoPath: pp, publications }) => ({
@@ -241,7 +241,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
       const linkedId = formData.linkedAuthorId || findLinkedAuthor(formData)?.id;
       if (linkedId) {
         await syncPhotoToAuthor(linkedId, photoPath);
-        toast('Photo synchronisée avec l\'auteur');
+        toast('Photo synchronisée avec le profil');
       }
     }
   };
@@ -311,13 +311,13 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
               {hasAuthorLink && linked && (
                 <span className="badge badge-green"
                   style={{ cursor: onTabChange ? 'pointer' : 'default' }}
-                  onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('auteurs'); }}
-                  title="Voir la fiche auteur">
-                  Auteur lié ({pubs.length} pub{pubs.length !== 1 ? 's' : ''})
+                  onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('profils'); }}
+                  title="Voir la fiche profil">
+                  Profil lié ({pubs.length} pub{pubs.length !== 1 ? 's' : ''})
                 </span>
               )}
               {hasAuthorLink && !linked && (
-                <span className="badge badge-ochre">Pas d'auteur lié</span>
+                <span className="badge badge-ochre">Pas de profil lié</span>
               )}
               {membre.linkedin && (
                 <a href={membre.linkedin} target="_blank" rel="noopener noreferrer"
@@ -367,7 +367,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     return (
       <div className="equipe-section-content">
         <div className="equipe-section-desc">
-          Membres du Conseil d'administration — liés aux fiches auteurs pour synchroniser photos et publications.
+          Membres du Conseil d'administration — liés aux profils pour synchroniser photos et publications.
         </div>
         <div className="equipe-member-list">
           {membres.map((membre, i) => (
@@ -748,7 +748,7 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
           )}
           {effectiveLinked && (
             <p style={{ fontSize: 11, color: COLORS.green, marginTop: 4 }}>
-              La photo sera synchronisée avec la fiche auteur « {effectiveLinked.firstName} {effectiveLinked.lastName} »
+              La photo sera synchronisée avec le profil « {effectiveLinked.firstName} {effectiveLinked.lastName} »
             </p>
           )}
         </div>
@@ -756,15 +756,15 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
 
       {hasAuthorLink && (
         <div className="equipe-author-link-section">
-          <label style={{ fontWeight: 600, fontSize: 13 }}>Auteur lié</label>
+          <label style={{ fontWeight: 600, fontSize: 13 }}>Profil lié</label>
           {autoDetected && (
             <div style={{ padding: '8px 0', fontSize: 12, color: COLORS.green }}>
-              Auteur détecté automatiquement : <strong>{autoDetected.firstName} {autoDetected.lastName}</strong>
+              Profil détecté automatiquement : <strong>{autoDetected.firstName} {autoDetected.lastName}</strong>
             </div>
           )}
           <select value={form.linkedAuthorId || (autoDetected?.id || '')}
             onChange={e => setForm({ ...form, linkedAuthorId: e.target.value })} style={{ width: '100%', marginTop: 4 }}>
-            <option value="">— Aucun auteur lié —</option>
+            <option value="">— Aucun profil lié —</option>
             {auteurs.map(a => (
               <option key={a.id} value={a.id}>{a.firstName} {a.lastName} ({a.publications || 0} pub{(a.publications || 0) !== 1 ? 's' : ''})</option>
             ))}
@@ -772,12 +772,12 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             {!effectiveLinked && form.prenom && form.nom && (
               <button type="button" className="btn btn-outline btn-sm" onClick={handleCreateAuthor} disabled={creatingAuthor}>
-                {creatingAuthor ? 'Création…' : `Créer « ${form.prenom} ${form.nom} » comme auteur`}
+                {creatingAuthor ? 'Création…' : `Créer un profil pour « ${form.prenom} ${form.nom} »`}
               </button>
             )}
             {effectiveLinked && onTabChange && (
-              <button type="button" className="btn btn-outline btn-sm" onClick={() => { onClose(); onTabChange('auteurs'); }}>
-                Voir la fiche auteur
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => { onClose(); onTabChange('profils'); }}>
+                Voir la fiche profil
               </button>
             )}
           </div>
@@ -788,7 +788,7 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontWeight: 600 }}>Publications liées ({effectivePubs.length})</label>
           {effectivePubs.length === 0 ? (
-            <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>Aucune publication liée à cet auteur.</p>
+            <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>Aucune publication liée à ce profil.</p>
           ) : (
             <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 8, border: '1px solid var(--border)', borderRadius: 8, padding: 8 }}>
               {effectivePubs.map(pub => (

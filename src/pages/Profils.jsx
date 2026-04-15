@@ -18,7 +18,7 @@ const SORT_OPTIONS = [
   { value: 'recent', label: 'Récents d’abord' },
 ];
 
-export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setContenu, loading, toast, saveToSite, onTabChange }) {
+export default function Profils({ auteurs, setAuteurs, articles, contenu, setContenu, loading, toast, saveToSite, onTabChange }) {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('alpha');
   const [modalOpen, setModalOpen] = useState(false);
@@ -227,7 +227,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
           reader.onload = () => resolve(reader.result.split(',')[1]);
           reader.readAsDataURL(photoFile);
         });
-        const result = await githubUploadImage(ghPath, base64, `Photo auteur : ${form.firstName} ${form.lastName}`);
+        const result = await githubUploadImage(ghPath, base64, `Photo profil : ${form.firstName} ${form.lastName}`);
         photoUrl = result.url;
         toast('Photo uploadée sur GitHub');
       } catch (err) {
@@ -262,11 +262,11 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     if (editId) {
       updatedList = auteurs.map(a => a.id === editId ? { ...a, ...auteurData } : a);
       setAuteurs(updatedList);
-      toast('Auteur mis à jour');
+      toast('Profil mis à jour');
     } else {
       updatedList = [...auteurs, auteurData];
       setAuteurs(updatedList);
-      toast('Auteur ajouté');
+      toast('Profil ajouté');
     }
     setModalOpen(false);
 
@@ -283,7 +283,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
         try {
           await saveToSite('auteurs', updatedList.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
             id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
-          })), `Mise à jour auteur : ${form.firstName} ${form.lastName}`);
+          })), `Mise à jour profil : ${form.firstName} ${form.lastName}`);
         } catch { /* silent */ }
       }
     }
@@ -302,14 +302,14 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     const updatedList = auteurs.filter(a => a.id !== auteur.id);
     setAuteurs(updatedList);
     setModalOpen(false);
-    toast('Auteur supprimé');
+    toast('Profil supprimé');
     if (hasGitHub()) {
       try { await saveAuthorsToGitHub(updatedList); } catch { /* silent */ }
       if (saveToSite) {
         try {
           await saveToSite('auteurs', updatedList.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
             id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
-          })), `Suppression auteur : ${getDisplayName(auteur)}`);
+          })), `Suppression profil : ${getDisplayName(auteur)}`);
         } catch { /* silent */ }
       }
     }
@@ -322,7 +322,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
   if (loading) {
     return (
       <>
-        <div className="page-header"><h1>Auteurs</h1></div>
+        <div className="page-header"><h1>Profils</h1></div>
         <div className="page-body">
           <div className="grid grid-3">{[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}</div>
         </div>
@@ -334,8 +334,8 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
     <>
       <div className="page-header">
         <div>
-          <h1>Auteurs</h1>
-          <p className="page-header-sub">{auteurs.length} auteur{auteurs.length !== 1 ? 's' : ''} enregistré{auteurs.length !== 1 ? 's' : ''}</p>
+          <h1>Profils</h1>
+          <p className="page-header-sub">{auteurs.length} profil{auteurs.length !== 1 ? 's' : ''} enregistré{auteurs.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex-center gap-8">
           <ServiceBadge service="notion" />
@@ -344,7 +344,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               Publier tout sur le site
             </button>
           )}
-          <button className="btn btn-primary" onClick={openAdd}>+ Ajouter un auteur</button>
+          <button className="btn btn-primary" onClick={openAdd}>+ Ajouter un profil</button>
         </div>
       </div>
 
@@ -353,7 +353,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
         <div className="auteur-stats-bar">
           <div className="auteur-stat">
             <span className="auteur-stat-value">{auteurs.length}</span>
-            <span className="auteur-stat-label">Auteurs</span>
+            <span className="auteur-stat-label">Profils</span>
           </div>
           <div className="auteur-stat-divider" />
           <div className="auteur-stat">
@@ -375,7 +375,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
         {/* Search + Sort */}
         <div className="auteur-toolbar">
           <div style={{ flex: 1 }}>
-            <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un auteur…" />
+            <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un profil…" />
           </div>
           <select
             className="auteur-sort-select"
@@ -391,7 +391,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
         {filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">&#128100;</div>
-            <p>Aucun auteur trouvé.</p>
+            <p>Aucun profil trouvé.</p>
             {debouncedSearch && (
               <button className="btn btn-outline" style={{ marginTop: 12 }} onClick={() => setSearch('')}>
                 Effacer la recherche
@@ -464,7 +464,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
       </div>
 
       {modalOpen && (
-        <Modal onClose={() => setModalOpen(false)} title={editId ? 'Modifier l’auteur' : 'Ajouter un auteur'} size="lg">
+        <Modal onClose={() => setModalOpen(false)} title={editId ? 'Modifier le profil' : 'Ajouter un profil'} size="lg">
           <form onSubmit={handleSubmit}>
             {/* Photo preview at top of modal */}
             <div className="auteur-modal-header">
@@ -479,7 +479,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'Cormorant Garamond', serif", color: COLORS.navy }}>
-                  {form.firstName || form.lastName ? `${form.firstName} ${form.lastName}`.trim() : 'Nouvel auteur'}
+                  {form.firstName || form.lastName ? `${form.firstName} ${form.lastName}`.trim() : 'Nouveau profil'}
                 </div>
                 {form.role && <div style={{ fontSize: 13, color: COLORS.textLight, marginTop: 2 }}>{form.role}</div>}
                 {editingAuteur && getTeamRole(editingAuteur) && (
@@ -503,7 +503,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               <input value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="Ex: Secrétaire générale de la CNCDH" required />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label>Photo de l'auteur</label>
+              <label>Photo</label>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -561,7 +561,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
             {editingAuteur && getTeamRole(editingAuteur) && (
               <div className="auteur-team-info">
                 <span className="badge badge-green" style={{ fontSize: 10 }}>{getTeamRole(editingAuteur)}</span>
-                <span style={{ fontSize: 12 }}>Cet auteur est aussi membre de l'équipe.</span>
+                <span style={{ fontSize: 12 }}>Ce profil est aussi membre de l'équipe.</span>
                 {onTabChange && (
                   <button type="button" className="btn btn-outline btn-sm" style={{ marginLeft: 'auto', fontSize: 11 }}
                     onClick={() => { setModalOpen(false); onTabChange('equipe'); }}>
@@ -576,7 +576,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontWeight: 600 }}>Publications liées ({linkedPubs.length})</label>
                 {linkedPubs.length === 0 ? (
-                  <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>Aucune publication liée à cet auteur.</p>
+                  <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 4 }}>Aucune publication liée à ce profil.</p>
                 ) : (
                   <div style={{ maxHeight: 200, overflowY: 'auto', marginTop: 8, border: '1px solid var(--border)', borderRadius: 8, padding: 8 }}>
                     {linkedPubs.map(pub => (
@@ -606,7 +606,7 @@ export default function Auteurs({ auteurs, setAuteurs, articles, contenu, setCon
                   disabled={uploading}
                   style={{ marginRight: 'auto' }}
                 >
-                  Supprimer cet auteur
+                  Supprimer ce profil
                 </button>
               )}
               <button type="button" className="btn btn-outline" onClick={() => setModalOpen(false)} disabled={uploading}>Annuler</button>
