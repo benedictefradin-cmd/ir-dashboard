@@ -201,17 +201,16 @@ export const DEFAULT_PAGE_SIZE = 50;
 export const SITE_URL = 'https://institut-rousseau-kb9p.vercel.app';
 
 // ─── Photo helpers ───────────────────────────────────
-const GITHUB_RAW_BASE = `https://raw.githubusercontent.com/${DEFAULT_GITHUB_OWNER}/${DEFAULT_GITHUB_SITE_REPO}/main`;
-
 /**
  * Résout un chemin de photo vers une URL affichable.
  * Gère les URLs absolues, les chemins assets/*, et les chemins relatifs.
  */
 export function resolvePhotoUrl(photo) {
   if (!photo) return '';
-  if (photo.startsWith('http')) return photo;
-  if (photo.startsWith('assets/')) return `${GITHUB_RAW_BASE}/${photo.replace('assets/', '')}`;
-  if (photo.startsWith('images/')) return `${GITHUB_RAW_BASE}/${photo}`;
+  if (photo.startsWith('http') || photo.startsWith('data:')) return photo;
+  // Chemin interne au repo site (privé) — conserver tel quel pour que le loader
+  // authentifié (githubGetImageDataUrl) puisse le fetch via l'API GitHub.
+  if (photo.startsWith('assets/') || photo.startsWith('images/')) return photo;
   return `${SITE_URL}/${photo}`;
 }
 

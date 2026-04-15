@@ -3,8 +3,10 @@ import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
-import { COLORS, resolvePhotoUrl, normalizeName, namesMatch, findPublicationsForAuthor, canonicalPhotoPath } from '../utils/constants';
+import { COLORS, normalizeName, namesMatch, findPublicationsForAuthor, canonicalPhotoPath } from '../utils/constants';
 import useDebounce from '../hooks/useDebounce';
+import usePhoto from '../hooks/usePhoto';
+import RepoPhoto from '../components/shared/RepoPhoto';
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
 
 const emptyForm = { firstName: '', lastName: '', role: '', photo: '', bio: '', email: '' };
@@ -29,6 +31,10 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
   const debouncedSearch = useDebounce(search, 150);
+
+  // Photo existante (chargée via API auth pour repo privé) quand aucun nouveau fichier n'a été choisi
+  const { url: existingPhotoUrl } = usePhoto(!photoFile && !photoPreview ? form.photo : '');
+  const effectivePreview = photoPreview || existingPhotoUrl;
 
   const filtered = useMemo(() => {
     let list = [...auteurs];
@@ -191,11 +197,12 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
       firstName: auteur.firstName || (auteur.name || '').split(' ')[0] || '',
       lastName: auteur.lastName || (auteur.name || '').split(' ').slice(1).join(' ') || '',
       role: auteur.role || auteur.titre || '',
-      photo: auteur.photo || '',
+      photo: auteur.photoPath || auteur.photo || '',
       bio: auteur.bio || '',
       email: auteur.email || '',
     });
-    setPhotoPreview(auteur.photo ? resolvePhotoUrl(auteur.photo) : null);
+    // La preview sera gérée par le modal via le hook usePhoto (form.photo).
+    setPhotoPreview(null);
     setPhotoFile(null);
     setModalOpen(true);
   };
@@ -411,22 +418,18 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
                 >
                   {/* Photo or initial */}
                   <div className="auteur-card-photo">
-                    {auteur.photo ? (
-                      <img
-                        src={resolvePhotoUrl(auteur.photo)}
-                        alt={getDisplayName(auteur)}
-                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                      />
-                    ) : null}
-                    <div
-                      className="auteur-card-initials"
-                      style={{
-                        backgroundColor: getAvatarColor(i),
-                        display: auteur.photo ? 'none' : 'flex',
-                      }}
-                    >
-                      {getInitial(auteur)}
-                    </div>
+                    <RepoPhoto
+                      photo={auteur.photoPath || auteur.photo}
+                      alt={getDisplayName(auteur)}
+                      fallback={
+                        <div
+                          className="auteur-card-initials"
+                          style={{ backgroundColor: getAvatarColor(i), display: 'flex' }}
+                        >
+                          {getInitial(auteur)}
+                        </div>
+                      }
+                    />
                   </div>
 
                   {/* Info */}
@@ -469,8 +472,8 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
             {/* Photo preview at top of modal */}
             <div className="auteur-modal-header">
               <div className="auteur-modal-avatar">
-                {photoPreview ? (
-                  <img src={photoPreview} alt="Aperçu" />
+                {effectivePreview ? (
+                  <img src={effectivePreview} alt="Aperçu" />
                 ) : (
                   <div className="auteur-modal-initials" style={{ backgroundColor: COLORS.navy }}>
                     {form.firstName ? form.firstName.charAt(0).toUpperCase() : '?'}
@@ -511,9 +514,9 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
                 onChange={handlePhotoSelect}
                 style={{ display: 'none' }}
               />
-              {photoPreview ? (
+              {effectivePreview ? (
                 <div className="photo-upload-preview">
-                  <img src={photoPreview} alt="Aperçu" />
+                  <img src={effectivePreview} alt="Aperçu" />
                   <div className="photo-upload-actions">
                     <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()}>
                       Changer

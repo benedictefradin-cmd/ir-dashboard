@@ -33,6 +33,44 @@ export async function githubGetFile(path) {
   return { content: decodeContent(data.content), sha: data.sha };
 }
 
+// ─── Cache en mémoire pour les images chargées via l'API (repo privé) ───
+const imageCache = new Map(); // path → Promise<dataUrl>
+
+/**
+ * Charge une image binaire depuis le repo site via l'API GitHub authentifiée
+ * et retourne un data URL (base64). Utilisé pour contourner l'inaccessibilité
+ * de raw.githubusercontent.com sur les repos privés.
+ * @param {string} path - Chemin dans le repo (ex: 'assets/images/equipe/x.png')
+ * @returns {Promise<string>} data URL prêt à être mis dans un <img src>
+ */
+export function githubGetImageDataUrl(path) {
+  if (!path) return Promise.resolve('');
+  if (path.startsWith('http') || path.startsWith('data:')) return Promise.resolve(path);
+  if (imageCache.has(path)) return imageCache.get(path);
+
+  const p = (async () => {
+    const res = await fetch(`${GITHUB_API}/${path}`, {
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' },
+    });
+    if (!res.ok) throw new Error(handleHttpError(res.status));
+    const data = await res.json();
+    const base64 = (data.content || '').replace(/\n/g, '');
+    const ext = (path.split('.').pop() || 'jpg').toLowerCase();
+    const mime = ext === 'png' ? 'image/png'
+      : ext === 'webp' ? 'image/webp'
+      : ext === 'svg' ? 'image/svg+xml'
+      : ext === 'gif' ? 'image/gif'
+      : 'image/jpeg';
+    return `data:${mime};base64,${base64}`;
+  })().catch(err => {
+    imageCache.delete(path); // permet de retenter après échec
+    throw err;
+  });
+
+  imageCache.set(path, p);
+  return p;
+}
+
 export async function githubPutFile(path, content, sha, message) {
   const body = {
     message: message || `Mise à jour de ${path} depuis le back-office`,

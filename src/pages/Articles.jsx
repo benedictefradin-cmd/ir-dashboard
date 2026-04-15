@@ -680,28 +680,100 @@ export default function Articles({
                   pdfUrl: form.pdfUrl,
                   fr: { title: form.title, summary: form.summary, content: form.content },
                 }}
-                onPublished={(finalArticle) => {
-                  // Mettre à jour ou ajouter l'article localement
-                  if (editingArt) {
-                    setArticles(prev => prev.map(a => a.id === editingArt.id ? {
-                      ...a,
-                      ...finalArticle,
+                onPublished={async (finalArticle) => {
+                  // 1. Pousser sur GitHub (version FR)
+                  try {
+                    const authorNames = form.author || '';
+                    const today = new Date().toISOString().split('T')[0];
+                    const todayFr = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                    const slug = finalArticle.slug;
+                    const pole = (finalArticle.tags || [])[0] || '';
+                    const pubType = finalArticle.type || '';
+
+                    const fullHtml = buildPublicationHtml({
                       title: finalArticle.fr.title,
-                      summary: finalArticle.fr.summary,
+                      authors: authorNames,
+                      date: todayFr,
+                      pole,
+                      type: pubType,
+                      summary: finalArticle.fr.summary || '',
                       content: finalArticle.fr.content,
-                      synced: true,
-                    } : a));
-                  } else {
-                    setArticles(prev => [{
-                      ...finalArticle,
-                      title: finalArticle.fr.title,
-                      summary: finalArticle.fr.summary,
-                      content: finalArticle.fr.content,
-                      synced: true,
-                    }, ...prev]);
+                      slug,
+                    });
+
+                    const workerUrl = loadLocal('ir_worker_url', '') || loadLocal('worker-url', '') || import.meta.env.VITE_WORKER_URL || '';
+                    const githubToken = loadLocal('ir_github_token', '');
+                    const githubOwner = loadLocal('ir_github_owner', '');
+                    const githubRepo = loadLocal('ir_github_site_repo', '');
+
+                    if (githubToken && githubOwner && githubRepo && workerUrl) {
+                      const resp = await fetch(`${workerUrl}/api/github/publish`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'X-GitHub-Token': githubToken,
+                          'X-GitHub-Owner': githubOwner,
+                          'X-GitHub-Repo': githubRepo,
+                        },
+                        body: JSON.stringify({
+                          slug,
+                          html: fullHtml,
+                          metadata: { title: finalArticle.fr.title, authors: authorNames, pole, type: pubType },
+                          commitMessage: `Publish: ${finalArticle.fr.title}`,
+                        }),
+                      });
+                      if (!resp.ok) {
+                        const err = await resp.json().catch(() => ({}));
+                        throw new Error(err.error || `GitHub : ${resp.status}`);
+                      }
+                    } else if (hasGitHub()) {
+                      const cardHtml = `
+<article class="publication-card" data-tags="${(finalArticle.tags || []).join(' ')}">
+  ${(finalArticle.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
+  <span class="type">${pubType}</span>
+  <h3>${finalArticle.fr.title}</h3>
+  <p class="meta">${authorNames} — ${todayFr}</p>
+  <p>${finalArticle.fr.summary || ''}</p>
+</article>`;
+                      await insertHtmlInPage('publications.html', cardHtml, `Ajout publication : ${finalArticle.fr.title}`);
+                    } else {
+                      throw new Error('GitHub non configuré — renseigne le token dans Paramètres');
+                    }
+
+                    // 2. Mettre à jour Notion si applicable
+                    if (editingArt?.isNotion) {
+                      await updateArticleStatus(editingArt.id, 'Publié', today, authorNames);
+                    }
+
+                    // 3. Mettre à jour l'état local
+                    if (editingArt) {
+                      setArticles(prev => prev.map(a => a.id === editingArt.id ? {
+                        ...a,
+                        ...finalArticle,
+                        title: finalArticle.fr.title,
+                        summary: finalArticle.fr.summary,
+                        content: finalArticle.fr.content,
+                        status: 'published',
+                        date: today,
+                        synced: true,
+                      } : a));
+                    } else {
+                      setArticles(prev => [{
+                        ...finalArticle,
+                        title: finalArticle.fr.title,
+                        summary: finalArticle.fr.summary,
+                        content: finalArticle.fr.content,
+                        status: 'published',
+                        date: today,
+                        synced: true,
+                      }, ...prev]);
+                    }
+                    toast('Article publié sur le site');
+                    syncNotion?.();
+                    closeForm();
+                  } catch (err) {
+                    toast(`Erreur publication : ${err.message}`, 'error');
                   }
-                  toast('Article publié dans toutes les langues');
-                  closeForm();
                 }}
                 onClose={() => setShowPublishTranslation(false)}
                 toast={toast}

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import useDebounce from '../../hooks/useDebounce';
 import { COLORS } from '../../utils/constants';
+import RepoPhoto from './RepoPhoto';
 
 const avatarColors = [COLORS.navy, COLORS.sky, COLORS.terra, COLORS.ochre, COLORS.green];
 
@@ -90,24 +91,19 @@ export default function AuthorPicker({ authors = [], selected = [], onChange, mu
               className={`author-picker-card${isSelected ? ' selected' : ''}`}
               onClick={() => toggleAuthor(a.id)}
             >
-              {a.photo ? (
-                <div className="author-picker-avatar">
-                  <img src={a.photo} alt={getDisplayName(a)} />
-                </div>
-              ) : (
-                <div
-                  className="author-picker-avatar"
-                  style={{
-                    backgroundColor: avatarColors[i % avatarColors.length],
-                    color: '#fff',
-                    fontSize: 20,
-                    fontFamily: "'Cormorant Garamond', serif",
-                    fontWeight: 700,
-                  }}
-                >
-                  {getInitial(a)}
-                </div>
-              )}
+              <div className="author-picker-avatar" style={{
+                backgroundColor: a.photo ? 'transparent' : avatarColors[i % avatarColors.length],
+                color: '#fff',
+                fontSize: 20,
+                fontFamily: "'Cormorant Garamond', serif",
+                fontWeight: 700,
+              }}>
+                <RepoPhoto
+                  photo={a.photoPath || a.photo}
+                  alt={getDisplayName(a)}
+                  fallback={<>{getInitial(a)}</>}
+                />
+              </div>
               <div className="author-picker-info">
                 <span className="author-picker-name">{getDisplayName(a)}</span>
                 {a.role && <span className="author-picker-role">{a.role}</span>}

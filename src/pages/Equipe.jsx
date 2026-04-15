@@ -1,7 +1,9 @@
 import { useState, useRef, useMemo } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import Modal from '../components/shared/Modal';
-import { COLORS, resolvePhotoUrl, normalizeName, namesMatch, findPublicationsForAuthor, canonicalPhotoPath } from '../utils/constants';
+import { COLORS, normalizeName, namesMatch, findPublicationsForAuthor, canonicalPhotoPath } from '../utils/constants';
+import usePhoto from '../hooks/usePhoto';
+import RepoPhoto from '../components/shared/RepoPhoto';
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
 
 const CS_CATEGORIES = [
@@ -31,22 +33,17 @@ function slugify(prenom, nom) {
 // ─── Shared avatar component ───
 function Avatar({ photo, prenom, nom, size = 48 }) {
   const initials = (prenom || '?').charAt(0).toUpperCase();
-  if (photo) {
-    return (
-      <div className="equipe-avatar" style={{ width: size, height: size }}>
-        <img
-          src={resolvePhotoUrl(photo)}
-          alt={`${prenom} ${nom}`}
-          onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.style.display = 'none'; }}
-        />
-      </div>
-    );
-  }
-  return (
+  const placeholder = (
     <div className="equipe-avatar equipe-avatar-placeholder" style={{
       width: size, height: size, fontSize: size * 0.42,
     }}>
       {initials}
+    </div>
+  );
+  if (!photo) return placeholder;
+  return (
+    <div className="equipe-avatar" style={{ width: size, height: size }}>
+      <RepoPhoto photo={photo} alt={`${prenom} ${nom}`} fallback={placeholder} />
     </div>
   );
 }
@@ -626,7 +623,9 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
 function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, findLinkedAuthor, getLinkedPublications, onSave, onClose, onCreateAuthor, onTabChange, toast, isEdit }) {
   const [form, setForm] = useState({ ...initial });
   const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(initial.photo ? resolvePhotoUrl(initial.photo) : null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const { url: existingPhotoUrl } = usePhoto(!photoFile && !photoPreview ? (initial.photo || form.photo || '') : '');
+  const effectivePreview = photoPreview || existingPhotoUrl;
   const [uploading, setUploading] = useState(false);
   const [creatingAuthor, setCreatingAuthor] = useState(false);
   const fileInputRef = useRef(null);
@@ -728,9 +727,9 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
             onChange={(e) => { if (e.target.files?.[0]) handlePhotoSelect(e.target.files[0]); }}
             style={{ display: 'none' }} />
-          {photoPreview ? (
+          {effectivePreview ? (
             <div className="photo-upload-preview">
-              <img src={photoPreview} alt="Aperçu" onError={(e) => { e.target.style.display = 'none'; }} />
+              <img src={effectivePreview} alt="Aperçu" onError={(e) => { e.target.style.display = 'none'; }} />
               <div className="photo-upload-actions">
                 <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()}>Changer</button>
                 <button type="button" className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={removePhoto}>Supprimer</button>

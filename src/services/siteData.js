@@ -171,6 +171,9 @@ export function normalizeAuteurs(auteurs) {
     role: a.role || '',
     titre: a.role || '',
     bio: a.bio || '',
+    // photo & photoPath : chemin interne au repo site (ex: 'assets/images/equipe/x.png').
+    // Le chargement réel se fait via usePhoto/RepoPhoto qui passe par l'API auth
+    // (le repo est privé, raw.githubusercontent.com ne fonctionne pas sans token).
     photo: resolvePhotoUrl(a.photo),
     photoPath: a.photo || '',
     publications: a.publications || 0,
