@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef } from 'react';
-import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
@@ -39,16 +38,17 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
   const filtered = useMemo(() => {
     let list = [...auteurs];
 
-    // Filter
+    // Filter — tokens multiples (ex: "jean dup" matche "Jean Dupont")
     if (debouncedSearch) {
-      const q = normalizeName(debouncedSearch);
-      list = list.filter(a =>
-        normalizeName(a.firstName).includes(q) ||
-        normalizeName(a.lastName).includes(q) ||
-        normalizeName(a.name).includes(q) ||
-        normalizeName(a.role).includes(q) ||
-        normalizeName(a.titre).includes(q)
-      );
+      const tokens = normalizeName(debouncedSearch).split(/\s+/).filter(Boolean);
+      if (tokens.length) {
+        list = list.filter(a => {
+          const haystack = normalizeName(
+            [a.firstName, a.lastName, a.name, a.role, a.titre, a.email].filter(Boolean).join(' ')
+          );
+          return tokens.every(t => haystack.includes(t));
+        });
+      }
     }
 
     // Sort
@@ -381,8 +381,26 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
 
         {/* Search + Sort */}
         <div className="auteur-toolbar">
-          <div style={{ flex: 1 }}>
-            <SearchBar value={search} onChange={setSearch} placeholder="Rechercher un profil…" />
+          <div className="search-input" style={{ flex: 1, maxWidth: 'none' }}>
+            <span className="search-icon">{'\u{1F50D}'}</span>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Rechercher par prénom, nom ou fonction…"
+              style={{ width: '100%', maxWidth: 'none' }}
+              autoFocus
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Effacer"
+                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--text-light)' }}
+              >
+                ×
+              </button>
+            )}
           </div>
           <select
             className="auteur-sort-select"
