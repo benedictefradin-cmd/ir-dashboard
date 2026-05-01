@@ -3,6 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!--
+    Content-Security-Policy : verrou anti-XSS, cf. AUDIT §4.9.
+    - script-src 'self' : seuls les bundles Vite/main.jsx exécutent du JS.
+      'unsafe-inline' tolère les styles inline générés par certaines librairies
+      React (TipTap, recharts) ; à supprimer dès que tout le styling passe par
+      les fichiers CSS compilés.
+    - connect-src : Worker Cloudflare (API), api.notion.com (translate fallback),
+      api.github.com (pour les data URLs binaires si des callers traînent).
+    - img-src data: : indispensable pour les data URLs des photos privées
+      du repo site servies par /api/github/contents/?binary=1.
+  -->
+  <!--
+    frame-ancestors n'a aucun effet via <meta> (limitation HTTP-only) ; pour
+    l'iframe-blocking il faudrait un header X-Frame-Options ou Content-Security-
+    Policy: frame-ancestors envoyé par le serveur (GitHub Pages, à voir).
+  -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self';
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com data:;
+    img-src 'self' data: https:;
+    connect-src 'self' https://*.workers.dev https://api.github.com https://api.notion.com;
+    base-uri 'self';
+    form-action 'self';
+  " />
   <title>Institut Rousseau — Back-office</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -1,24 +1,44 @@
 // ─── Auth service ─────────────────────────────────────
 // Communique avec /api/auth/* du Worker Cloudflare.
-// Token stocké dans localStorage (clé `ir_auth_token`).
+// Token stocké en sessionStorage : vidé à la fermeture de l'onglet, pas
+// partagé entre onglets, et cohérent avec le brief sécurité (cf. AUDIT §4.2).
 
-import { loadLocal, saveLocal, removeLocal } from '../utils/localStorage';
-import { DEFAULT_WORKER_URL, LS_KEYS } from '../utils/constants';
+import { loadLocal } from '../utils/localStorage';
+import { DEFAULT_WORKER_URL, LS_KEYS, LS_PREFIX } from '../utils/constants';
 
-const TOKEN_KEY = 'ir_auth_token';
+const TOKEN_KEY = `${LS_PREFIX}ir_auth_token`;
 
 function getWorkerUrl() {
   return loadLocal(LS_KEYS.workerUrl, null) || DEFAULT_WORKER_URL;
 }
 
 export function getToken() {
-  return loadLocal(TOKEN_KEY, null);
+  try {
+    const v = sessionStorage.getItem(TOKEN_KEY);
+    return v ? JSON.parse(v) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function setToken(token) {
-  if (token) saveLocal(TOKEN_KEY, token);
-  else removeLocal(TOKEN_KEY);
+  try {
+    if (token) sessionStorage.setItem(TOKEN_KEY, JSON.stringify(token));
+    else sessionStorage.removeItem(TOKEN_KEY);
+  } catch { /* private mode / quota */ }
 }
+
+// Migration unique : si l'ancien token traîne en localStorage, on le bascule
+// en sessionStorage la première fois et on purge la clé persistante.
+try {
+  const legacy = localStorage.getItem(TOKEN_KEY);
+  if (legacy) {
+    if (!sessionStorage.getItem(TOKEN_KEY)) {
+      sessionStorage.setItem(TOKEN_KEY, legacy);
+    }
+    localStorage.removeItem(TOKEN_KEY);
+  }
+} catch { /* ignore (SSR / quota) */ }
 
 async function authFetch(endpoint, { method = 'GET', body, withAuth = true } = {}) {
   const workerUrl = getWorkerUrl();

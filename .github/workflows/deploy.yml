@@ -28,10 +28,11 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
+          # Seul VITE_WORKER_URL est encore lu côté front. Les secrets GitHub
+          # / Notion / Brevo vivent désormais uniquement comme secrets du Worker
+          # Cloudflare (`wrangler secret put …`) — jamais inlinés dans le bundle
+          # public, qui était une faille critique (cf. AUDIT §4.1).
           VITE_WORKER_URL: ${{ secrets.WORKER_URL }}
-          VITE_GITHUB_TOKEN: ${{ secrets.GH_SITE_TOKEN }}
-          VITE_GITHUB_OWNER: ${{ secrets.GH_OWNER }}
-          VITE_GITHUB_SITE_REPO: ${{ secrets.GH_SITE_REPO }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

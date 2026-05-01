@@ -15,22 +15,66 @@
  *   CONTACT_AUTH_TOKEN    — Bearer token pour les endpoints back-office
  */
 
+// ─── CORS — allowlist d'origines (cf. AUDIT §4.4) ───
+// Origin: * était permissif au point que tout site malveillant pouvait
+// adresser le Worker. On échoit l'Origin uniquement si elle figure dans
+// la liste blanche. Les endpoints publics (formulaire de contact) restent
+// joignables — l'auth Bearer protège déjà les endpoints sensibles.
+const ALLOWED_ORIGINS = [
+  'https://benedictefradin-cmd.github.io',
+  'https://institut-rousseau.fr',
+  'https://www.institut-rousseau.fr',
+];
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^http:\/\/localhost(:\d+)?$/,
+  /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+];
+
+function pickAllowedOrigin(origin) {
+  if (!origin) return null;
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  if (ALLOWED_ORIGIN_PATTERNS.some(rx => rx.test(origin))) return origin;
+  return null;
+}
+
+function corsHeaders(request) {
+  const origin = pickAllowedOrigin(request.headers.get('Origin'));
+  const headers = {
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Notion-Token, X-Notion-Database-Id, X-GitHub-Token, X-GitHub-Owner, X-GitHub-Repo',
+    'Vary': 'Origin',
+  };
+  if (origin) headers['Access-Control-Allow-Origin'] = origin;
+  return headers;
+}
+
+// Headers CORS de méthodes/headers (toujours présents). L'Allow-Origin est
+// décidé dynamiquement via `pickAllowedOrigin` puis injecté dans le wrapper
+// fetch() ci-dessous (préflight + post-handler).
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Notion-Token, X-Notion-Database-Id, X-GitHub-Token, X-GitHub-Owner, X-GitHub-Repo',
 };
 
 export default {
   async fetch(request, env) {
+    const cors = corsHeaders(request);
     if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return new Response(null, { status: 204, headers: cors });
     }
+    const response = await handle(request, env).catch(err => json({ error: err.message || 'Erreur interne' }, 500));
+    // Injecte les headers CORS sur la réponse finale (sans toucher 134 appels à json()).
+    const headers = new Headers(response.headers);
+    for (const [k, v] of Object.entries(cors)) headers.set(k, v);
+    return new Response(response.body, { status: response.status, headers });
+  },
+};
 
-    const url = new URL(request.url);
-    const path = url.pathname;
+async function handle(request, env) {
+  const url = new URL(request.url);
+  const path = url.pathname;
 
-    try {
+  try {
 
       // ═══════════════════════════════════════════
       // AUTH — comptes utilisateurs (PBKDF2 + sessions KV)
@@ -1297,13 +1341,12 @@ Input:
         return json(data);
       }
 
-      return json({ error: 'Route inconnue', path }, 404);
+  return json({ error: 'Route inconnue', path }, 404);
 
-    } catch (err) {
-      return json({ error: err.message || 'Erreur interne' }, 500);
-    }
-  },
-};
+  } catch (err) {
+    return json({ error: err.message || 'Erreur interne' }, 500);
+  }
+}
 
 // ═══ Helpers ═══════════════════════════════════════
 
