@@ -79,14 +79,20 @@ async function resizeImage(file, maxDim) {
   ));
 }
 
-const MODES = [
+const ALL_MODES = [
   { key: 'visual', label: 'Visuel' },
   { key: 'html', label: 'HTML' },
   { key: 'preview', label: 'Aper\u00e7u' },
 ];
 
 export default function RichEditor({ value, onChange, title, author, date, placeholder, slug, toast, trusted = false, defaultMode = 'visual' }) {
-  const [mode, setMode] = useState(defaultMode);
+  // Pour un contenu de confiance (HTML qui vient du repo site), on cache le
+  // mode visuel : TipTap normaliserait certaines balises (iframe, svg,
+  // structures complexes) et on perdrait le round-trip parfait. HTML +
+  // Aper\u00e7u suffisent pour \u00e9diter et v\u00e9rifier sans rien casser.
+  const MODES = trusted ? ALL_MODES.filter(m => m.key !== 'visual') : ALL_MODES;
+  const initialMode = trusted && defaultMode === 'visual' ? 'html' : defaultMode;
+  const [mode, setMode] = useState(initialMode);
   const [htmlCode, setHtmlCode] = useState(value || '');
 
   // Quand le HTML vient de notre propre repo (`trusted`), on saute la
@@ -166,12 +172,14 @@ export default function RichEditor({ value, onChange, title, author, date, place
   }, [value, trusted]);
 
   // When switching from HTML mode back to visual, sanitize then push.
+  // En mode trusted, on saute la sanitization pour préserver les balises
+  // peu courantes (iframe, svg, attributs name/id…) à l'identique.
   const handleModeChange = (newMode) => {
     if (mode === 'html' && newMode !== 'html' && editor) {
-      const cleaned = sanitizeHtml(htmlCode);
-      editor.commands.setContent(cleaned, false);
-      setHtmlCode(cleaned);
-      onChange?.(cleaned);
+      const next = trusted ? htmlCode : sanitizeHtml(htmlCode);
+      editor.commands.setContent(next, false);
+      setHtmlCode(next);
+      onChange?.(next);
     }
     if (newMode === 'html' && editor) {
       setHtmlCode(editor.getHTML());

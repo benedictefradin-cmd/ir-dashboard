@@ -73,6 +73,11 @@ const COMMON_HEADERS = {
   'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
 };
 
+// Statuts HTTP qu'on traite comme "lien valide derrière un mur" — la page
+// existe, mais nécessite un compte / un abonnement / un humain. Pas une
+// cassure à corriger ; juste une info.
+const PAYWALLED_STATUSES = new Set([401, 402, 403, 429]);
+
 async function checkUrl(url) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
@@ -83,9 +88,9 @@ async function checkUrl(url) {
       signal: ctrl.signal,
       headers: COMMON_HEADERS,
     });
-    // Certains serveurs refusent HEAD (405) ou bloquent par défaut (403) — on
-    // retente en GET avec les mêmes headers, sans télécharger le corps.
-    if (resp.status === 405 || resp.status === 403 || resp.status === 400) {
+    // Certains serveurs refusent HEAD (405) ou répondent 4xx sur HEAD mais
+    // OK sur GET. On retente en GET sans télécharger le corps.
+    if (resp.status === 405 || PAYWALLED_STATUSES.has(resp.status) || resp.status === 400) {
       resp = await fetch(url, {
         method: 'GET',
         redirect: 'follow',
@@ -93,7 +98,11 @@ async function checkUrl(url) {
         headers: COMMON_HEADERS,
       });
     }
-    return { url, status: resp.status, ok: resp.ok };
+    // ok = 2xx ; on traite aussi les paywalls comme "ok" (pas cassé) — la page
+    // existe, juste réservée. broken = vraiment 404/410/5xx/timeout.
+    const isPaywalled = PAYWALLED_STATUSES.has(resp.status);
+    const ok = resp.ok || isPaywalled;
+    return { url, status: resp.status, ok, paywalled: isPaywalled };
   } catch (err) {
     return { url, status: 0, ok: false, error: err.name === 'AbortError' ? 'timeout' : err.message };
   } finally {
@@ -188,11 +197,12 @@ async function main() {
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
   const broken = results.filter(r => !r.ok);
+  const paywalled = results.filter(r => r.paywalled);
   const ok = results.length - broken.length;
 
   console.log(`══ RÉSULTAT (${elapsed}s) ══`);
-  console.log(`  ✓ ${ok}/${results.length} OK`);
-  console.log(`  ✗ ${broken.length} cassés ou injoignables\n`);
+  console.log(`  ✓ ${ok}/${results.length} accessibles${paywalled.length ? ` (dont ${paywalled.length} paywall/auth)` : ''}`);
+  console.log(`  ✗ ${broken.length} vraiment cassés (404, 5xx, timeout)\n`);
 
   if (broken.length) {
     // ─── Stats par catégorie d'erreur (pour prioriser le triage) ───
