@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import DataTable from '../components/shared/DataTable';
 import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
@@ -31,13 +31,20 @@ export default function Articles({
   const [form, setForm] = useState({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '' });
 
   // Auto-save du brouillon dans localStorage (debounce 3s) + alerte beforeunload.
+  // On désactive l'autosave pour les articles déjà publiés sur le site : la
+  // sauvegarde se fait directement vers GitHub, et un brouillon résiduel en
+  // localStorage finit par proposer de restaurer un état périmé.
   const draftKey = editingArt?.id ? `article-${editingArt.id}` : 'article-new';
+  const draftEnabled = showForm && editingArt?.status !== 'published';
   const { existingDraft, restore: restoreDraft, clear: clearDraft, dismissDraft } =
-    useDraftAutosave(draftKey, form, { enabled: showForm });
+    useDraftAutosave(draftKey, form, { enabled: draftEnabled });
   const { markSaved } = useUnsavedGuard(showForm ? form : null);
   const [publishingId, setPublishingId] = useState(null);
   const [contentLoading, setContentLoading] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  // Identifie l'édition en cours pour annuler l'application d'un fetch
+  // lent si l'utilisateur a entre-temps cliqué Éditer sur un autre article.
+  const editGenRef = useRef(0);
   const debouncedSearch = useDebounce(search);
 
   // ─── Publish flow state ───────────────────────
