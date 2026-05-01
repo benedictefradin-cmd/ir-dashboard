@@ -3,6 +3,7 @@ import Modal from '../components/shared/Modal';
 import StatsCard from '../components/shared/StatsCard';
 import { COLORS } from '../utils/constants';
 import { formatDateFr, formatDateShort } from '../utils/formatters';
+import { useConfirm } from '../components/shared/ConfirmDialog';
 
 // ═══════════════════════════════════════════════════════════
 // CALENDRIER — Social Media · Rapports Fondations · Événements
@@ -145,6 +146,7 @@ export default function Calendrier({ socialPosts, setSocialPosts, rapports, setR
 // A1 — CALENDRIER RÉSEAUX SOCIAUX
 // ═══════════════════════════════════════════════════════════
 function SocialMediaCalendar({ posts, setPosts, events = [], toast, onTabChange }) {
+  const confirm = useConfirm();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -217,9 +219,20 @@ function SocialMediaCalendar({ posts, setPosts, events = [], toast, onTabChange 
     setShowForm(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
+    const post = posts.find(p => p.id === id);
+    const platformLabel = PLATFORMS.find(pl => pl.key === post?.platform)?.label || 'ce post';
+    const preview = (post?.text || '').slice(0, 80);
+    const ok = await confirm({
+      title: 'Supprimer le post',
+      message: `Voulez-vous vraiment supprimer ce post ${platformLabel} ?`,
+      details: preview ? `« ${preview}${(post?.text || '').length > 80 ? '…' : ''} »` : null,
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
     setPosts(prev => prev.filter(p => p.id !== id));
-    toast('Post supprimé');
+    toast('Post supprimé du calendrier');
   };
 
   const markPublished = (id) => {
@@ -406,7 +419,13 @@ function SocialMediaCalendar({ posts, setPosts, events = [], toast, onTabChange 
                   {p.status !== 'publie' && (
                     <button className="btn btn-green btn-sm" onClick={(e) => { e.stopPropagation(); markPublished(p.id); }}>✓ Publié</button>
                   )}
-                  <button className="btn btn-outline btn-sm" style={{ color: COLORS.danger }} onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }}>✕</button>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    style={{ color: COLORS.danger }}
+                    title="Supprimer ce post"
+                    aria-label="Supprimer ce post"
+                    onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }}
+                  >Supprimer</button>
                 </div>
               </div>
             );
@@ -468,6 +487,7 @@ function SocialMediaCalendar({ posts, setPosts, events = [], toast, onTabChange 
 // A2 — RAPPORTS FONDATIONS
 // ═══════════════════════════════════════════════════════════
 function RapportsFondations({ rapports, setRapports, toast }) {
+  const confirm = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [editingRapport, setEditingRapport] = useState(null);
   const emptyForm = { fondation: DEFAULT_FONDATIONS[0], type: 'Intermédiaire', deadline: '', status: 'a_faire', responsable: 'Bénédicte', notes: '', dateEnvoi: '' };
@@ -491,7 +511,18 @@ function RapportsFondations({ rapports, setRapports, toast }) {
     setShowForm(false);
   };
 
-  const handleDelete = (id) => { setRapports(prev => prev.filter(r => r.id !== id)); toast('Rapport supprimé'); };
+  const handleDelete = async (id) => {
+    const r = rapports.find(x => x.id === id);
+    const ok = await confirm({
+      title: 'Supprimer le rapport',
+      message: `Voulez-vous vraiment supprimer le rapport ${r?.type ? `« ${r.type} »` : ''} ${r?.fondation ? `pour ${r.fondation}` : ''} ?`,
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
+    setRapports(prev => prev.filter(x => x.id !== id));
+    toast('Rapport supprimé');
+  };
 
   const markSent = (id) => {
     const today = new Date().toISOString().slice(0, 10);
@@ -595,7 +626,13 @@ function RapportsFondations({ rapports, setRapports, toast }) {
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button className="btn btn-outline btn-sm" onClick={() => openEdit(r)}>Modifier</button>
                       {r.status !== 'envoye' && <button className="btn btn-green btn-sm" onClick={() => markSent(r.id)}>Envoyé</button>}
-                      <button className="btn btn-outline btn-sm" style={{ color: COLORS.danger }} onClick={() => handleDelete(r.id)}>✕</button>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        style={{ color: COLORS.danger }}
+                        title="Supprimer ce rapport"
+                        aria-label={`Supprimer le rapport ${r.fondation || ''}`}
+                        onClick={() => handleDelete(r.id)}
+                      >Supprimer</button>
                     </div>
                   </td>
                 </tr>
@@ -662,6 +699,7 @@ function RapportsFondations({ rapports, setRapports, toast }) {
 // A3 — ÉVÉNEMENTS EXTÉRIEURS
 // ═══════════════════════════════════════════════════════════
 function EvenementsExterieurs({ extEvents, setExtEvents, siteEvents = [], toast }) {
+  const confirm = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [editingEvt, setEditingEvt] = useState(null);
   const [viewMode, setViewMode] = useState('liste');
@@ -715,7 +753,18 @@ function EvenementsExterieurs({ extEvents, setExtEvents, siteEvents = [], toast 
     setShowForm(false);
   };
 
-  const handleDelete = (id) => { setExtEvents(prev => prev.filter(e => e.id !== id)); toast('Événement supprimé'); };
+  const handleDelete = async (id) => {
+    const evt = extEvents.find(e => e.id === id);
+    const ok = await confirm({
+      title: "Supprimer l'événement",
+      message: `Voulez-vous vraiment supprimer ${evt?.titre ? `« ${evt.titre} »` : 'cet événement'} ?`,
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
+    setExtEvents(prev => prev.filter(e => e.id !== id));
+    toast('Événement supprimé');
+  };
 
   // Filtrage & tri
   const filtered = useMemo(() => {
@@ -802,7 +851,15 @@ function EvenementsExterieurs({ extEvents, setExtEvents, siteEvents = [], toast 
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
                 {evt._fromSite && <span className="badge badge-sky" style={{ fontSize: 10 }}>Site IR</span>}
                 <span className={`badge ${EXT_STATUSES[evt.status]?.badgeClass || 'badge-gray'}`}>{EXT_STATUSES[evt.status]?.label || evt.status}</span>
-                {!evt._fromSite && <button className="btn btn-outline btn-sm" style={{ color: COLORS.danger }} onClick={(e) => { e.stopPropagation(); handleDelete(evt.id); }}>✕</button>}
+                {!evt._fromSite && (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    style={{ color: COLORS.danger }}
+                    title="Supprimer cet événement"
+                    aria-label={`Supprimer ${evt.titre || 'cet événement'}`}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(evt.id); }}
+                  >Supprimer</button>
+                )}
               </div>
             </div>
           ))}

@@ -8,6 +8,9 @@ import { formatDateFr, escapeHtml as escAttr } from '../utils/formatters';
 import { COLORS, PRESSE_TYPES } from '../utils/constants';
 import { hasGitHub, insertHtmlInPage, formatDateSite } from '../services/github';
 import useDebounce from '../hooks/useDebounce';
+import { useConfirm } from '../components/shared/ConfirmDialog';
+import { humanizeError } from '../utils/errors';
+import ResultsCount from '../components/shared/ResultsCount';
 
 const TYPE_BADGE = {
   Tribune: 'badge-sky',
@@ -29,6 +32,7 @@ const emptyForm = {
 };
 
 export default function Presse({ presse, setPresse, sollicitations = [], loading, toast, saveToSite }) {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState('Tribunes');
   const [search, setSearch] = useState('');
   const [yearFilter, setYearFilter] = useState('all');
@@ -113,7 +117,16 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
     setShowForm(true);
   };
 
-  const deleteItem = (id) => {
+  const deleteItem = async (id) => {
+    const item = presse.find(p => p.id === id);
+    const ok = await confirm({
+      title: 'Supprimer cette entrée presse',
+      message: `Voulez-vous vraiment supprimer ${item?.title ? `« ${item.title} »` : 'cette entrée'} ?`,
+      details: item?.media ? `Média : ${item.media}` : null,
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
     setPresse(prev => prev.filter(p => p.id !== id));
     toast('Entrée presse supprimée');
   };
@@ -139,7 +152,9 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
         toast('Article presse publié (simulation)');
       }
     } catch (e) {
-      toast(e.message || 'Erreur de publication', 'error');
+      toast(humanizeError(e, "La publication n'a pas pu être ajoutée au site"), 'error', {
+        action: { label: 'Réessayer', onClick: () => publishItem(item) },
+      });
     }
     setPublishingId(null);
   };
@@ -236,7 +251,25 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
           </select>
         </div>
 
-        <DataTable columns={columns} data={filtered} pageSize={15} totalCount={presse.length} emptyMessage="Aucune entrée presse trouvée" />
+        <ResultsCount
+          count={filtered.length}
+          total={presse.filter(p => p.type === TAB_TO_TYPE[activeTab]).length}
+          itemLabel={activeTab === 'Podcast' ? 'podcast' : activeTab === 'Tribunes' ? 'tribune' : 'entretien'}
+          itemLabelPlural={activeTab.toLowerCase()}
+          onReset={() => { setSearch(''); setYearFilter('all'); }}
+        />
+
+        <DataTable
+          columns={columns}
+          data={filtered}
+          pageSize={15}
+          totalCount={presse.length}
+          emptyMessage={
+            (search || yearFilter !== 'all')
+              ? 'Aucune entrée presse ne correspond à vos filtres.'
+              : `Aucune entrée pour ${activeTab.toLowerCase()}. Cliquez sur « Ajouter » pour commencer.`
+          }
+        />
 
         {/* Demandes de contact presse */}
         {(() => {

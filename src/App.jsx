@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import './styles.css';
 import Layout from './components/layout/Layout';
+import { ConfirmProvider } from './components/shared/ConfirmDialog';
 
 // ─── Lazy-loaded pages ─────────────────────────────
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -36,6 +37,7 @@ import {
 import { loadLocal, saveLocal } from './utils/localStorage';
 import { LS_KEYS, COLORS } from './utils/constants';
 import { getActivity, logActivity } from './utils/activity';
+import { humanizeError } from './utils/errors';
 import logoSvg from './assets/logo.svg';
 
 
@@ -134,10 +136,22 @@ export default function App() {
 
   // (Notion retiré — cf. AUDIT §7 Q5. Les pages ont été nettoyées.)
 
-  const toast = useCallback((message, type = 'success') => {
+  // toast(message, type) — signature legacy
+  // toast(message, type, { action: { label, onClick }, duration, persistent }) — signature étendue
+  const toast = useCallback((message, type = 'success', options = {}) => {
     const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+    const { action = null, duration, persistent } = options;
+    // Les erreurs et toasts avec action restent affichés jusqu'à fermeture
+    // manuelle pour que l'utilisateur puisse lire / cliquer sur Réessayer.
+    const isPersistent = persistent ?? (type === 'error' || !!action);
+    const ms = duration ?? (type === 'error' ? 9000 : 4000);
+    setToasts(prev => [...prev, { id, message, type, action }]);
+    if (!isPersistent) {
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), ms);
+    } else if (type === 'error') {
+      // Filet de sécurité : auto-dismiss au bout de 12s même pour les erreurs
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 12000);
+    }
     // Logger les actions réussies dans le feed d'activité
     if (type === 'success') {
       setActivity(logActivity(message));
@@ -282,7 +296,12 @@ export default function App() {
       await saveSiteData(dataType, data, message);
       toast('Modifications publiées sur le site');
     } catch (err) {
-      toast(`Erreur publication : ${err.message}`, 'error');
+      toast(humanizeError(err, 'Échec de la publication sur le site'), 'error', {
+        action: {
+          label: 'Réessayer',
+          onClick: () => saveToSite(dataType, data, message),
+        },
+      });
     }
   }, [toast]);
 
@@ -469,23 +488,25 @@ export default function App() {
   };
 
   return (
-    <Layout
-      activeTab={tab}
-      onTabChange={changeTab}
-      badges={badges}
-      toasts={toasts}
-      onRemoveToast={(id) => setToasts(prev => prev.filter(t => t.id !== id))}
-      articles={articles}
-      events={events}
-      presse={presse}
-      subscribers={subscribers}
-      sollicitations={sollicitations}
-      currentUser={currentUser}
-      onLogout={handleLogout}
-    >
-      <Suspense fallback={<div className="page-body" style={{ textAlign: 'center', padding: 60, color: 'var(--text-light)' }}>Chargement…</div>}>
-        {renderPage()}
-      </Suspense>
-    </Layout>
+    <ConfirmProvider>
+      <Layout
+        activeTab={tab}
+        onTabChange={changeTab}
+        badges={badges}
+        toasts={toasts}
+        onRemoveToast={(id) => setToasts(prev => prev.filter(t => t.id !== id))}
+        articles={articles}
+        events={events}
+        presse={presse}
+        subscribers={subscribers}
+        sollicitations={sollicitations}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+      >
+        <Suspense fallback={<div className="page-body" style={{ textAlign: 'center', padding: 60, color: 'var(--text-light)' }}>Chargement…</div>}>
+          {renderPage()}
+        </Suspense>
+      </Layout>
+    </ConfirmProvider>
   );
 }

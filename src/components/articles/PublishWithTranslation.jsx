@@ -103,17 +103,28 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
       });
   };
 
+  // Édition manuelle d'un champ (mode sans API de traduction)
+  const updateField = (langCode, field, value) => {
+    setTranslations(prev => ({
+      ...prev,
+      [langCode]: { ...prev[langCode], [field]: value },
+    }));
+  };
+
+  const isFilled = (t) => !!(t.title?.trim() && t.content?.trim());
+
   // Publier — retourner l'article final avec toutes les traductions
   const handlePublish = async () => {
-    const hasErrors = Object.values(translations).some(t => t.status === 'error');
-    if (hasErrors && !translateDisabled) {
-      toast('Certaines traductions ont échoué — corrigez ou réessayez', 'error');
-      return;
+    if (!translateDisabled) {
+      const hasErrors = Object.values(translations).some(t => t.status === 'error');
+      if (hasErrors) {
+        toast('Certaines traductions ont échoué — corrigez ou réessayez', 'error');
+        return;
+      }
     }
 
     setPublishing(true);
     try {
-      // Construire l'article final avec toutes les langues
       const finalArticle = {
         ...article,
         status: 'published',
@@ -121,10 +132,10 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
         lastModified: new Date().toISOString(),
       };
 
-      // Ajouter chaque traduction
       TARGET_LANGUAGES.forEach(lang => {
         const t = translations[lang.code];
-        if (t.status === 'done') {
+        const include = translateDisabled ? isFilled(t) : t.status === 'done';
+        if (include) {
           finalArticle[lang.code] = {
             title: t.title,
             summary: t.summary,
@@ -134,9 +145,11 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
         }
       });
 
-      // Ajouter les langues traduites dans les métadonnées
       finalArticle.translatedLangs = TARGET_LANGUAGES
-        .filter(l => translations[l.code].status === 'done')
+        .filter(l => {
+          const t = translations[l.code];
+          return translateDisabled ? isFilled(t) : t.status === 'done';
+        })
         .map(l => l.code);
 
       onPublished?.(finalArticle);
@@ -148,7 +161,9 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
     }
   };
 
-  const successCount = Object.values(translations).filter(t => t.status === 'done').length;
+  const successCount = translateDisabled
+    ? Object.values(translations).filter(isFilled).length
+    : Object.values(translations).filter(t => t.status === 'done').length;
   const totalCount = TARGET_LANGUAGES.length;
 
   return (
@@ -159,12 +174,12 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
         </p>
         <p style={{ fontSize: 13, color: 'var(--text-light)' }}>
           {translateDisabled
-            ? 'Traduction automatique non configurée — publication en français uniquement. Ajoutez DEEPL_API_KEY ou ANTHROPIC_API_KEY au Worker pour activer le multilingue.'
+            ? 'Traduction automatique non configurée. Remplis les langues que tu veux publier, laisse vide les autres.'
             : `Traduction automatique en cours vers ${totalCount} langue${totalCount > 1 ? 's' : ''}…`}
         </p>
       </div>
 
-      {/* Progression par langue */}
+      {/* Progression / saisie par langue */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
         {/* Source FR — toujours OK */}
         <div className="publish-lang-row">
@@ -175,6 +190,43 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
 
         {TARGET_LANGUAGES.map(lang => {
           const t = translations[lang.code];
+
+          if (translateDisabled) {
+            const filled = isFilled(t);
+            return (
+              <div key={lang.code} className="publish-lang-manual">
+                <div className="publish-lang-manual-header">
+                  <span className="publish-lang-flag">{lang.flag}</span>
+                  <span className="publish-lang-name">{lang.label}</span>
+                  <span className={`publish-lang-status ${filled ? 'done' : 'pending'}`}>
+                    {filled ? '✓ rempli' : 'vide — ne sera pas publié'}
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  placeholder={`Titre en ${lang.label}`}
+                  value={t.title}
+                  onChange={(e) => updateField(lang.code, 'title', e.target.value)}
+                  style={{ width: '100%', marginBottom: 6 }}
+                />
+                <textarea
+                  placeholder={`Résumé en ${lang.label} (optionnel)`}
+                  value={t.summary}
+                  onChange={(e) => updateField(lang.code, 'summary', e.target.value)}
+                  rows={2}
+                  style={{ width: '100%', marginBottom: 6, resize: 'vertical' }}
+                />
+                <textarea
+                  placeholder={`Contenu en ${lang.label} (HTML autorisé)`}
+                  value={t.content}
+                  onChange={(e) => updateField(lang.code, 'content', e.target.value)}
+                  rows={6}
+                  style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit' }}
+                />
+              </div>
+            );
+          }
+
           return (
             <div key={lang.code} className="publish-lang-row">
               <span className="publish-lang-flag">{lang.flag}</span>

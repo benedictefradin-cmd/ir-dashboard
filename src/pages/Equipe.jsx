@@ -7,6 +7,8 @@ import RepoPhoto from '../components/shared/RepoPhoto';
 import SearchableSelect from '../components/shared/SearchableSelect';
 import PersonIllustration from '../components/shared/PersonIllustration';
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
+import { useConfirm } from '../components/shared/ConfirmDialog';
+import { humanizeError } from '../utils/errors';
 
 const CS_CATEGORIES = [
   { id: 'droit', label: 'Droit & Institutions', icon: '⚖️' },
@@ -48,6 +50,7 @@ function Avatar({ photo, prenom, nom, size = 48 }) {
 }
 
 export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, articles = [], toast, saveToSite, onTabChange, embedded }) {
+  const confirm = useConfirm();
   const [activeSection, setActiveSection] = useState('ca');
   const [saving, setSaving] = useState(false);
 
@@ -162,7 +165,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
       try {
         await saveAuthorsToGitHub(updated);
         toast('Profil créé et lié');
-      } catch (err) { toast(`Erreur création profil : ${err.message}`, 'error'); }
+      } catch (err) { toast(humanizeError(err, 'Échec de la création du profil auteur'), 'error'); }
       if (saveToSite) {
         try {
           await saveToSite('auteurs', updated.map(({ id, firstName, lastName, role, bio, photo, photoPath: pp, publications }) => ({
@@ -214,7 +217,7 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
         await githubUploadImage(ghPath, base64, `Photo équipe : ${formData.prenom} ${formData.nom}`);
         toast('Photo uploadée sur GitHub');
       } catch (err) {
-        toast(`Erreur upload photo : ${err.message}`, 'error');
+        toast(humanizeError(err, "L'envoi de la photo a échoué"), 'error');
         return;
       }
     } else if (photoFile && !hasGitHub()) {
@@ -251,9 +254,17 @@ export default function Equipe({ contenu, setContenu, auteurs = [], setAuteurs, 
     handleChange(section, listKey, items);
   };
 
-  const deleteMember = (section, listKey, index, name) => {
-    if (!window.confirm(`Supprimer ${name} ? Cette action est irréversible.`)) return;
+  const deleteMember = async (section, listKey, index, name) => {
+    const ok = await confirm({
+      title: 'Supprimer le membre',
+      message: `Voulez-vous vraiment retirer ${name || 'ce membre'} ?`,
+      details: 'Le membre sera retiré de la page Équipe du site lors de la prochaine publication. Son profil auteur lié (s\'il existe) n\'est pas supprimé.',
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
     handleChange(section, listKey, (equipe?.[section]?.[listKey] || []).filter((_, i) => i !== index));
+    toast(`${name || 'Membre'} retiré de l'équipe`);
   };
 
   // ─── Field configs ───
@@ -623,11 +634,17 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
   const [form, setForm] = useState({ ...initial });
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [touched, setTouched] = useState({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const { url: existingPhotoUrl } = usePhoto(!photoFile && !photoPreview ? (initial.photo || form.photo || '') : '');
   const effectivePreview = photoPreview || existingPhotoUrl;
   const [uploading, setUploading] = useState(false);
   const [creatingAuthor, setCreatingAuthor] = useState(false);
   const fileInputRef = useRef(null);
+
+  const fieldHasError = (f) =>
+    f.required && (submitAttempted || touched[f.key]) && !((form[f.key] || '').toString().trim());
+  const errorStyle = { borderColor: 'var(--danger, #c0392b)' };
 
   const effectiveLinked = useMemo(() => {
     if (!hasAuthorLink) return null;
@@ -656,20 +673,30 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitAttempted(true);
     const required = fields.filter(f => f.required);
-    for (const f of required) {
-      if (!form[f.key]?.trim()) {
-        toast(`Le champ « ${f.label.replace(' *', '')} » est requis`, 'error');
-        return;
-      }
+    const missing = required.filter(f => !((form[f.key] || '').toString().trim()));
+    if (missing.length) {
+      const labels = missing.map(f => `« ${f.label.replace(' *', '')} »`).join(', ');
+      toast(`Champ${missing.length > 1 ? 's' : ''} requis : ${labels}`, 'error');
+      // Met le focus sur le premier champ manquant pour aider l'utilisateur
+      const firstKey = missing[0].key;
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-field="${firstKey}"]`);
+        if (el && typeof el.focus === 'function') el.focus();
+      });
+      return;
     }
     setUploading(true);
     const finalForm = { ...form };
     if (hasAuthorLink && !finalForm.linkedAuthorId && autoDetected) {
       finalForm.linkedAuthorId = autoDetected.id;
     }
-    await onSave(finalForm, photoFile);
-    setUploading(false);
+    try {
+      await onSave(finalForm, photoFile);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleCreateAuthor = async () => {
@@ -684,40 +711,64 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
       {fields.some(f => f.key === 'prenom') && fields.some(f => f.key === 'nom') ? (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-            {fields.filter(f => f.key === 'prenom' || f.key === 'nom').map(f => (
-              <div key={f.key}>
-                <label>{f.label}</label>
-                <input value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                  placeholder={f.placeholder} required={f.required} />
-              </div>
-            ))}
+            {fields.filter(f => f.key === 'prenom' || f.key === 'nom').map(f => {
+              const err = fieldHasError(f);
+              return (
+                <div key={f.key}>
+                  <label>{f.label}</label>
+                  <input
+                    data-field={f.key}
+                    value={form[f.key] || ''}
+                    onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                    onBlur={() => setTouched(t => ({ ...t, [f.key]: true }))}
+                    placeholder={f.placeholder}
+                    required={f.required}
+                    aria-invalid={err || undefined}
+                    style={err ? errorStyle : undefined}
+                  />
+                  {err && <small style={{ color: 'var(--danger, #c0392b)', fontSize: 12 }}>Ce champ est requis</small>}
+                </div>
+              );
+            })}
           </div>
           {fields.filter(f => f.key !== 'prenom' && f.key !== 'nom').map(f => (
             <div key={f.key} style={{ marginBottom: 16 }}>
               <label>{f.label}</label>
               {f.type === 'textarea' ? (
-                <textarea value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                <textarea data-field={f.key} value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                   rows={3} placeholder={f.placeholder} />
               ) : (
-                <input value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                <input data-field={f.key} value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                   placeholder={f.placeholder} />
               )}
             </div>
           ))}
         </>
       ) : (
-        fields.map(f => (
-          <div key={f.key} style={{ marginBottom: 16 }}>
-            <label>{f.label}</label>
-            {f.type === 'textarea' ? (
-              <textarea value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                rows={3} placeholder={f.placeholder} />
-            ) : (
-              <input value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                placeholder={f.placeholder} required={f.required} />
-            )}
-          </div>
-        ))
+        fields.map(f => {
+          const err = fieldHasError(f);
+          return (
+            <div key={f.key} style={{ marginBottom: 16 }}>
+              <label>{f.label}</label>
+              {f.type === 'textarea' ? (
+                <textarea data-field={f.key} value={form[f.key] || ''} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                  rows={3} placeholder={f.placeholder} />
+              ) : (
+                <input
+                  data-field={f.key}
+                  value={form[f.key] || ''}
+                  onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                  onBlur={() => setTouched(t => ({ ...t, [f.key]: true }))}
+                  placeholder={f.placeholder}
+                  required={f.required}
+                  aria-invalid={err || undefined}
+                  style={err ? errorStyle : undefined}
+                />
+              )}
+              {err && <small style={{ color: 'var(--danger, #c0392b)', fontSize: 12 }}>Ce champ est requis</small>}
+            </div>
+          );
+        })
       )}
 
       {hasPhoto && (

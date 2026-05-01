@@ -17,11 +17,15 @@ import PublishWithTranslation from '../components/articles/PublishWithTranslatio
 import RichEditor from '../components/editor/RichEditor';
 import useDraftAutosave from '../hooks/useDraftAutosave';
 import useUnsavedGuard from '../hooks/useUnsavedGuard';
+import { useConfirm } from '../components/shared/ConfirmDialog';
+import ResultsCount from '../components/shared/ResultsCount';
+import { humanizeError } from '../utils/errors';
 
 export default function Articles({
   articles, setArticles, loading, toast,
   auteurs = [],
 }) {
+  const confirm = useConfirm();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState([]);
   const [themeFilter, setThemeFilter] = useState([]);
@@ -242,12 +246,27 @@ export default function Articles({
         toast('Publication publiée (simulation)');
       }
     } catch (e) {
-      toast(e.message || 'Erreur de publication', 'error');
+      toast(humanizeError(e, 'La publication a échoué'), 'error', {
+        action: { label: 'Réessayer', onClick: () => publishArticle(id) },
+      });
     }
     setPublishingId(null);
   };
 
-  const deleteArticle = (id) => {
+  const deleteArticle = async (id) => {
+    const art = articles.find(a => a.id === id);
+    const title = art?.title || 'cette publication';
+    const isPublished = art?.status === 'published';
+    const ok = await confirm({
+      title: 'Supprimer la publication',
+      message: `Voulez-vous vraiment supprimer « ${title} » ?`,
+      details: isPublished
+        ? 'Cette publication est en ligne sur le site. La supprimer ici ne la retire pas du site automatiquement — il faudra la dépublier ensuite.'
+        : null,
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
     setArticles(prev => prev.filter(a => a.id !== id));
     toast('Publication supprimée');
   };
@@ -456,7 +475,15 @@ export default function Articles({
           {row.status === 'published' && (
             <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); updateStatus(row.id, 'draft'); }}>Dépublier</button>
           )}
-          <button className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); deleteArticle(row.id); }}>Suppr.</button>
+          <button
+            className="btn btn-outline btn-sm"
+            style={{ color: 'var(--danger)' }}
+            title="Supprimer cette publication"
+            aria-label={`Supprimer la publication ${row.title || ''}`}
+            onClick={(e) => { e.stopPropagation(); deleteArticle(row.id); }}
+          >
+            Supprimer
+          </button>
         </div>
       )
     },
@@ -551,30 +578,57 @@ export default function Articles({
             {statusFilter.map(v => (
               <span key={`s-${v}`} className="filter-tag">
                 {ARTICLE_STATUSES[v]?.label || v}
-                <button type="button" onClick={() => setStatusFilter(statusFilter.filter(x => x !== v))}>×</button>
+                <button
+                  type="button"
+                  aria-label={`Retirer le filtre ${ARTICLE_STATUSES[v]?.label || v}`}
+                  title="Retirer ce filtre"
+                  onClick={() => setStatusFilter(statusFilter.filter(x => x !== v))}
+                >×</button>
               </span>
             ))}
             {themeFilter.map(v => (
               <span key={`t-${v}`} className="filter-tag">
                 {v}
-                <button type="button" onClick={() => setThemeFilter(themeFilter.filter(x => x !== v))}>×</button>
+                <button
+                  type="button"
+                  aria-label={`Retirer le filtre ${v}`}
+                  title="Retirer ce filtre"
+                  onClick={() => setThemeFilter(themeFilter.filter(x => x !== v))}
+                >×</button>
               </span>
             ))}
             {typeFilter.map(v => (
               <span key={`y-${v}`} className="filter-tag">
                 {v}
-                <button type="button" onClick={() => setTypeFilter(typeFilter.filter(x => x !== v))}>×</button>
+                <button
+                  type="button"
+                  aria-label={`Retirer le filtre ${v}`}
+                  title="Retirer ce filtre"
+                  onClick={() => setTypeFilter(typeFilter.filter(x => x !== v))}
+                >×</button>
               </span>
             ))}
           </div>
         )}
+
+        <ResultsCount
+          count={filtered.length}
+          total={allArticles.length}
+          itemLabel="publication"
+          itemLabelPlural="publications"
+          onReset={() => { setStatusFilter([]); setThemeFilter([]); setTypeFilter([]); setSearch(''); }}
+        />
 
         <DataTable
           columns={columns}
           data={filtered}
           pageSize={15}
           totalCount={allArticles.length}
-          emptyMessage="Aucune publication trouvée"
+          emptyMessage={
+            (statusFilter.length || themeFilter.length || typeFilter.length || search)
+              ? 'Aucune publication ne correspond à vos filtres. Essayez d\'élargir votre recherche.'
+              : 'Aucune publication pour le moment. Cliquez sur « + Nouvelle publication » pour commencer.'
+          }
           rowClassName={rowClassName}
         />
 
@@ -634,12 +688,18 @@ export default function Articles({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
                 <label>Type</label>
-                <select value={form.type} onChange={e => {
+                <select value={form.type} onChange={async (e) => {
                   const newType = e.target.value;
                   setForm(f => ({ ...f, type: newType }));
                   // Si article nouveau et contenu vide, proposer la trame
                   if (!editingArt && !form.content && ARTICLE_TEMPLATES[newType]) {
-                    if (window.confirm(`Charger la trame "${newType}" dans l'éditeur ?`)) {
+                    const ok = await confirm({
+                      title: 'Charger la trame ?',
+                      message: `Voulez-vous charger la trame « ${newType} » dans l'éditeur ?`,
+                      details: `Cible recommandée : ${ARTICLE_TEMPLATES[newType].estimatedWords}`,
+                      confirmLabel: 'Charger la trame',
+                    });
+                    if (ok) {
                       setForm(f => ({ ...f, type: newType, content: ARTICLE_TEMPLATES[newType].skeleton }));
                     }
                   }
@@ -675,10 +735,17 @@ export default function Articles({
                     type="button"
                     className="btn btn-outline btn-sm"
                     style={{ width: '100%', marginTop: 8 }}
-                    onClick={() => {
-                      if (!form.content || window.confirm('Remplacer le contenu actuel par la trame ?')) {
-                        setForm(f => ({ ...f, content: ARTICLE_TEMPLATES[f.type].skeleton }));
+                    onClick={async () => {
+                      if (form.content) {
+                        const ok = await confirm({
+                          title: 'Remplacer le contenu ?',
+                          message: 'Le contenu actuel de l\'éditeur va être remplacé par la trame du modèle.',
+                          confirmLabel: 'Remplacer',
+                          danger: true,
+                        });
+                        if (!ok) return;
                       }
+                      setForm(f => ({ ...f, content: ARTICLE_TEMPLATES[f.type].skeleton }));
                     }}
                   >
                     📋 Charger la trame

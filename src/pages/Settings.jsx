@@ -11,8 +11,11 @@ import {
   listUsers, createUser as apiCreateUser, updateUser as apiUpdateUser,
   deleteUser as apiDeleteUser, changeMyPassword,
 } from '../services/auth';
+import { useConfirm } from '../components/shared/ConfirmDialog';
+import { humanizeError } from '../utils/errors';
 
 export default function Settings({ subscribers, services, onImportSubscribers, onRefresh, toast, currentUser }) {
+  const confirmDialog = useConfirm();
   // ─── Config API ───────────────────────────────
   const [workerUrl, setWorkerUrl] = useState(() => loadLocal(LS_KEYS.workerUrl, DEFAULT_WORKER_URL));
   const [testing, setTesting] = useState({});
@@ -107,20 +110,29 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
       setNewUser({ login: '', name: '', password: '', role: 'editor' });
       refreshUsers();
     } catch (err) {
-      toast(err.message || 'Erreur création', 'error');
+      toast(humanizeError(err, 'La création du compte a échoué'), 'error');
     } finally {
       setCreatingUser(false);
     }
   };
 
   const handleDeleteUser = async (u) => {
-    if (!confirm(`Supprimer définitivement le compte "${u.login}" ?`)) return;
+    const ok = await confirmDialog({
+      title: 'Supprimer le compte utilisateur',
+      message: `Voulez-vous vraiment supprimer définitivement le compte « ${u.login} » ?`,
+      details: u.role === 'admin'
+        ? 'Ce compte est administrateur. Sa suppression retire ses droits sur le dashboard.'
+        : 'Cet utilisateur ne pourra plus accéder au dashboard.',
+      confirmLabel: 'Supprimer le compte',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await apiDeleteUser(u.id);
-      toast(`Compte "${u.login}" supprimé`);
+      toast(`Compte « ${u.login} » supprimé`);
       refreshUsers();
     } catch (err) {
-      toast(err.message || 'Erreur suppression', 'error');
+      toast(humanizeError(err, 'La suppression du compte a échoué'), 'error');
     }
   };
 
@@ -128,10 +140,10 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
     const nextRole = u.role === 'admin' ? 'editor' : 'admin';
     try {
       await apiUpdateUser(u.id, { role: nextRole });
-      toast(`Rôle de "${u.login}" changé en ${nextRole}`);
+      toast(`Rôle de « ${u.login} » changé en ${nextRole}`);
       refreshUsers();
     } catch (err) {
-      toast(err.message || 'Erreur', 'error');
+      toast(humanizeError(err, 'Le changement de rôle a échoué'), 'error');
     }
   };
 

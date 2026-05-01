@@ -8,6 +8,9 @@ import usePhoto from '../hooks/usePhoto';
 import RepoPhoto from '../components/shared/RepoPhoto';
 import PersonIllustration from '../components/shared/PersonIllustration';
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
+import { useConfirm } from '../components/shared/ConfirmDialog';
+import { humanizeError } from '../utils/errors';
+import ResultsCount from '../components/shared/ResultsCount';
 
 const emptyForm = { firstName: '', lastName: '', role: '', photo: '', bio: '', email: '' };
 
@@ -22,6 +25,7 @@ const SORT_OPTIONS = [
 ];
 
 export default function Profils({ auteurs, setAuteurs, articles, contenu, setContenu, loading, toast, saveToSite, onTabChange }) {
+  const confirm = useConfirm();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('alpha');
   const [modalOpen, setModalOpen] = useState(false);
@@ -312,19 +316,36 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
   };
 
   const handleDelete = async (auteur) => {
-    if (!window.confirm(`Supprimer ${getDisplayName(auteur)} ? Cette action est irréversible.`)) return;
+    const name = getDisplayName(auteur);
+    const pubsCount = findPublicationsForAuthor(auteur, articles).length;
+    const ok = await confirm({
+      title: 'Supprimer le profil',
+      message: `Voulez-vous vraiment supprimer le profil de ${name} ?`,
+      details: pubsCount > 0
+        ? `Ce profil est lié à ${pubsCount} publication${pubsCount > 1 ? 's' : ''}. Les publications resteront sur le site, mais elles ne seront plus liées à l'auteur.`
+        : 'Aucune publication n\'est liée à ce profil.',
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
     const updatedList = auteurs.filter(a => a.id !== auteur.id);
     setAuteurs(updatedList);
     setModalOpen(false);
     toast('Profil supprimé');
     if (hasGitHub()) {
-      try { await saveAuthorsToGitHub(updatedList); } catch { /* silent */ }
+      try {
+        await saveAuthorsToGitHub(updatedList);
+      } catch (err) {
+        toast(humanizeError(err, 'La suppression a été enregistrée localement mais GitHub n\'a pas pu être mis à jour'), 'error', {
+          action: { label: 'Réessayer', onClick: () => saveAuthorsToGitHub(updatedList).catch(() => {}) },
+        });
+      }
       if (saveToSite) {
         try {
           await saveToSite('auteurs', updatedList.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
             id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
-          })), `Suppression profil : ${getDisplayName(auteur)}`);
-        } catch { /* silent */ }
+          })), `Suppression profil : ${name}`);
+        } catch { /* déjà toasté par saveToSite avec retry */ }
       }
     }
   };
@@ -420,10 +441,18 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
           </select>
         </div>
 
+        <ResultsCount
+          count={filtered.length}
+          total={auteurs.length}
+          itemLabel="profil"
+          itemLabelPlural="profils"
+          onReset={() => setSearch('')}
+        />
+
         {filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">&#128100;</div>
-            <p>Aucun profil trouvé.</p>
+            <p>{debouncedSearch ? 'Aucun profil ne correspond à votre recherche.' : 'Aucun profil pour le moment. Créez le premier profil auteur.'}</p>
             {debouncedSearch && (
               <button className="btn btn-outline" style={{ marginTop: 12 }} onClick={() => setSearch('')}>
                 Effacer la recherche

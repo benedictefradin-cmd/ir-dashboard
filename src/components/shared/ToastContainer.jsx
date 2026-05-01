@@ -7,9 +7,37 @@ export default function ToastContainer({ toasts, onRemove }) {
         <div
           key={t.id}
           className={`toast toast-${t.type || 'success'}`}
-          onClick={() => onRemove(t.id)}
+          role={t.type === 'error' ? 'alert' : 'status'}
+          aria-live={t.type === 'error' ? 'assertive' : 'polite'}
         >
-          {t.message}
+          <div className="toast-body" onClick={() => !t.actions && onRemove(t.id)}>
+            <span className="toast-icon" aria-hidden="true">
+              {t.type === 'error' ? '⚠' : t.type === 'warning' ? '!' : t.type === 'info' ? 'i' : '✓'}
+            </span>
+            <span className="toast-message">{t.message}</span>
+          </div>
+          <div className="toast-actions">
+            {t.action && (
+              <button
+                type="button"
+                className="toast-action"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  try { t.action.onClick?.(); } finally { onRemove(t.id); }
+                }}
+              >
+                {t.action.label}
+              </button>
+            )}
+            <button
+              type="button"
+              className="toast-close"
+              aria-label="Fermer la notification"
+              onClick={(e) => { e.stopPropagation(); onRemove(t.id); }}
+            >
+              ×
+            </button>
+          </div>
         </div>
       ))}
     </div>
