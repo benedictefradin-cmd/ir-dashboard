@@ -8,6 +8,7 @@
 
 import { loadLocal } from '../utils/localStorage';
 import { LS_KEYS, DEFAULT_WORKER_URL } from '../utils/constants';
+import { gitHubAuthHeaders } from './githubAuth';
 
 function getWorkerUrl() {
   return loadLocal(LS_KEYS.workerUrl, null) || DEFAULT_WORKER_URL;
@@ -38,7 +39,14 @@ async function workerFetch(endpoint, opts = {}) {
   if (!workerUrl) throw new Error('URL du Worker non configurée');
   const resp = await fetch(`${workerUrl}${endpoint}`, {
     method: opts.method || 'GET',
-    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    headers: {
+      'Content-Type': 'application/json',
+      // Si l'utilisateur est connecté en OAuth GitHub, on envoie son token
+      // pour que les commits soient attribués à son compte. Sinon le Worker
+      // tombe sur le PAT serveur (env.GITHUB_PAT).
+      ...gitHubAuthHeaders(),
+      ...(opts.headers || {}),
+    },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
   if (!resp.ok) {

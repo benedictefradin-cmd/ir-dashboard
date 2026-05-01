@@ -28,6 +28,10 @@ import { fetchAllCalendar, saveCalendar } from './services/calendar';
 import { fetchAllSiteData, normalizePublications, normalizeEvents, normalizePresse, normalizeAuteurs, saveSiteData } from './services/siteData';
 import { hasGitHub } from './services/github';
 import { login as apiLogin, logout as apiLogout, fetchMe, getToken } from './services/auth';
+import {
+  consumeOAuthHash, getGitHubUser, getGitHubToken,
+  startGitHubLogin, gitHubLogout,
+} from './services/githubAuth';
 import { loadLocal, saveLocal } from './utils/localStorage';
 import { LS_KEYS, COLORS } from './utils/constants';
 import { getActivity, logActivity } from './utils/activity';
@@ -49,10 +53,36 @@ export default function App() {
   const [loginBusy, setLoginBusy] = useState(false);
   const lastActivity = useRef(Date.now());
 
-  // Vérifier le token au démarrage
+  // Auth GitHub OAuth (token en sessionStorage)
+  const [ghUser, setGhUser] = useState(() => getGitHubUser());
+
+  // Au démarrage : récupère le token OAuth depuis l'URL si on revient du
+  // callback Worker (#token=…&login=…), nettoie l'URL, puis vérifie l'auth
+  // login/mdp legacy si encore présent.
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // 1. Consomme le hash OAuth GitHub si on revient du callback
+      const oauthUser = consumeOAuthHash();
+      if (oauthUser && !cancelled) {
+        setGhUser(oauthUser);
+        setLoggedIn(true);
+        // L'utilisateur "courant" est le compte GitHub. role='admin' tant
+        // qu'on a la whitelist côté Worker — pas de rôle granulaire pour
+        // l'instant (à raffiner si besoin via une table dans KV).
+        setCurrentUser({ id: `gh:${oauthUser.login}`, login: oauthUser.login, name: oauthUser.name, role: 'admin' });
+        setAuthChecking(false);
+        return;
+      }
+      // 2. Si déjà connecté GitHub (sessionStorage), on retient
+      const existing = getGitHubUser();
+      if (existing && !cancelled) {
+        setLoggedIn(true);
+        setCurrentUser({ id: `gh:${existing.login}`, login: existing.login, name: existing.name, role: 'admin' });
+        setAuthChecking(false);
+        return;
+      }
+      // 3. Fallback : auth login/mdp legacy
       if (!getToken()) { setAuthChecking(false); return; }
       try {
         const { user } = await fetchMe();
@@ -139,7 +169,12 @@ export default function App() {
   };
 
   const handleLogout = useCallback(async () => {
-    await apiLogout();
+    // Déconnecte les deux mécanismes (GitHub OAuth + login/mdp legacy).
+    await Promise.all([
+      gitHubLogout(),
+      apiLogout().catch(() => {}),
+    ]);
+    setGhUser(null);
     setLoggedIn(false);
     setCurrentUser(null);
   }, []);
@@ -332,11 +367,33 @@ export default function App() {
         <div className="card login-card slide-up">
           <img src={logoSvg} alt="Institut Rousseau" style={{ height: 40, marginBottom: 24 }} />
           <p className="login-sub">Back-office</p>
+
+          {/* Bouton GitHub OAuth — option recommandée. Le clic redirige vers
+              le Worker qui passe la main à GitHub puis revient ici avec le
+              token. Le compte doit être dans ALLOWED_GITHUB_USERS côté Worker. */}
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => { try { startGitHubLogin(); } catch (e) { setLoginError(e.message); } }}
+            style={{ padding: '10px 24px', fontSize: 15, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#24292f', borderColor: '#24292f' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 0a12 12 0 0 0-3.79 23.4c.6.11.82-.26.82-.58v-2.05c-3.34.73-4.04-1.61-4.04-1.61-.55-1.4-1.34-1.77-1.34-1.77-1.09-.74.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 2-.4 3.03-.4 1.03 0 2.07.13 3.03.4 2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 0z"/>
+            </svg>
+            Se connecter avec GitHub
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0', color: 'var(--text-light)', fontSize: 12 }}>
+            <span style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            ou identifiants
+            <span style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <input placeholder="Identifiant" value={loginId} onChange={e => setLoginId(e.target.value)} style={{ width: '100%' }} autoComplete="username" />
             <input placeholder="Mot de passe" type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} style={{ width: '100%' }} autoComplete="current-password" />
             {loginError && <p className="login-error">{loginError}</p>}
-            <button type="submit" className="btn btn-primary" style={{ padding: '10px 32px', fontSize: 15 }} disabled={loginBusy}>
+            <button type="submit" className="btn btn-outline" style={{ padding: '10px 32px', fontSize: 14 }} disabled={loginBusy}>
               {loginBusy ? 'Connexion…' : 'Se connecter'}
             </button>
           </form>

@@ -41,7 +41,7 @@ function corsHeaders(request) {
   const origin = pickAllowedOrigin(request.headers.get('Origin'));
   const headers = {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Notion-Token, X-Notion-Database-Id, X-GitHub-Token, X-GitHub-Owner, X-GitHub-Repo',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Notion-Token, X-Notion-Database-Id, X-GitHub-Token, X-GitHub-Owner, X-GitHub-Repo, X-GitHub-User-Token',
     'Vary': 'Origin',
   };
   if (origin) headers['Access-Control-Allow-Origin'] = origin;
@@ -53,7 +53,7 @@ function corsHeaders(request) {
 // fetch() ci-dessous (préflight + post-handler).
 const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Notion-Token, X-Notion-Database-Id, X-GitHub-Token, X-GitHub-Owner, X-GitHub-Repo',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Notion-Token, X-Notion-Database-Id, X-GitHub-Token, X-GitHub-Owner, X-GitHub-Repo, X-GitHub-User-Token',
 };
 
 export default {
@@ -85,6 +85,121 @@ async function handle(request, env) {
           return json({ error: 'KV non configuré' }, 503);
         }
         const kv = env.CONTACT_SUBMISSIONS;
+
+        // ═══════════════════════════════════════════
+        // OAuth GitHub — start + callback
+        //
+        // Modèle : redirect-with-token (le navigateur de l'utilisateur fait
+        // l'aller-retour, jamais d'AJAX vers github.com depuis le front).
+        //
+        // 1) GET /api/auth/github/start?redirect=<dashboard_url>
+        //    → 302 vers github.com/login/oauth/authorize avec state anti-CSRF
+        //      (stocké 5 min en KV).
+        // 2) GitHub redirige vers /api/auth/github/callback?code=…&state=…
+        // 3) Le Worker échange code → access_token, lit /user pour vérifier
+        //    le login dans ALLOWED_GITHUB_USERS, puis 302 vers le dashboard
+        //    avec le token + login en hash params (lus + effacés côté front).
+        // ═══════════════════════════════════════════
+
+        if (path === '/api/auth/github/start' && request.method === 'GET') {
+          if (!env.GITHUB_OAUTH_CLIENT_ID) {
+            return json({ error: 'OAuth non configuré (GITHUB_OAUTH_CLIENT_ID manquant).' }, 503);
+          }
+          const dashboardRedirect = url.searchParams.get('redirect') || '';
+          const state = randomToken(16);
+          // Stocke l'URL de retour souhaitée + état dans KV (TTL 5 min)
+          await kv.put(`auth:oauth_state:${state}`, JSON.stringify({ dashboardRedirect }), {
+            expirationTtl: 300,
+          });
+          const callbackUrl = `${url.origin}/api/auth/github/callback`;
+          const ghAuth = new URL('https://github.com/login/oauth/authorize');
+          ghAuth.searchParams.set('client_id', env.GITHUB_OAUTH_CLIENT_ID);
+          ghAuth.searchParams.set('redirect_uri', callbackUrl);
+          ghAuth.searchParams.set('state', state);
+          // Scope `repo` pour pouvoir commiter dans le repo privé du site,
+          // `read:user` pour récupérer le login afin de vérifier la whitelist.
+          ghAuth.searchParams.set('scope', 'repo read:user');
+          return Response.redirect(ghAuth.toString(), 302);
+        }
+
+        if (path === '/api/auth/github/callback' && request.method === 'GET') {
+          const code = url.searchParams.get('code');
+          const state = url.searchParams.get('state');
+          if (!code || !state) {
+            return new Response('Paramètres OAuth manquants.', { status: 400 });
+          }
+          const stateRaw = await kv.get(`auth:oauth_state:${state}`);
+          if (!stateRaw) {
+            return new Response('État OAuth invalide ou expiré. Réessayez.', { status: 400 });
+          }
+          await kv.delete(`auth:oauth_state:${state}`);
+          const { dashboardRedirect } = JSON.parse(stateRaw);
+
+          // Échange code → access_token
+          const tokenResp = await fetch('https://github.com/login/oauth/access_token', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              client_id: env.GITHUB_OAUTH_CLIENT_ID,
+              client_secret: env.GITHUB_OAUTH_CLIENT_SECRET,
+              code,
+            }),
+          });
+          const tokenData = await tokenResp.json().catch(() => ({}));
+          const accessToken = tokenData.access_token;
+          if (!accessToken) {
+            return new Response(
+              `Échec OAuth : ${tokenData.error_description || tokenData.error || 'pas de token'}`,
+              { status: 500 }
+            );
+          }
+
+          // Vérification de l'utilisateur (whitelist)
+          const userResp = await fetch('https://api.github.com/user', {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'User-Agent': 'ir-dashboard-worker',
+            },
+          });
+          if (!userResp.ok) {
+            return new Response(`Impossible de récupérer le profil GitHub (${userResp.status}).`, { status: 500 });
+          }
+          const ghUser = await userResp.json();
+          const login = ghUser.login || '';
+
+          const allowed = (env.ALLOWED_GITHUB_USERS || '')
+            .split(',')
+            .map(s => s.trim().toLowerCase())
+            .filter(Boolean);
+          if (allowed.length > 0 && !allowed.includes(login.toLowerCase())) {
+            return new Response(
+              `Accès refusé : le compte GitHub "${login}" n'est pas autorisé. Contactez l'administrateur.`,
+              { status: 403 }
+            );
+          }
+
+          // Redirige vers le dashboard avec le token + login en hash params.
+          // Le hash n'est jamais envoyé au serveur d'origine (donc pas de
+          // log côté GitHub Pages). Le front lit + efface immédiatement.
+          const target = dashboardRedirect && dashboardRedirect.startsWith('https://')
+            ? dashboardRedirect
+            : 'https://benedictefradin-cmd.github.io/ir-dashboard/';
+          const params = new URLSearchParams({
+            token: accessToken,
+            login,
+            name: ghUser.name || '',
+            avatar: ghUser.avatar_url || '',
+          });
+          return Response.redirect(`${target}#${params.toString()}`, 302);
+        }
+
+        if (path === '/api/auth/github/logout' && request.method === 'POST') {
+          // Marqueur explicite. Le token étant en sessionStorage côté front,
+          // sa simple suppression suffit ; rien à faire côté serveur tant
+          // qu'on ne révoque pas l'access_token via l'API GitHub apps.
+          return json({ ok: true });
+        }
 
         // ─── POST /api/auth/login ───
         if (path === '/api/auth/login' && request.method === 'POST') {
@@ -904,7 +1019,13 @@ async function handle(request, env) {
       // ═══════════════════════════════════════════
 
       if (path.startsWith('/api/github/')) {
-        const githubToken = env.GITHUB_PAT || request.headers.get('X-GitHub-Token');
+        // Priorité au token OAuth de l'utilisateur connecté (header
+        // X-GitHub-User-Token, jamais persisté côté Worker — le commit est
+        // attribué à l'utilisateur). Fallback sur le PAT serveur si l'user
+        // n'est pas connecté ou n'a pas envoyé de token. Dernier fallback :
+        // le header legacy X-GitHub-Token (sera retiré après la transition).
+        const userToken = request.headers.get('X-GitHub-User-Token');
+        const githubToken = userToken || env.GITHUB_PAT || request.headers.get('X-GitHub-Token');
         const owner = env.GITHUB_OWNER || request.headers.get('X-GitHub-Owner');
         const repo = env.GITHUB_SITE_REPO || request.headers.get('X-GitHub-Repo');
 
