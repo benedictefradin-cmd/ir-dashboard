@@ -8,7 +8,7 @@ import MultiSelect from '../components/shared/MultiSelect';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
 import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL, TARGET_LANGUAGES } from '../utils/constants';
-import { hasGitHub, insertHtmlInPage, formatDateSite, updatePublicationsI18n } from '../services/github';
+import { hasGitHub, insertHtmlInPage, formatDateSite, updatePublicationsI18n, updatePublicationsData, categoryColor } from '../services/github';
 import { fetchArticleContent, updateArticleStatus, hasNotion } from '../services/notion';
 import { loadLocal } from '../utils/localStorage';
 import useDebounce from '../hooks/useDebounce';
@@ -206,7 +206,7 @@ export default function Articles({
       });
 
       // 4. Push to GitHub via Worker
-      const workerUrl = loadLocal('ir_worker_url', '') || loadLocal('worker-url', '') || import.meta.env.VITE_WORKER_URL || '';
+      const workerUrl = loadLocal('worker-url', '') || import.meta.env.VITE_WORKER_URL || '';
       const githubToken = loadLocal('ir_github_token', '');
       const githubOwner = loadLocal('ir_github_owner', '');
       const githubRepo = loadLocal('ir_github_site_repo', '');
@@ -701,7 +701,7 @@ export default function Articles({
                       slug,
                     });
 
-                    const workerUrl = loadLocal('ir_worker_url', '') || loadLocal('worker-url', '') || import.meta.env.VITE_WORKER_URL || '';
+                    const workerUrl = loadLocal('worker-url', '') || import.meta.env.VITE_WORKER_URL || '';
                     const githubToken = loadLocal('ir_github_token', '');
                     const githubOwner = loadLocal('ir_github_owner', '');
                     const githubRepo = loadLocal('ir_github_site_repo', '');
@@ -740,7 +740,28 @@ export default function Articles({
                       throw new Error('GitHub non configuré — renseigne le token dans Paramètres');
                     }
 
-                    // 1b. Mettre à jour publications-i18n.js avec les traductions
+                    // 1b. Enregistrer la publication dans publications-data.js (liste du site)
+                    if (hasGitHub()) {
+                      const dateYm = today.slice(0, 7); // YYYY-MM
+                      const categories = (finalArticle.tags || []).map(t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+                      try {
+                        await updatePublicationsData({
+                          id: slug,
+                          title: finalArticle.fr.title,
+                          author: authorNames,
+                          date: dateYm,
+                          type: pubType,
+                          categories,
+                          color: categoryColor(categories[0]),
+                          description: finalArticle.fr.summary || '',
+                          image: `assets/img/publications/${slug}-1200.jpg`,
+                        });
+                      } catch (dataErr) {
+                        toast(`Publication OK mais liste non mise à jour : ${dataErr.message}`, 'error');
+                      }
+                    }
+
+                    // 1c. Mettre à jour publications-i18n.js avec les traductions
                     if (hasGitHub() && (finalArticle.translatedLangs || []).length > 0) {
                       const i18nEntry = {};
                       for (const langCode of finalArticle.translatedLangs) {
@@ -957,79 +978,161 @@ export default function Articles({
 }
 
 // ─── HTML Template builder ──────────────────────────
+// Slugifie une étiquette pour générer une classe CSS (ex: "Économie" → "economie").
+function slugifyTag(s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+// Mappe un type ("Note d'analyse", "Essai", …) vers le suffixe de classe utilisé par le site.
+function typeBadgeSuffix(type) {
+  const t = (type || '').toLowerCase();
+  if (t.includes('note')) return 'note';
+  if (t.includes('essai')) return 'essai';
+  if (t.includes('tribune')) return 'tribune';
+  if (t.includes('rapport')) return 'rapport';
+  if (t.includes('entretien') || t.includes('interview')) return 'entretien';
+  return slugifyTag(type);
+}
+
+// Calcule les initiales (max 2) d'une chaîne d'auteurs.
+function authorInitials(authors) {
+  const first = (authors || '').split(',')[0].trim();
+  const parts = first.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'IR';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// Échappe les attributs HTML.
+function escAttr(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function buildPublicationHtml({ title, authors, date, pole, type, summary, content, slug }) {
+  const tagsArr = Array.isArray(pole) ? pole : (pole ? [pole] : []);
+  const typeSuffix = typeBadgeSuffix(type);
+  const initials = authorInitials(authors);
+  const canonical = `https://institut-rousseau.fr/publications/${slug}`;
+  const shareUrl = encodeURIComponent(canonical);
+  const shareTitle = encodeURIComponent(`${title} — Institut Rousseau`);
+  const descEsc = escAttr(summary);
+  const titleEsc = escAttr(title);
+
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} — Institut Rousseau</title>
-  <meta name="description" content="${summary.replace(/"/g, '&quot;')}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
-  <style>
-    :root { --navy: #1a2744; --sky: #4a90d9; --cream: #f7f4ee; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Source Sans 3', sans-serif; color: var(--navy); background: var(--cream); line-height: 1.7; }
-    .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
-    header { background: var(--navy); color: white; padding: 16px 0; }
-    header .container { display: flex; justify-content: space-between; align-items: center; }
-    header a { color: white; text-decoration: none; font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; }
-    nav a { color: rgba(255,255,255,0.8); text-decoration: none; margin-left: 24px; font-size: 15px; }
-    nav a:hover { color: white; }
-    .breadcrumb { padding: 12px 0; font-size: 14px; color: #6B7280; }
-    .breadcrumb a { color: var(--sky); text-decoration: none; }
-    article { background: white; border-radius: 12px; padding: 48px; margin: 24px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-    article h1 { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 700; line-height: 1.2; margin-bottom: 16px; }
-    .meta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #E5E7EB; }
-    .meta .tag { background: #EBF4FF; color: var(--sky); padding: 2px 10px; border-radius: 4px; font-size: 13px; }
-    .meta .author { font-weight: 600; }
-    .meta .date { color: #6B7280; font-size: 14px; }
-    .content h2 { font-family: 'Cormorant Garamond', serif; font-size: 24px; margin: 32px 0 12px; }
-    .content h3 { font-size: 20px; margin: 24px 0 8px; }
-    .content p { margin-bottom: 16px; }
-    .content ul, .content ol { margin: 0 0 16px 24px; }
-    .content li { margin-bottom: 4px; }
-    .content blockquote { border-left: 3px solid var(--sky); padding: 12px 20px; margin: 20px 0; background: #f8f9fa; font-style: italic; }
-    .content figure { margin: 24px 0; text-align: center; }
-    .content figure img { max-width: 100%; border-radius: 8px; }
-    .content figcaption { font-size: 13px; color: #6B7280; margin-top: 8px; }
-    footer { text-align: center; padding: 32px 0; font-size: 14px; color: #6B7280; }
-  </style>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap"></noscript>
+  <meta name="description" content="${descEsc}">
+  <meta name="theme-color" content="#1B2A4A">
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <link rel="apple-touch-icon" href="../assets/images/favicon.svg">
+  <meta property="og:title" content="${titleEsc} — Institut Rousseau">
+  <meta property="og:description" content="${descEsc}">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="${canonical}">
+  <link rel="canonical" href="${canonical}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${titleEsc} — Institut Rousseau">
+  <meta name="twitter:description" content="${descEsc}">
+  <title>${titleEsc} — Institut Rousseau</title>
+  <link rel="stylesheet" href="../assets/css/variables.css?v=2">
+  <link rel="stylesheet" href="../assets/css/base.css?v=2">
+  <link rel="stylesheet" href="../assets/css/layout.css?v=2">
+  <link rel="stylesheet" href="../assets/css/components.css?v=2">
+  <link rel="stylesheet" href="../assets/css/header.css?v=2">
+  <link rel="stylesheet" href="../assets/css/footer.css?v=2">
+  <link rel="stylesheet" href="../assets/css/pages/publications.css?v=2">
+  <link rel="stylesheet" href="../assets/css/responsive.css?v=2">
+  <link rel="stylesheet" href="../assets/css/features.css?v=2">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": ${JSON.stringify(title)},
+  "description": ${JSON.stringify(summary || '')},
+  "datePublished": ${JSON.stringify(date)},
+  "author": { "@type": "Person", "name": ${JSON.stringify(authors || 'Institut Rousseau')} },
+  "publisher": { "@type": "Organization", "name": "Institut Rousseau", "url": "https://institut-rousseau.fr" },
+  "mainEntityOfPage": ${JSON.stringify(canonical)}
+}
+</script>
 </head>
 <body>
-  <header>
-    <div class="container">
-      <a href="/">Institut Rousseau</a>
-      <nav>
-        <a href="/publications.html">Publications</a>
-        <a href="/evenements.html">Événements</a>
-        <a href="/contact.html">Contact</a>
-      </nav>
-    </div>
-  </header>
-  <main class="container">
-    <div class="breadcrumb">
-      <a href="/">Accueil</a> / <a href="/publications.html">Publications</a> / ${title}
-    </div>
-    <article>
-      <h1>${title}</h1>
-      <div class="meta">
-        ${pole ? `<span class="tag">${pole}</span>` : ''}
-        ${type ? `<span class="tag">${type}</span>` : ''}
-        <span class="author">${authors}</span>
-        <span class="date">${date}</span>
+<div id="progress-bar" class="reading-progress"></div>
+<a href="#main" class="skip-link">Aller au contenu principal</a>
+<div id="nav-placeholder"></div>
+
+<main id="main">
+<section class="page-header">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Fil d'Ariane">
+      <a href="../index.html">Accueil</a> <span class="sep">/</span> <a href="../publications.html">Publications</a> <span class="sep">/</span> <span aria-current="page">${titleEsc}</span>
+    </nav>
+    ${tagsArr.length ? `<div class="pub-card-tags" style="margin-bottom:.75rem;">${tagsArr.map(t => `<span class="pub-card-tag tag-${slugifyTag(t)}">${escAttr(t)}</span>`).join('')}</div>` : ''}
+    ${type ? `<span class="article-type-badge article-type-badge--${typeSuffix}">${escAttr(type)}</span>` : ''}
+    <h1>${titleEsc}</h1>
+    <p>${escAttr(date)}</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="article-content">
+      ${authors ? `<div class="article-author-block">
+        <div class="article-author-avatar" style="background:linear-gradient(135deg,#2D6A4F,#aaa)">${escAttr(initials)}</div>
+        <div class="article-author-info">
+          <div class="article-author-name">${escAttr(authors)}</div>
+        </div>
+      </div>` : ''}
+
+      ${content}
+
+      <div class="article-share">
+        <span class="article-share-label">Partager</span>
+        <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}" target="_blank" rel="noopener noreferrer" aria-label="Partager sur Twitter">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}" target="_blank" rel="noopener noreferrer" aria-label="Partager sur LinkedIn">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+        <button class="copy-link-btn" aria-label="Copier le lien">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+        </button>
       </div>
-      <div class="content">
-        ${content}
+
+      <div class="article-cta" style="margin:2.5rem 0 1.5rem;padding:1.5rem;background:var(--bg-alt,#f8fafc);border-radius:var(--radius-md,8px);text-align:center;">
+        <p style="margin:0 0 .75rem;font-size:.95rem;color:var(--ink);">Vous avez apprécié cette publication ?</p>
+        <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
+          <a href="../don.html" class="btn btn-terra" style="font-size:.85rem;">Faire un don <span style="font-size:.7rem;opacity:.8;">(66% déductible)</span></a>
+          <a href="../adhesion.html" class="btn btn-secondary" style="font-size:.85rem;">Adhérer</a>
+        </div>
       </div>
-    </article>
-  </main>
-  <footer>
-    <div class="container">
-      <p>&copy; Institut Rousseau ${new Date().getFullYear()} — <a href="https://institut-rousseau.fr" style="color: var(--sky);">institut-rousseau.fr</a></p>
+      <div id="relatedPubs" class="related-pubs"></div>
+      <a href="../publications.html" class="article-back">← Retour aux publications</a>
     </div>
-  </footer>
+  </div>
+</section>
+</main>
+
+<div id="footer-placeholder"></div>
+<script src="../assets/js/translation.js?v=2"></script>
+<script defer src="../assets/js/components.js?v=2"></script>
+<script defer src="../assets/js/nav.js?v=2"></script>
+<script defer src="../assets/js/main.js?v=2"></script>
+<script defer src="../assets/js/search.js?v=2"></script>
+<script src="../assets/js/publications-i18n.js?v=2"></script>
+<script src="../assets/js/publications-data.js?v=3"></script>
+<script src="../assets/js/article-i18n.js?v=2"></script>
+<script src="../assets/js/related.js?v=3"></script>
 </body>
 </html>`;
 }

@@ -1,11 +1,11 @@
-import { loadLocal } from '../utils/localStorage';
+import { loadLocal, saveLocal } from '../utils/localStorage';
 import { LS_KEYS } from '../utils/constants';
+
+const LAST_DEPLOY_KEY = 'last-deploy-triggered';
 
 /**
  * Déclenche un rebuild du site via le Vercel Deploy Hook.
- * Le hook est un POST sur une URL du type :
- * https://api.vercel.com/v1/integrations/deploy/prj_xxx/yyy
- * Configurable dans Settings → localStorage.
+ * Retourne { job, triggeredAt } — job.id est utilisable pour suivre le build.
  */
 export async function triggerRebuild() {
   const hookUrl = loadLocal(LS_KEYS.vercelDeployHook, '');
@@ -18,10 +18,18 @@ export async function triggerRebuild() {
     throw new Error(`Erreur Vercel : ${resp.status}`);
   }
 
-  return resp.json();
+  const data = await resp.json();
+  const triggeredAt = new Date().toISOString();
+  const entry = { triggeredAt, job: data.job || null };
+  saveLocal(LAST_DEPLOY_KEY, entry);
+  return entry;
 }
 
 export function hasDeployHook() {
   const hookUrl = loadLocal(LS_KEYS.vercelDeployHook, '');
   return !!hookUrl;
+}
+
+export function getLastDeploy() {
+  return loadLocal(LAST_DEPLOY_KEY, null);
 }

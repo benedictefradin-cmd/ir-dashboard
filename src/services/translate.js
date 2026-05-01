@@ -1,4 +1,5 @@
 import { loadLocal } from '../utils/localStorage';
+import { LS_KEYS } from '../utils/constants';
 
 /**
  * Traduit un article (title, summary, content) d'une langue source vers une langue cible
@@ -10,7 +11,7 @@ import { loadLocal } from '../utils/localStorage';
  * @returns {Promise<{ title: string, summary: string, content: string }>}
  */
 export async function translateArticle(article, fromLang, toLang) {
-  const workerUrl = loadLocal('ir_worker_url', '') || loadLocal('worker-url', '') || import.meta.env.VITE_WORKER_URL || '';
+  const workerUrl = loadLocal(LS_KEYS.workerUrl, '') || import.meta.env.VITE_WORKER_URL || '';
 
   if (!workerUrl) {
     throw new Error('Worker URL non configurée — allez dans Config');

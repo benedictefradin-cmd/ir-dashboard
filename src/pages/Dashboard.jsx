@@ -4,7 +4,7 @@ import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
 import { COLORS } from '../utils/constants';
-import { triggerRebuild, hasDeployHook } from '../services/deploy';
+import { triggerRebuild, hasDeployHook, getLastDeploy } from '../services/deploy';
 
 export default function Dashboard({
   subscribers = [],
@@ -66,6 +66,7 @@ export default function Dashboard({
   const newSollCount = sollicitations.filter(s => s.status === 'new').length;
 
   const [rebuilding, setRebuilding] = useState(false);
+  const [lastDeploy, setLastDeploy] = useState(() => getLastDeploy());
 
   const handleRebuild = async () => {
     if (!hasDeployHook()) {
@@ -74,12 +75,16 @@ export default function Dashboard({
     }
     setRebuilding(true);
     try {
-      await triggerRebuild();
-      toast?.('Rebuild du site déclenché avec succès');
+      const entry = await triggerRebuild();
+      setLastDeploy(entry);
+      toast?.('Rebuild déclenché — le site sera à jour dans ~2 min');
+      // Fin automatique de l'état "rebuilding" après 2 min
+      setTimeout(() => setRebuilding(false), 120000);
+      return;
     } catch (e) {
       toast?.(e.message || 'Erreur lors du rebuild', 'error');
+      setRebuilding(false);
     }
-    setRebuilding(false);
   };
 
   if (loading) {
@@ -162,9 +167,14 @@ export default function Dashboard({
                 <span style={{ fontSize: 20 }}>{'\u{2709}\ufe0f'}</span>
                 <span style={{ fontSize: 12 }}>Newsletter</span>
               </button>
-              <button className="quick-action-btn" onClick={handleRebuild} disabled={rebuilding}>
+              <button className="quick-action-btn" onClick={handleRebuild} disabled={rebuilding} title={lastDeploy?.triggeredAt ? `Dernier rebuild : ${new Date(lastDeploy.triggeredAt).toLocaleString('fr-FR')}` : ''}>
                 <span style={{ fontSize: 20 }}>{'\u{1F680}'}</span>
-                <span style={{ fontSize: 12 }}>{rebuilding ? 'Rebuild…' : 'Rebuild site'}</span>
+                <span style={{ fontSize: 12 }}>{rebuilding ? 'En cours…' : 'Rebuild site'}</span>
+                {lastDeploy?.triggeredAt && !rebuilding && (
+                  <span style={{ fontSize: 10, color: 'var(--text-light)' }}>
+                    {new Date(lastDeploy.triggeredAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
               </button>
               {newSollCount > 0 ? (
                 <button className="quick-action-btn" onClick={() => onTabChange('sollicitations')} style={{ borderColor: COLORS.terra, color: COLORS.terra }}>

@@ -189,6 +189,12 @@ export const LS_KEYS = {
   vercelDeployHook: 'vercel-deploy-hook',
   contactAuthToken: 'contact-auth-token',
   messageHistory: 'message-history',
+  // Tokens override (surchargent .env via Settings)
+  notionToken: 'ir_notion_token',
+  notionDbId: 'ir_notion_db_id',
+  githubToken: 'ir_github_token',
+  githubOwner: 'ir_github_owner',
+  githubSiteRepo: 'ir_github_site_repo',
 };
 
 // ─── Config par défaut ──────────────────────────────

@@ -167,12 +167,31 @@ export default function App() {
       console.warn('[App] Erreur chargement sollicitations :', err.message);
     }
 
-    // Charger le calendrier depuis le Worker (KV) — fallback localStorage si échec
+    // Charger le calendrier depuis le Worker (KV). Migration one-shot :
+    // si KV vide mais localStorage contient des données, on les pousse vers KV.
     try {
       const cal = await fetchAllCalendar();
-      if (Array.isArray(cal.socialPosts)) setSocialPostsRaw(cal.socialPosts);
-      if (Array.isArray(cal.rapports)) setRapportsRaw(cal.rapports);
-      if (Array.isArray(cal.extEvents)) setExtEventsRaw(cal.extEvents);
+      const localSocial = loadLocal(LS_KEYS.socialPosts, []);
+      const localRapports = loadLocal(LS_KEYS.rapportsFondations, []);
+      const localExt = loadLocal(LS_KEYS.extEvents, []);
+
+      if (Array.isArray(cal.socialPosts) && cal.socialPosts.length > 0) {
+        setSocialPostsRaw(cal.socialPosts);
+      } else if (localSocial.length > 0) {
+        saveCalendar('socialPosts', localSocial).catch(() => {});
+      }
+
+      if (Array.isArray(cal.rapports) && cal.rapports.length > 0) {
+        setRapportsRaw(cal.rapports);
+      } else if (localRapports.length > 0) {
+        saveCalendar('rapports', localRapports).catch(() => {});
+      }
+
+      if (Array.isArray(cal.extEvents) && cal.extEvents.length > 0) {
+        setExtEventsRaw(cal.extEvents);
+      } else if (localExt.length > 0) {
+        saveCalendar('extEvents', localExt).catch(() => {});
+      }
     } catch (err) {
       console.warn('[App] Erreur chargement calendrier KV, fallback localStorage :', err.message);
     }

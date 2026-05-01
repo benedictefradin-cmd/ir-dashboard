@@ -30,6 +30,17 @@ export async function githubGetFile(path) {
   });
   if (!res.ok) throw new Error(handleHttpError(res.status));
   const data = await res.json();
+
+  // L'API /contents ne retourne PAS le champ `content` pour les fichiers > 1 Mo.
+  // On bascule alors sur /git/blobs/{sha} qui n'a pas cette limite.
+  if (!data.content && data.sha) {
+    const blobRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/blobs/${data.sha}`, {
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' },
+    });
+    if (!blobRes.ok) throw new Error(handleHttpError(blobRes.status));
+    const blob = await blobRes.json();
+    return { content: decodeContent(blob.content), sha: data.sha };
+  }
   return { content: decodeContent(data.content), sha: data.sha };
 }
 
@@ -244,6 +255,55 @@ export async function updatePublicationsI18n(slug, entry) {
   const newContent = `${header}window.PUB_I18N = ${JSON.stringify(obj, null, 2)};\n`;
 
   return githubPutFile(path, newContent, file.sha, `Traductions publication : ${slug}`);
+}
+
+/**
+ * Met à jour `assets/js/publications-data.js` pour enregistrer la nouvelle publication
+ * dans la liste officielle du site (alimente publications.html et related.js).
+ *
+ * Le fichier a la forme `window.PUBLICATIONS_DATA = [ {...}, {...} ];`
+ * — du JSON pur encapsulé dans du JS, parsable avec JSON.parse après extraction.
+ *
+ * Si une entrée avec le même id existe déjà, elle est remplacée. Sinon insérée en tête.
+ *
+ * @param {Object} entry - { id, title, author, date, type, categories, color, description, image }
+ */
+export async function updatePublicationsData(entry) {
+  const path = 'assets/js/publications-data.js';
+  const file = await githubGetFile(path);
+
+  const match = file.content.match(/window\.PUBLICATIONS_DATA\s*=\s*(\[[\s\S]*\])\s*;?\s*$/);
+  if (!match) throw new Error('Format inattendu dans publications-data.js');
+
+  let arr;
+  try {
+    arr = JSON.parse(match[1]);
+  } catch {
+    // Fallback : évaluation JS tolérante si clés non-quotées.
+    arr = new Function(`return (${match[1]});`)();
+  }
+
+  const idx = arr.findIndex(p => p.id === entry.id);
+  if (idx >= 0) {
+    arr[idx] = { ...arr[idx], ...entry };
+  } else {
+    arr.unshift(entry);
+  }
+
+  const newContent = `window.PUBLICATIONS_DATA = ${JSON.stringify(arr, null, 2)};\n`;
+  return githubPutFile(path, newContent, file.sha, `Publication ajoutée : ${entry.title}`);
+}
+
+// Couleur par défaut selon la première catégorie (matche les couleurs utilisées dans publications-data.js).
+export function categoryColor(category) {
+  const c = (category || '').toLowerCase();
+  if (c.includes('econom')) return '#2563EB';
+  if (c.includes('ecolog')) return '#16A34A';
+  if (c.includes('institution')) return '#D97706';
+  if (c.includes('international')) return '#0EA5E9';
+  if (c.includes('social')) return '#C1121F';
+  if (c.includes('culture')) return '#8B5CF6';
+  return '#1B2A4A';
 }
 
 /**
