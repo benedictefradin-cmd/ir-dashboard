@@ -17,6 +17,7 @@ const SORT_OPTIONS = [
   { value: 'alpha-desc', label: 'Z → A' },
   { value: 'pubs', label: 'Publications ↓' },
   { value: 'recent', label: 'Récents d’abord' },
+  { value: 'no-photo', label: 'Sans photo en premier' },
 ];
 
 export default function Profils({ auteurs, setAuteurs, articles, contenu, setContenu, loading, toast, saveToSite, onTabChange }) {
@@ -62,6 +63,11 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
           return (getPublicationCount(b) - getPublicationCount(a)) || (a.lastName || '').localeCompare(b.lastName || '', 'fr');
         case 'recent':
           return (auteurs.indexOf(b) - auteurs.indexOf(a));
+        case 'no-photo': {
+          const aMissing = !a.photo && !a.photoPath ? 1 : 0;
+          const bMissing = !b.photo && !b.photoPath ? 1 : 0;
+          return (bMissing - aMissing) || (a.lastName || '').localeCompare(b.lastName || '', 'fr');
+        }
         default:
           return 0;
       }
@@ -472,8 +478,15 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
                           {teamRole}
                         </span>
                       )}
-                      {!auteur.photo && (
-                        <span className="badge badge-ochre">Pas de photo</span>
+                      {!auteur.photo && !auteur.photoPath && (
+                        <span
+                          className="badge badge-ochre"
+                          style={{ cursor: 'pointer' }}
+                          title="Cliquer pour ajouter une photo"
+                          onClick={(e) => { e.stopPropagation(); openEdit(auteur); setTimeout(() => fileInputRef.current?.click(), 100); }}
+                        >
+                          + Photo
+                        </span>
                       )}
                     </div>
                   </div>

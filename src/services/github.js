@@ -47,6 +47,38 @@ export async function githubGetFile(path) {
 // ─── Cache en mémoire pour les images chargées via l'API (repo privé) ───
 const imageCache = new Map(); // path → Promise<dataUrl>
 
+// Limiteur de concurrence pour éviter de saturer l'API GitHub (rate limit 5000/h).
+// Au plus 6 fetches d'image en parallèle ; le reste attend.
+const MAX_CONCURRENT = 6;
+let activeRequests = 0;
+const requestQueue = [];
+
+function withConcurrencyLimit(fn) {
+  return new Promise((resolve, reject) => {
+    const run = () => {
+      activeRequests++;
+      fn()
+        .then(resolve, reject)
+        .finally(() => {
+          activeRequests--;
+          const next = requestQueue.shift();
+          if (next) next();
+        });
+    };
+    if (activeRequests < MAX_CONCURRENT) run();
+    else requestQueue.push(run);
+  });
+}
+
+/**
+ * Invalide une entrée du cache d'images (à appeler après upload d'une
+ * nouvelle photo pour le même chemin).
+ */
+export function invalidateImageCache(path) {
+  if (path) imageCache.delete(path);
+  else imageCache.clear();
+}
+
 /**
  * Charge une image binaire depuis le repo site via l'API GitHub authentifiée
  * et retourne un data URL (base64). Utilisé pour contourner l'inaccessibilité
@@ -59,7 +91,7 @@ export function githubGetImageDataUrl(path) {
   if (path.startsWith('http') || path.startsWith('data:')) return Promise.resolve(path);
   if (imageCache.has(path)) return imageCache.get(path);
 
-  const p = (async () => {
+  const p = withConcurrencyLimit(async () => {
     // L'API /contents ne retourne PAS le champ `content` pour les fichiers > 1 Mo.
     // On récupère d'abord les métadonnées (sha + size), puis on bascule sur
     // l'API /git/blobs/{sha} pour les gros fichiers.
@@ -81,6 +113,8 @@ export function githubGetImageDataUrl(path) {
       base64 = (blob.content || '').replace(/\n/g, '');
     }
 
+    if (!base64) throw new Error(`Photo vide : ${path}`);
+
     const ext = (path.split('.').pop() || 'jpg').toLowerCase();
     const mime = ext === 'png' ? 'image/png'
       : ext === 'webp' ? 'image/webp'
@@ -88,8 +122,9 @@ export function githubGetImageDataUrl(path) {
       : ext === 'gif' ? 'image/gif'
       : 'image/jpeg';
     return `data:${mime};base64,${base64}`;
-  })().catch(err => {
+  }).catch(err => {
     imageCache.delete(path); // permet de retenter après échec
+    console.warn(`[RepoPhoto] Échec chargement ${path}:`, err.message);
     throw err;
   });
 
@@ -167,6 +202,11 @@ export async function githubUploadImage(path, base64Content, message) {
   });
   if (!res.ok) throw new Error(handleHttpError(res.status));
   const data = await res.json();
+
+  // Invalider le cache image — la photo précédente à ce chemin est obsolète.
+  // Préfixe `assets/` aussi puisque resolvePhotoUrl normalise vers ça.
+  invalidateImageCache(path);
+  invalidateImageCache(`assets/${path}`);
 
   const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/${path}`;
   return { sha: data.content?.sha || null, url: rawUrl };
