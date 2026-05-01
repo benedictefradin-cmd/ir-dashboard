@@ -699,7 +699,7 @@ export default function Articles({
               )}
               {editingArt?.slug && editingArt?.status === 'published' && !contentLoading && (
                 <div style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 6 }}>
-                  Article existant : mode HTML par défaut pour préserver les notes de bas de page et balisage avancé. Le mode visuel peut reformater certaines structures complexes.
+                  Article existant : édition en HTML uniquement (round-trip exact garanti — préserve notes de bas de page, tableaux, iframes, SVG et toutes les balises d'origine). Utilise l'onglet Aperçu pour vérifier le rendu.
                 </div>
               )}
               <RichEditor

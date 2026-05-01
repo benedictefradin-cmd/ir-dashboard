@@ -66,16 +66,15 @@ async function run() {
   const labels = {
     dashboard: 'Dashboard', articles: 'Publications', evenements: 'Événements',
     calendrier: 'Calendrier', presse: 'Presse', profils: 'Profils', newsletter: 'Newsletter',
-    messagerie: 'Messagerie', pagessite: 'Pages du site', contenu: 'Contenu', accueil: 'Accueil',
+    messagerie: 'Messagerie', editeur: 'Éditeur visuel', pagessite: 'Pages du site', contenu: 'Contenu', accueil: 'Accueil',
     seo: 'SEO', medias: 'Médias', navigation: 'Navigation', equipe: 'Équipe',
     technique: 'Technique', sollicitations: 'Sollicitations', settings: 'Config',
   };
 
   // Pages accessibles depuis la sidebar
-  const SIDEBAR_TABS = ['dashboard', 'articles', 'evenements', 'calendrier', 'presse', 'profils', 'newsletter', 'messagerie', 'pagessite', 'seo', 'medias', 'technique', 'sollicitations', 'settings'];
+  const SIDEBAR_TABS = ['dashboard', 'articles', 'evenements', 'calendrier', 'presse', 'profils', 'newsletter', 'messagerie', 'editeur', 'pagessite', 'seo', 'medias', 'technique', 'sollicitations', 'settings'];
   // Sous-onglets de PagesSite
   const PAGES_SITE_SUBTABS = [
-    { key: 'contenu', label: 'Contenu éditorial' },
     { key: 'accueil', label: "Page d'accueil" },
     { key: 'equipe', label: 'Équipe' },
     { key: 'navigation', label: 'Navigation' },

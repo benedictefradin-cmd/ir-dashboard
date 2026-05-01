@@ -21,6 +21,7 @@ const Technique = lazy(() => import('./pages/Technique'));
 const Sollicitations = lazy(() => import('./pages/Sollicitations'));
 const Calendrier = lazy(() => import('./pages/Calendrier'));
 const PagesSite = lazy(() => import('./pages/PagesSite'));
+const EditeurVisuel = lazy(() => import('./pages/EditeurVisuel'));
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
 import { fetchSollicitations } from './services/contact';
@@ -431,6 +432,8 @@ export default function App() {
         return <Messagerie subscribers={subscribers} presse={presse} auteurs={auteurs} events={events} services={services} toast={toast} />;
       case 'pagessite':
         return <PagesSite contenu={contenu} setContenu={setContenu} auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} toast={toast} saveToSite={saveToSite} onTabChange={changeTab} />;
+      case 'editeur':
+        return <EditeurVisuel toast={toast} />;
       case 'contenu':
         return <Contenu contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
       case 'accueil':

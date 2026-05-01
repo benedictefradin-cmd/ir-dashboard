@@ -57,6 +57,7 @@ export const NAV_GROUPS = [
     label: 'Site & Config',
     defaultOpen: false,
     items: [
+      { key: 'editeur', label: 'Éditeur visuel', icon: '\u{270F}\u{FE0F}' },
       { key: 'pagessite', label: 'Pages du site', icon: '\u{1F3E0}' },
       { key: 'seo', label: 'SEO', icon: '\u{1F50D}' },
       { key: 'medias', label: 'Médias', icon: '\u{1F5BC}' },

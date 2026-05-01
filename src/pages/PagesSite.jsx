@@ -1,18 +1,16 @@
 import { useState } from 'react';
-import Contenu from './Contenu';
 import Accueil from './Accueil';
 import Equipe from './Equipe';
 import Navigation from './Navigation';
 
 const SECTIONS = [
-  { key: 'contenu', label: 'Contenu éditorial', icon: '✎' },
   { key: 'accueil', label: "Page d'accueil", icon: '\u{1F3E0}' },
   { key: 'equipe', label: 'Équipe', icon: '\u{1F464}' },
   { key: 'navigation', label: 'Navigation', icon: '\u{1F517}' },
 ];
 
 export default function PagesSite(props) {
-  const [section, setSection] = useState('contenu');
+  const [section, setSection] = useState('accueil');
 
   return (
     <>
@@ -37,7 +35,6 @@ export default function PagesSite(props) {
           ))}
         </div>
 
-        {section === 'contenu' && <Contenu {...props} embedded />}
         {section === 'accueil' && <Accueil {...props} embedded />}
         {section === 'equipe' && <Equipe {...props} embedded />}
         {section === 'navigation' && <Navigation {...props} embedded />}

@@ -103,20 +103,58 @@ const EDIT_MODE_SCRIPT = `
 
   document.addEventListener('submit', function (e) { e.preventDefault(); }, true);
 
+  // Patch local appliqué en plus du dictionnaire i18n distant.
+  // Permet au back-office de pousser des modifications "live" sans
+  // recharger le JSON, pour un aperçu immédiat avant publication.
+  var livePatch = Object.create(null); // { key: { lang: value } }
+
+  function applyLivePatch(key, lang) {
+    var value = livePatch[key] && livePatch[key][lang];
+    if (value === undefined) return;
+    document.querySelectorAll('[data-i18n="' + CSS.escape(key) + '"]').forEach(function (el) {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.placeholder = value;
+      } else if (value.indexOf('<') !== -1) {
+        el.innerHTML = value;
+      } else {
+        el.textContent = value;
+      }
+    });
+  }
+
+  function currentLang() {
+    return localStorage.getItem('lang') || 'fr';
+  }
+
   window.addEventListener('message', function (e) {
     var msg = e.data;
     if (!msg || typeof msg !== 'object') return;
     if (msg.type === 'ir-reload-i18n') {
       if (typeof window.__irReloadTranslations === 'function') {
-        window.__irReloadTranslations();
+        window.__irReloadTranslations().then(function () {
+          // Re-applique le patch local par-dessus
+          Object.keys(livePatch).forEach(function (k) { applyLivePatch(k, currentLang()); });
+        });
       } else {
         window.location.reload();
       }
-    }
-    if (msg.type === 'ir-clear-selection') {
+    } else if (msg.type === 'ir-clear-selection') {
       document.querySelectorAll('.ir-editing').forEach(function (el) {
         el.classList.remove('ir-editing');
       });
+    } else if (msg.type === 'ir-apply-live' && msg.key && msg.lang) {
+      if (!livePatch[msg.key]) livePatch[msg.key] = {};
+      livePatch[msg.key][msg.lang] = msg.value || '';
+      if (msg.lang === currentLang()) applyLivePatch(msg.key, msg.lang);
+    } else if (msg.type === 'ir-revert-live' && msg.key && msg.lang) {
+      if (livePatch[msg.key]) {
+        delete livePatch[msg.key][msg.lang];
+        if (Object.keys(livePatch[msg.key]).length === 0) delete livePatch[msg.key];
+      }
+      // Re-fetch les traductions pour récupérer la valeur d'origine
+      if (typeof window.__irReloadTranslations === 'function') {
+        window.__irReloadTranslations();
+      }
     }
   });
 
