@@ -65,7 +65,7 @@ export default function Articles({
   const [publishResult, setPublishResult] = useState(null);
   const [publishError, setPublishError] = useState(null);
 
-  // Source unique : les publications du repo site (data/publications.json),
+  // Source unique : les publications du repo site (assets/js/publications-data.js),
   // chargées par App.jsx via siteData.fetchAllSiteData() et passées en props.
   const allArticles = articles;
 
@@ -198,7 +198,7 @@ export default function Articles({
         await insertHtmlInPage('publications.html', cardHtml, `Ajout publication : ${article.title}`);
       }
 
-      // 5. Update local state (la source de vérité reste data/publications.json
+      // 5. Update local state (la source de vérité reste publications-data.js
       //    du repo site ; le rechargement est piloté par App.jsx).
       setArticles(prev => prev.map(a =>
         a.id === article.id ? { ...a, status: 'published', synced: true, date: today, author: authorNames } : a
@@ -923,7 +923,7 @@ export default function Articles({
                 slug={editingArt?.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}
                 toast={toast}
                 trusted={!!(editingArt?.slug && editingArt?.status === 'published') && isSourceLang}
-                defaultMode={editingArt?.slug && editingArt?.status === 'published' && isSourceLang ? 'html' : 'visual'}
+                defaultMode={editingArt?.slug && editingArt?.status === 'published' && isSourceLang ? 'html' : 'apercu'}
               />
             </div>
 

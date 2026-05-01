@@ -3,6 +3,7 @@ import Modal from '../shared/Modal';
 import { TARGET_LANGUAGES } from '../../utils/constants';
 import { translateArticle } from '../../services/translate';
 import { checkHealth } from '../../services/api';
+import { useConfirm } from '../shared/ConfirmDialog';
 import RichEditor from '../editor/RichEditor';
 
 /**
@@ -11,6 +12,7 @@ import RichEditor from '../editor/RichEditor';
  * - Sinon → mode manuel : champs vides par langue, l'utilisatrice traduit ce qu'elle veut.
  */
 export default function PublishWithTranslation({ article, onPublished, onClose, toast }) {
+  const confirm = useConfirm();
   const [translations, setTranslations] = useState(() => {
     const initial = {};
     TARGET_LANGUAGES.forEach(lang => {
@@ -146,9 +148,13 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
       const partial = TARGET_LANGUAGES.filter(l => isPartial(translations[l.code]));
       if (partial.length > 0) {
         const names = partial.map(l => l.label).join(', ');
-        const ok = window.confirm(
-          `Les langues suivantes sont incomplètes (titre OU contenu manquant) et ne seront pas publiées :\n\n${names}\n\nContinuer ?`
-        );
+        const ok = await confirm({
+          title: 'Langues incomplètes',
+          message: 'Certaines langues ont un titre ou un contenu manquant et ne seront pas publiées. Continuer ?',
+          details: names,
+          confirmLabel: 'Publier sans elles',
+          cancelLabel: 'Revenir',
+        });
         if (!ok) return;
       }
     }
