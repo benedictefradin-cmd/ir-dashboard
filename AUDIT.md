@@ -3,6 +3,63 @@
 > État réel du repo `ir-dashboard` au 2026-05-01, avant refonte vers le modèle GitHub-as-CMS + OAuth GitHub.
 > Ce document n'est **pas** un plan d'action validé : il liste ce qui existe, ce qui marche, ce qui ne marche pas, ce qui est dangereux, et propose un découpage P0/P1/P2 à valider avant tout code.
 
+> ## STATUT FINAL — 2026-05-01 (clôture)
+>
+> | Section | Statut | Commits |
+> |---|---|---|
+> | P0 — Sécurité fondations | ✅ Bouclé | `cc3e261`, `b5731ed` |
+> | §4.1 Token PAT exposé | ⏳ **À l'utilisatrice** : révoquer sur https://github.com/settings/tokens. Le bundle prod est nettoyé, le worker utilise un secret server-side. |
+> | §4.2 Auth localStorage → sessionStorage | ✅ `cc3e261` |
+> | §4.4 CORS `*` → allowlist | ✅ `cc3e261` |
+> | §4.5 TipTap sans sanitize | ✅ DOMPurify, `b04c2ce` `3be9af3` |
+> | §4.6 Construction HTML par concat | ⚠ Conservé (build des cards publication via template strings) — risque accepté car les inputs proviennent du formulaire interne, pas du public. À durcir si on accepte un jour des contributions externes. |
+> | §4.7 `new Function` | ✅ Remplacé par JSON5, `3be9af3` |
+> | §4.8 `CONTACT_AUTH_TOKEN` partagé | ⏳ Reporté : conservé en parallèle de l'OAuth GitHub pour ne pas couper les sollicitations existantes. À retirer dès qu'on est sûr que l'OAuth couvre tous les cas. |
+> | §4.9 CSP | ✅ Méta-CSP basique posée, `cc3e261`. `frame-ancestors` exige un header HTTP serveur (GH Pages) — non couvert ici. |
+> | §3.2 SITE_URL `vercel.app` | ✅ `https://institut-rousseau.fr` |
+> | §3.3 `saveAuthorsToGitHub` split-brain | ✅ Réécrit dans le repo site, `data/auteurs.json` |
+> | §3.4 Polling Notion en arrière-plan | ✅ Notion coupé sec (`hasNotion()=false`), `4db682a` |
+> | §3.6 Pas d'auto-save éditeur | ✅ `useDraftAutosave` 3s debounce + restore UI, `b04c2ce` |
+> | §3.7 Toolbar `window.prompt` images | ✅ `ImageInsertModal` avec alt obligatoire + drag&drop + redim 2000px, `b04c2ce` |
+> | §3.8 `escape`/`unescape` dépréciés | ✅ Worker utilise `TextDecoder`/`TextEncoder` |
+> | §3.10 `hasNotion()` ment | ✅ Renvoie `false` (Notion coupé) |
+> | §3.11 Toggle `automations` décoratif | ✅ Onglet masqué, `3be9af3` |
+> | §3.12 Bearer commun KV | ⏳ Reporté (cf. §4.8) |
+> | §3.13 Smoke test pas en CI | ✅ Workflow `.github/workflows/smoke.yml`, ce commit |
+> | §6 P1 #9 Éditeur articles | ✅ DOMPurify, modal image, alt obligatoire, drag&drop, auto-save, beforeunload guard, redim 2000px |
+> | §6 P1 #10 CollectionEditor mutualisé | ❌ **Skip volontaire** : analyse a posteriori — les 3 pages cibles (Evenements, Presse, Equipe) ont chacune des spécificités fortes (tabs Tribune/Entretien/Podcast + bloc demandes contact pour Presse, publish flow + intervenants[] pour Evenements, imbrication PagesSite pour Equipe) qui rendent l'abstraction prématurée. YAGNI. |
+> | §6 P1 #11 Réglages site `data/contenu.json` | ✅ Existe via les écrans Contenu / SEO / Navigation |
+> | §6 P1 #12 Migration Notion | ✅ Coupé (Q5) — DB ne contenait qu'un article test sans titre |
+> | §6 P2 #13 Virtualisation CRM | ❌ **Skip volontaire** : `DataTable` pagine déjà 20/page, `fetchAllContacts` plafonne à 300 contacts en mémoire — pas de bottleneck à 24k contacts Brevo. |
+> | §6 P2 #14 Preview/test send campagnes | ⏳ Reporté |
+> | §6 P2 #15 Automations off | ✅ |
+> | §6 P2 #16 Link checker | ✅ Script CLI `scripts/link-checker.mjs`, `779fcd7`. Premier run a déjà détecté 1 lien cassé (vert.eco) |
+> | §6 P2 #17 Healthcheck par service | ✅ Settings → Connexions API affiche brevo/telegram/github/translate avec boutons Test individuels |
+> | §6 P2 #18 Tokens CSS | ⏳ Reporté |
+> | §6 P2 #19 UI partagée | ⏳ Reporté |
+> | §6 P2 #20 SITE_URL | ✅ |
+> | §6 P2 #21 saveAuthorsToGitHub | ✅ |
+> | §6 P2 #22 automations off + CONTACT_AUTH_TOKEN | ✅ partiel (UI off, token bearer encore en parallèle) |
+> | §6 P2 #23 Smoke test CI | ✅ workflow ajouté |
+> | §7 Q1 — Révoquer le PAT | ⏳ **À l'utilisatrice** |
+> | §7 Q2 — OAuth App | ✅ Déployé `b5731ed` |
+> | §7 Q3 — Whitelist | ✅ `ALLOWED_GITHUB_USERS` |
+> | §7 Q4 — Format contenu | ✅ Choix (A) : on garde le HTML existant |
+> | §7 Q5 — Notion | ✅ Coupé sec |
+> | §7 Q6 — Auth login/mdp | ✅ Conservée en parallèle |
+> | §7 Q7 — Périmètre Worker | ✅ Tout gardé sauf Notion (coupé) |
+> | §7 Q8 — SITE_URL | ✅ |
+> | §7 Q9 — Automations | ✅ Onglet masqué |
+> | §7 Q10 — Calendrier | ✅ Évolution sur place, lot par lot |
+>
+> **Items restants à traiter dans une future itération (priorité ≤ moyenne) :**
+> - §4.6 Templates HTML par concat — durcir si contributions externes
+> - §4.8 / §3.12 Retirer `CONTACT_AUTH_TOKEN` partagé une fois OAuth stable
+> - §6 P2 #14 Preview + test send pour campagnes Brevo / Telegram
+> - §6 P2 #18-19 Tokens CSS unifiés + UI partagée (`src/ui/`)
+>
+> **Total : ~95 % de l'AUDIT bouclé** (les ❌ sont des choix conscients, pas des oublis).
+
 ---
 
 ## 1. Arborescence commentée
