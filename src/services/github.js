@@ -211,6 +211,23 @@ export async function saveAuthorsToGitHub(authors) {
 }
 
 /**
+ * Lit l'entrée de traduction d'un slug dans `assets/js/publications-i18n.js`.
+ * Retourne `{ title_en, description_en, body_en, title_es, ... }` ou `{}`.
+ * Best-effort : ne lève pas si le fichier est absent ou mal formé.
+ */
+export async function fetchPublicationI18n(slug) {
+  try {
+    const file = await githubGetFile('assets/js/publications-i18n.js');
+    const match = file.content.match(/window\.PUB_I18N\s*=\s*([\s\S]*?);\s*$/);
+    if (!match) return {};
+    const obj = JSON5.parse(match[1]);
+    return obj[slug] || {};
+  } catch {
+    return {};
+  }
+}
+
+/**
  * Met à jour le fichier `assets/js/publications-i18n.js` pour ajouter ou
  * remplacer les traductions d'un slug.
  *

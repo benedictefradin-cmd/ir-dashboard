@@ -2282,6 +2282,55 @@ label {
 .filter-select:hover { border-color: var(--sky); }
 .filter-select:focus { border-color: var(--sky); box-shadow: 0 0 0 3px rgba(74,144,217,0.12); }
 
+/* ─── Onglets de langue (formulaire article) ──── */
+.lang-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+.lang-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-light);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.lang-tab:hover { color: var(--navy); background: rgba(0,0,0,0.02); }
+.lang-tab.active {
+  color: var(--navy);
+  font-weight: 600;
+  border-bottom-color: var(--sky);
+}
+.lang-tab.filled:not(.active) { color: var(--green); }
+.lang-tab-flag { font-size: 16px; line-height: 1; }
+.lang-tab-source {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--text-light);
+  background: var(--sand);
+  padding: 1px 6px;
+  border-radius: 8px;
+  letter-spacing: 0.04em;
+}
+.lang-tab-check {
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 700;
+}
+
 /* ── MultiSelect ────────────────────────────── */
 .multi-select {
   position: relative;

@@ -7,8 +7,8 @@ import AuthorPicker from '../components/shared/AuthorPicker';
 import MultiSelect from '../components/shared/MultiSelect';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
-import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL, TARGET_LANGUAGES, LS_KEYS } from '../utils/constants';
-import { hasGitHub, insertHtmlInPage, formatDateSite, updatePublicationsI18n, updatePublicationsData, categoryColor } from '../services/github';
+import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL, TARGET_LANGUAGES, SITE_LANGUAGES, LS_KEYS } from '../utils/constants';
+import { hasGitHub, insertHtmlInPage, formatDateSite, updatePublicationsI18n, updatePublicationsData, categoryColor, fetchPublicationI18n } from '../services/github';
 import { fetchPublicationContent } from '../services/siteData';
 import { loadLocal } from '../utils/localStorage';
 import useDebounce from '../hooks/useDebounce';
@@ -32,7 +32,12 @@ export default function Articles({
   const [typeFilter, setTypeFilter] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingArt, setEditingArt] = useState(null);
-  const [form, setForm] = useState({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '' });
+  const emptyTranslations = () => Object.fromEntries(
+    TARGET_LANGUAGES.map(l => [l.code, { title: '', summary: '', content: '' }])
+  );
+  const [form, setForm] = useState({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '', translations: emptyTranslations() });
+  // Langue actuellement éditée dans le formulaire ('fr' = source, sinon code de TARGET_LANGUAGES).
+  const [langTab, setLangTab] = useState('fr');
 
   // Auto-save du brouillon dans localStorage (debounce 3s) + alerte beforeunload.
   // On désactive l'autosave pour les articles déjà publiés sur le site : la
@@ -343,8 +348,29 @@ export default function Articles({
       setSavingEdit(true);
       try {
         await pushArticleToSite(editingArt, form);
+        // Pousse aussi les traductions saisies dans les onglets EN/ES/DE/IT
+        // dans `assets/js/publications-i18n.js` du repo site.
+        const i18nEntry = {};
+        const filledLangs = [];
+        for (const lang of TARGET_LANGUAGES) {
+          const t = form.translations?.[lang.code];
+          if (!(t?.title?.trim() && t?.content?.trim())) continue;
+          i18nEntry[`title_${lang.code}`] = t.title;
+          if (t.summary) i18nEntry[`description_${lang.code}`] = t.summary;
+          i18nEntry[`body_${lang.code}`] = t.content;
+          filledLangs.push(lang.code);
+        }
+        if (Object.keys(i18nEntry).length > 0) {
+          try {
+            await updatePublicationsI18n(editingArt.slug, i18nEntry);
+          } catch (i18nErr) {
+            toast(`HTML mis à jour mais traductions non sauvegardées : ${i18nErr.message}`, 'error');
+          }
+        }
         setArticles(prev => prev.map(a => a.id === editingArt.id ? { ...a, ...form } : a));
-        toast('Publication mise à jour sur le site');
+        toast(filledLangs.length
+          ? `Publication mise à jour sur le site (FR + ${filledLangs.join(', ').toUpperCase()})`
+          : 'Publication mise à jour sur le site');
         markSaved();
         clearDraft();
         closeForm();
@@ -378,13 +404,51 @@ export default function Articles({
   const startEdit = async (art) => {
     const gen = ++editGenRef.current;
     setEditingArt(art);
+    // Pré-remplit translations avec ce qui est déjà présent sur l'article
+    // (clés `en`, `es`, etc. injectées par PublishWithTranslation lors d'une
+    // précédente publication multilingue).
+    const initialTranslations = emptyTranslations();
+    for (const lang of TARGET_LANGUAGES) {
+      // Deux sources : `art[code]` (legacy, posé par PublishWithTranslation lors
+      // d'une publication multilingue) ou `art.translations[code]` (nouvelle source,
+      // posée par le formulaire à chaque sauvegarde locale).
+      const t = art.translations?.[lang.code] || art[lang.code];
+      if (t) initialTranslations[lang.code] = { title: t.title || '', summary: t.summary || '', content: t.content || '' };
+    }
     setForm({
       title: art.title, author: art.author, tags: [...(art.tags || [])],
       summary: art.summary || '', content: art.content || '',
       type: art.type || 'Note d\'analyse', pdfUrl: art.pdfUrl || '',
       scheduledDate: art.scheduledDate || '',
+      translations: initialTranslations,
     });
+    setLangTab('fr');
     setShowForm(true);
+
+    // Best-effort : charger les traductions existantes depuis publications-i18n.js
+    // pour pré-remplir les onglets EN/ES/DE/IT. Ne bloque pas l'ouverture du form.
+    if (art.slug && hasGitHub()) {
+      fetchPublicationI18n(art.slug).then(i18n => {
+        if (gen !== editGenRef.current) return;
+        const updates = {};
+        let hasAny = false;
+        for (const lang of TARGET_LANGUAGES) {
+          const title = i18n[`title_${lang.code}`] || '';
+          const summary = i18n[`description_${lang.code}`] || '';
+          const content = i18n[`body_${lang.code}`] || '';
+          if (title || summary || content) {
+            updates[lang.code] = { title, summary, content };
+            hasAny = true;
+          }
+        }
+        if (hasAny) {
+          setForm(f => ({
+            ...f,
+            translations: { ...f.translations, ...updates },
+          }));
+        }
+      });
+    }
 
     // Article du site sans contenu en mémoire → on récupère le HTML
     // depuis publications/{slug}.html et on le charge dans l'éditeur.
@@ -425,7 +489,8 @@ export default function Articles({
     setShowForm(false);
     setShowPublishTranslation(false);
     setEditingArt(null);
-    setForm({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '' });
+    setForm({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '', translations: emptyTranslations() });
+    setLangTab('fr');
   };
 
   // ─── Colonnes tableau ─────────────────────────
@@ -504,6 +569,31 @@ export default function Articles({
       </>
     );
   }
+
+  // Accesseurs basés sur l'onglet de langue actif. La source FR vit sur
+  // form.{title,summary,content} ; les autres langues sur form.translations[code].
+  const isSourceLang = langTab === 'fr';
+  const currentTitle = isSourceLang ? form.title : (form.translations[langTab]?.title ?? '');
+  const currentSummary = isSourceLang ? form.summary : (form.translations[langTab]?.summary ?? '');
+  const currentContent = isSourceLang ? form.content : (form.translations[langTab]?.content ?? '');
+  const updateLangField = (field, value) => {
+    if (isSourceLang) {
+      setForm(f => ({ ...f, [field]: value }));
+    } else {
+      setForm(f => ({
+        ...f,
+        translations: {
+          ...f.translations,
+          [langTab]: { ...(f.translations[langTab] || { title: '', summary: '', content: '' }), [field]: value },
+        },
+      }));
+    }
+  };
+  const isLangFilled = (code) => {
+    if (code === 'fr') return !!(form.title?.trim() && form.content?.trim());
+    const t = form.translations[code];
+    return !!(t?.title?.trim() && t?.content?.trim());
+  };
 
   return (
     <>
@@ -660,14 +750,36 @@ export default function Articles({
                 </button>
               </div>
             )}
+            {/* Onglets de langue : FR (source) + traductions */}
+            <div className="lang-tabs" role="tablist" aria-label="Langue éditée">
+              {SITE_LANGUAGES.map(l => {
+                const filled = isLangFilled(l.code);
+                return (
+                  <button
+                    key={l.code}
+                    type="button"
+                    role="tab"
+                    aria-selected={langTab === l.code}
+                    className={`lang-tab${langTab === l.code ? ' active' : ''}${filled ? ' filled' : ''}`}
+                    onClick={() => setLangTab(l.code)}
+                  >
+                    <span className="lang-tab-flag">{l.flag}</span>
+                    <span className="lang-tab-label">{l.label}</span>
+                    {l.isSource && <span className="lang-tab-source">source</span>}
+                    {!l.isSource && filled && <span className="lang-tab-check" aria-hidden="true">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
-                <label>Titre</label>
-                <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+                <label>Titre {!isSourceLang && <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 400 }}>— version {SITE_LANGUAGES.find(l => l.code === langTab)?.label}</span>}</label>
+                <input value={currentTitle} onChange={e => updateLangField('title', e.target.value)} />
               </div>
               <div>
                 <label>Auteur</label>
-                <input value={form.author} onChange={e => setForm({ ...form, author: e.target.value })} />
+                <input value={form.author} onChange={e => setForm({ ...form, author: e.target.value })} disabled={!isSourceLang} title={!isSourceLang ? 'Le nom d\'auteur est commun à toutes les langues' : undefined} />
               </div>
             </div>
 
@@ -778,32 +890,40 @@ export default function Articles({
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label>Résumé</label>
-              <textarea rows={3} value={form.summary} onChange={e => setForm({ ...form, summary: e.target.value })} />
+              <label>Résumé {!isSourceLang && <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 400 }}>— version {SITE_LANGUAGES.find(l => l.code === langTab)?.label}</span>}</label>
+              <textarea rows={3} value={currentSummary} onChange={e => updateLangField('summary', e.target.value)} />
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label>Contenu</label>
+              <label>Contenu {!isSourceLang && <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 400 }}>— version {SITE_LANGUAGES.find(l => l.code === langTab)?.label}</span>}</label>
               {contentLoading && (
                 <div style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 6 }}>
                   Chargement de l'article depuis le site…
                 </div>
               )}
-              {editingArt?.slug && editingArt?.status === 'published' && !contentLoading && (
+              {editingArt?.slug && editingArt?.status === 'published' && !contentLoading && isSourceLang && (
                 <div style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 6 }}>
                   Article existant : édition en HTML uniquement (round-trip exact garanti — préserve notes de bas de page, tableaux, iframes, SVG et toutes les balises d'origine). Utilise l'onglet Aperçu pour vérifier le rendu.
                 </div>
               )}
+              {!isSourceLang && (
+                <div style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 6 }}>
+                  Saisis ici la traduction du contenu en {SITE_LANGUAGES.find(l => l.code === langTab)?.label}. HTML autorisé. Laisse vide pour ne pas publier cette langue.
+                </div>
+              )}
+              {/* Forcer le remount à chaque changement de langue : sinon l'éditeur garde
+                  son état interne (mode visuel/HTML, sélection) sur le contenu précédent. */}
               <RichEditor
-                value={form.content}
-                onChange={(html) => setForm(f => ({ ...f, content: html }))}
-                title={form.title}
+                key={`editor-${langTab}`}
+                value={currentContent}
+                onChange={(html) => updateLangField('content', html)}
+                title={currentTitle}
                 author={form.author}
                 placeholder={contentLoading ? 'Chargement…' : 'Écrivez votre article ici…'}
                 slug={editingArt?.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}
                 toast={toast}
-                trusted={!!(editingArt?.slug && editingArt?.status === 'published')}
-                defaultMode={editingArt?.slug && editingArt?.status === 'published' ? 'html' : 'visual'}
+                trusted={!!(editingArt?.slug && editingArt?.status === 'published') && isSourceLang}
+                defaultMode={editingArt?.slug && editingArt?.status === 'published' && isSourceLang ? 'html' : 'visual'}
               />
             </div>
 
@@ -836,6 +956,18 @@ export default function Articles({
                   author: form.author,
                   pdfUrl: form.pdfUrl,
                   fr: { title: form.title, summary: form.summary, content: form.content },
+                  // Traductions saisies dans les onglets EN/ES/DE/IT du formulaire :
+                  // pré-remplir la modale (status: 'done') pour qu'elle ne lance pas
+                  // d'appel à l'API de traduction et publie directement le contenu.
+                  ...Object.fromEntries(
+                    TARGET_LANGUAGES
+                      .map(l => {
+                        const t = form.translations[l.code];
+                        if (!(t?.title?.trim() && t?.content?.trim())) return null;
+                        return [l.code, { title: t.title, summary: t.summary || '', content: t.content }];
+                      })
+                      .filter(Boolean)
+                  ),
                 }}
                 onPublished={async (finalArticle) => {
                   // 1. Pousser sur GitHub (version FR)
