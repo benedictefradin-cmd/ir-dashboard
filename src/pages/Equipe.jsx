@@ -4,6 +4,7 @@ import Modal from '../components/shared/Modal';
 import { COLORS, normalizeName, namesMatch, findPublicationsForAuthor, canonicalPhotoPath } from '../utils/constants';
 import usePhoto from '../hooks/usePhoto';
 import RepoPhoto from '../components/shared/RepoPhoto';
+import SearchableSelect from '../components/shared/SearchableSelect';
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
 
 const CS_CATEGORIES = [
@@ -761,13 +762,19 @@ function MemberEditForm({ initial, fields, hasPhoto, hasAuthorLink, auteurs, fin
               Profil détecté automatiquement : <strong>{autoDetected.firstName} {autoDetected.lastName}</strong>
             </div>
           )}
-          <select value={form.linkedAuthorId || (autoDetected?.id || '')}
-            onChange={e => setForm({ ...form, linkedAuthorId: e.target.value })} style={{ width: '100%', marginTop: 4 }}>
-            <option value="">— Aucun profil lié —</option>
-            {auteurs.map(a => (
-              <option key={a.id} value={a.id}>{a.firstName} {a.lastName} ({a.publications || 0} pub{(a.publications || 0) !== 1 ? 's' : ''})</option>
-            ))}
-          </select>
+          <div style={{ marginTop: 4 }}>
+            <SearchableSelect
+              options={auteurs.map(a => ({
+                value: a.id,
+                label: `${a.firstName} ${a.lastName}`.trim(),
+                hint: `${a.publications || 0} pub${(a.publications || 0) !== 1 ? 's' : ''}`,
+              }))}
+              value={form.linkedAuthorId || (autoDetected?.id || '')}
+              onChange={(v) => setForm({ ...form, linkedAuthorId: v })}
+              placeholder="Rechercher un profil…"
+              emptyLabel="— Aucun profil lié —"
+            />
+          </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             {!effectiveLinked && form.prenom && form.nom && (
               <button type="button" className="btn btn-outline btn-sm" onClick={handleCreateAuthor} disabled={creatingAuthor}>
