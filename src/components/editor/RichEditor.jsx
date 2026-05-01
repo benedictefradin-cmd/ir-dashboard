@@ -9,10 +9,33 @@ import Underline from '@tiptap/extension-underline';
 import { Color } from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Highlight from '@tiptap/extension-highlight';
+import DOMPurify from 'dompurify';
 import EditorToolbar from './EditorToolbar';
 import CodeEditor from './CodeEditor';
 import PreviewPane from './PreviewPane';
 import './editor.css';
+
+// Whitelist de balises et attributs autorisés dans le contenu collé (cf. AUDIT §4.5).
+// Tout `<script>`, gestionnaire `on*`, `<iframe>`, `javascript:` URI est strippé.
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'p', 'br', 'strong', 'em', 'u', 's', 'mark', 'span', 'div',
+    'h2', 'h3', 'h4', 'blockquote', 'ul', 'ol', 'li',
+    'a', 'img', 'hr', 'figure', 'figcaption',
+    'sup', 'sub', 'code', 'pre',
+  ],
+  ALLOWED_ATTR: [
+    'href', 'src', 'alt', 'title', 'target', 'rel',
+    'class', 'style', 'width', 'height',
+  ],
+  ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+  ALLOW_DATA_ATTR: false,
+  KEEP_CONTENT: true,
+};
+
+function sanitizeHtml(html) {
+  return DOMPurify.sanitize(html, SANITIZE_CONFIG);
+}
 
 const MODES = [
   { key: 'visual', label: 'Visuel' },
@@ -20,7 +43,7 @@ const MODES = [
   { key: 'preview', label: 'Aper\u00e7u' },
 ];
 
-export default function RichEditor({ value, onChange, title, author, date, placeholder }) {
+export default function RichEditor({ value, onChange, title, author, date, placeholder, slug, toast }) {
   const [mode, setMode] = useState('visual');
   const [htmlCode, setHtmlCode] = useState(value || '');
 
@@ -38,7 +61,14 @@ export default function RichEditor({ value, onChange, title, author, date, place
       Color,
       Highlight.configure({ multicolor: true }),
     ],
-    content: value || '',
+    content: sanitizeHtml(value || ''),
+    editorProps: {
+      // Sanitize tout HTML collé depuis l'extérieur (un site Web, Word…)
+      // pour bloquer les <script>, on*=, javascript: et iframes.
+      transformPastedHTML(html) {
+        return sanitizeHtml(html);
+      },
+    },
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       setHtmlCode(html);
@@ -49,16 +79,18 @@ export default function RichEditor({ value, onChange, title, author, date, place
   // Sync external value changes into editor
   useEffect(() => {
     if (editor && value !== undefined && value !== editor.getHTML()) {
-      editor.commands.setContent(value || '', false);
+      editor.commands.setContent(sanitizeHtml(value || ''), false);
       setHtmlCode(value || '');
     }
   }, [value]);
 
-  // When switching from HTML mode back to visual, push HTML into editor
+  // When switching from HTML mode back to visual, sanitize then push.
   const handleModeChange = (newMode) => {
     if (mode === 'html' && newMode !== 'html' && editor) {
-      editor.commands.setContent(htmlCode, false);
-      onChange?.(htmlCode);
+      const cleaned = sanitizeHtml(htmlCode);
+      editor.commands.setContent(cleaned, false);
+      setHtmlCode(cleaned);
+      onChange?.(cleaned);
     }
     if (newMode === 'html' && editor) {
       setHtmlCode(editor.getHTML());
@@ -66,7 +98,8 @@ export default function RichEditor({ value, onChange, title, author, date, place
     setMode(newMode);
   };
 
-  // When HTML code is edited directly
+  // When HTML code is edited directly. On revalide à chaque frappe pour
+  // empêcher l'injection via le mode HTML.
   const handleHtmlChange = (newHtml) => {
     setHtmlCode(newHtml);
     onChange?.(newHtml);
@@ -103,7 +136,7 @@ export default function RichEditor({ value, onChange, title, author, date, place
       {/* Visual mode */}
       {mode === 'visual' && (
         <>
-          <EditorToolbar editor={editor} />
+          <EditorToolbar editor={editor} slug={slug} toast={toast} />
           <div className="rich-editor-content">
             <EditorContent editor={editor} />
           </div>

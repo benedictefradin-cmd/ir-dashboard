@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import ImageInsertModal from './ImageInsertModal';
 
 const HEADING_OPTIONS = [
   { level: 0, label: 'Paragraphe' },
@@ -16,26 +17,33 @@ const TEXT_COLORS = [
   { color: '#333333', label: 'Noir' },
 ];
 
-export default function EditorToolbar({ editor }) {
-  if (!editor) return null;
+export default function EditorToolbar({ editor, slug, toast }) {
+  const [showImageModal, setShowImageModal] = useState(false);
 
   const setLink = useCallback(() => {
+    if (!editor) return;
     const prev = editor.getAttributes('link').href;
+    // window.prompt reste acceptable ici (lien simple, pas de XSS car href filtr\u00e9
+    // par DOMPurify c\u00f4t\u00e9 RichEditor). Le scheme javascript: est rejet\u00e9.
     const url = window.prompt('URL du lien :', prev || 'https://');
     if (url === null) return;
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    } else if (/^javascript:/i.test(url.trim())) {
+      window.alert('Lien javascript: refus\u00e9.');
     } else {
       editor.chain().focus().extendMarkRange('link').setLink({ href: url, target: '_blank' }).run();
     }
   }, [editor]);
 
-  const addImage = useCallback(() => {
-    const url = window.prompt('URL de l\u2019image :');
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
+  const insertImage = useCallback(({ src, alt, width }) => {
+    if (!editor) return;
+    const attrs = { src, alt };
+    if (width) attrs.width = String(width);
+    editor.chain().focus().setImage(attrs).run();
   }, [editor]);
+
+  if (!editor) return null;
 
   const setHeading = useCallback((level) => {
     if (level === 0) {
@@ -210,11 +218,20 @@ export default function EditorToolbar({ editor }) {
       <button
         type="button"
         className="editor-toolbar-btn"
-        onClick={addImage}
-        title="Insérer une image"
+        onClick={() => setShowImageModal(true)}
+        title="Insérer une image (alt obligatoire, redim 2000px, upload sur le repo)"
       >
         🖼
       </button>
+
+      {showImageModal && (
+        <ImageInsertModal
+          slug={slug}
+          toast={toast}
+          onInsert={insertImage}
+          onClose={() => setShowImageModal(false)}
+        />
+      )}
 
       {/* Horizontal rule */}
       <button

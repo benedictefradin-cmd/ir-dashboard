@@ -15,6 +15,8 @@ import useDebounce from '../hooks/useDebounce';
 import ARTICLE_TEMPLATES from '../data/articleTemplates';
 import PublishWithTranslation from '../components/articles/PublishWithTranslation';
 import RichEditor from '../components/editor/RichEditor';
+import useDraftAutosave from '../hooks/useDraftAutosave';
+import useUnsavedGuard from '../hooks/useUnsavedGuard';
 
 // ─── Notion status mapping ─────────────────────────
 const NOTION_STATUS_MAP = {
@@ -47,6 +49,12 @@ export default function Articles({
   const [showForm, setShowForm] = useState(false);
   const [editingArt, setEditingArt] = useState(null);
   const [form, setForm] = useState({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '' });
+
+  // Auto-save du brouillon dans localStorage (debounce 3s) + alerte beforeunload.
+  const draftKey = editingArt?.id ? `article-${editingArt.id}` : 'article-new';
+  const { existingDraft, restore: restoreDraft, clear: clearDraft, dismissDraft } =
+    useDraftAutosave(draftKey, form, { enabled: showForm });
+  const { markSaved } = useUnsavedGuard(showForm ? form : null);
   const [publishingId, setPublishingId] = useState(null);
   const debouncedSearch = useDebounce(search);
 
@@ -321,6 +329,8 @@ export default function Articles({
       setArticles(prev => [newArt, ...prev]);
       toast('Publication créée');
     }
+    markSaved();
+    clearDraft();
     closeForm();
   };
 
@@ -523,6 +533,31 @@ export default function Articles({
         {/* ── Formulaire local ──────────────────── */}
         {showForm && (
           <Modal title={editingArt ? 'Modifier la publication' : 'Nouvelle publication'} onClose={closeForm} size="lg">
+            {existingDraft && (
+              <div className="alert-banner alert-banner-amber mb-16" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span>📝</span>
+                <div style={{ flex: 1, fontSize: 13 }}>
+                  Brouillon trouvé — sauvegardé {timeAgo(existingDraft.savedAt)}.
+                </div>
+                <button
+                  className="btn btn-sm btn-primary"
+                  type="button"
+                  onClick={() => {
+                    const restored = restoreDraft();
+                    if (restored) setForm(restored);
+                  }}
+                >
+                  Restaurer
+                </button>
+                <button
+                  className="btn btn-sm btn-outline"
+                  type="button"
+                  onClick={() => { dismissDraft(); clearDraft(); }}
+                >
+                  Ignorer
+                </button>
+              </div>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
                 <label>Titre</label>
@@ -640,6 +675,8 @@ export default function Articles({
                 title={form.title}
                 author={form.author}
                 placeholder="Écrivez votre article ici…"
+                slug={editingArt?.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}
+                toast={toast}
               />
             </div>
 
