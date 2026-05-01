@@ -54,11 +54,13 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
   const [activeSettingsTab, setActiveSettingsTab] = useState('connexions');
 
   const isAdmin = currentUser?.role === 'admin';
+  // L'onglet "Automatisations" est masqué en attendant un consommateur réel
+  // côté Worker (toggle décoratif jusqu'ici, cf. AUDIT §3.11 / Q9). Le state
+  // reste en localStorage pour ne pas perdre la config existante.
   const SETTINGS_TABS = [
     { key: 'connexions', label: 'Connexions API' },
     { key: 'utilisateurs', label: 'Utilisateurs' },
     { key: 'import', label: 'Import / Export' },
-    { key: 'automations', label: 'Automatisations' },
     { key: 'avance', label: 'Avancé' },
   ];
 

@@ -13,6 +13,7 @@ import DOMPurify from 'dompurify';
 import EditorToolbar from './EditorToolbar';
 import CodeEditor from './CodeEditor';
 import PreviewPane from './PreviewPane';
+import { githubUploadImage } from '../../services/github';
 import './editor.css';
 
 // Whitelist de balises et attributs autorisés dans le contenu collé (cf. AUDIT §4.5).
@@ -67,6 +68,33 @@ export default function RichEditor({ value, onChange, title, author, date, place
       // pour bloquer les <script>, on*=, javascript: et iframes.
       transformPastedHTML(html) {
         return sanitizeHtml(html);
+      },
+      // Drag & drop direct d'images dans l'éditeur : upload sur le repo site
+      // puis insertion. L'`alt` est temporairement vide — l'utilisateur peut
+      // l'éditer en cliquant sur l'image (ou repasser par la modal). Ce hook
+      // n'intercepte que les images, les autres drops (texte) suivent leur cours.
+      handleDrop(view, event) {
+        const files = Array.from(event.dataTransfer?.files || []).filter(f => f.type.startsWith('image/'));
+        if (!files.length) return false;
+        event.preventDefault();
+        files.forEach(async (file) => {
+          try {
+            const resized = await resizeImage(file, 2000);
+            const base64 = await fileToBase64(resized);
+            const folderSlug = slug || 'article';
+            const safeName = file.name.toLowerCase().replace(/[^a-z0-9.-]+/g, '-');
+            const path = `assets/img/publications/${folderSlug}/${safeName}`;
+            await githubUploadImage(path, base64, `Image (drop) ${file.name}`);
+            const altPrompt = window.prompt('Texte alternatif (alt) — accessibilité + SEO :', file.name);
+            view.dispatch(view.state.tr.replaceSelectionWith(
+              view.state.schema.nodes.image.create({ src: `/${path}`, alt: altPrompt || file.name })
+            ));
+            toast?.('Image uploadée et insérée');
+          } catch (err) {
+            toast?.(`Erreur upload : ${err.message}`, 'error');
+          }
+        });
+        return true;
       },
     },
     onUpdate: ({ editor }) => {

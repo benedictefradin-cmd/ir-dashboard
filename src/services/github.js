@@ -6,6 +6,7 @@
 // L'API publique (noms de fonctions exportées) est préservée pour minimiser
 // les changements en cascade dans les pages.
 
+import JSON5 from 'json5';
 import { loadLocal } from '../utils/localStorage';
 import { LS_KEYS, DEFAULT_WORKER_URL } from '../utils/constants';
 import { gitHubAuthHeaders } from './githubAuth';
@@ -213,9 +214,9 @@ export async function saveAuthorsToGitHub(authors) {
  * Met à jour le fichier `assets/js/publications-i18n.js` pour ajouter ou
  * remplacer les traductions d'un slug.
  *
- * Le fichier source utilise une syntaxe JS (clés non-quotées). On l'évalue avec
- * `new Function` (NB : héritage à fixer ultérieurement — voir AUDIT §4.7), on
- * merge la nouvelle entrée, puis on réécrit en JSON strict (toujours du JS valide).
+ * Le fichier source utilise une syntaxe JS-objet (clés non-quotées, virgules
+ * traînantes). On le parse avec JSON5 (au lieu de l'ancien `new Function`,
+ * cf. AUDIT §4.7) puis on merge et on réécrit en JSON strict.
  */
 export async function updatePublicationsI18n(slug, entry) {
   const path = 'assets/js/publications-i18n.js';
@@ -224,8 +225,12 @@ export async function updatePublicationsI18n(slug, entry) {
   const match = file.content.match(/window\.PUB_I18N\s*=\s*([\s\S]*?);\s*$/);
   if (!match) throw new Error('Format inattendu dans publications-i18n.js');
 
-  // eslint-disable-next-line no-new-func
-  const obj = new Function(`return (${match[1]});`)();
+  let obj;
+  try {
+    obj = JSON5.parse(match[1]);
+  } catch (e) {
+    throw new Error(`Parsing publications-i18n.js : ${e.message}`);
+  }
 
   obj[slug] = {
     ...(obj[slug] || {}),
@@ -258,9 +263,13 @@ export async function updatePublicationsData(entry) {
   try {
     arr = JSON.parse(match[1]);
   } catch {
-    // Fallback tolérant si clés non-quotées (héritage à fixer — AUDIT §4.7)
-    // eslint-disable-next-line no-new-func
-    arr = new Function(`return (${match[1]});`)();
+    // Fallback tolérant : JSON5 accepte les clés non-quotées et les virgules
+    // traînantes du JS, sans exécuter de code (contrairement à `new Function`).
+    try {
+      arr = JSON5.parse(match[1]);
+    } catch (e) {
+      throw new Error(`Parsing publications-data.js : ${e.message}`);
+    }
   }
 
   const idx = arr.findIndex(p => p.id === entry.id);
