@@ -1,75 +1,30 @@
-# Rapport link-checker — 01/05/2026 13:21:12
+# Rapport link-checker — 01/05/2026 13:37:25
 
-**Total :** 1977 URLs externes vérifiées · **1749 OK** · **228 cassés**
+**Total :** 1979 URLs externes vérifiées · **1750 OK** · **229 cassés**
 
 ## Résumé par catégorie
 | Catégorie | Nombre |
 |---|--:|
-| 4xx (page absente) | 151 |
+| 4xx (page absente) | 152 |
 | 5xx (serveur KO) | 11 |
-| Timeout (>10s) | 16 |
-| Échec réseau | 50 |
+| Timeout (>10s) | 14 |
+| Échec réseau | 52 |
 
 ## Top domaines cassés
 | # | Domaine |
 |--:|---|
-| 7 | `www.strategie.gouv.fr` |
-| 6 | `ec.europa.eu` |
 | 5 | `www.ecologie.gouv.fr` |
 | 5 | `travail-emploi.gouv.fr` |
+| 5 | `ec.europa.eu` |
 | 4 | `www.autorite-transports.fr` |
-| 4 | `www.diplomatie.gouv.fr` |
 | 4 | `www.i4ce.org` |
+| 4 | `www.diplomatie.gouv.fr` |
 | 4 | `www.cafepedagogique.net` |
+| 4 | `www.strategie.gouv.fr` |
 | 4 | `www.ecologique-solidaire.gouv.fr` |
 | 3 | `www-cairn-info.acces-distant.sciencespo.fr` |
 
 ## Détail (groupé par domaine)
-
-### `www.strategie.gouv.fr` — 7 liens
-
-- `HTTP 404` https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-na78-2019-emissions-voitures-meilhan-20juin-bat.pdf
-  - ↳ `publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html` — Face aux pièges de l’écologie « punitive », quelles restrictions les plus effica
-  - ↳ `publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html` — Quelles transformations globales pour une transition écologique effective ?
-
-- `HTTP 404` https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-ns_vehicules_electriques_31-05-2018_1816_0.pdf
-  - ↳ `publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html` — Face aux pièges de l’écologie « punitive », quelles restrictions les plus effica
-  - ↳ `publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html` — Quelles transformations globales pour une transition écologique effective ?
-
-- `HTTP 404` https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-2019-fiscalite-capital-01-10-2019.pdf
-  - ↳ `publications/quand-la-politique-dausterite-conduit-a-degrader-volontairement-le-controle-fiscal-et-lefficacite-de-la-lutte-contre-la-fraude.html` — Quand la politique d’austérité conduit à dégrader volontairement le contrôle fis
-
-- `HTTP 404` https://www.strategie.gouv.fr/espace-presse/evaluer-lexternalite-carbone-metaux
-  - ↳ `publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html` — Face au poids croissant du numérique : l’impératif de sobriété
-
-- `HTTP 404` https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-2020-dt-consommation-metaux-du-numerique-juin.pdf
-  - ↳ `publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html` — Face au poids croissant du numérique : l’impératif de sobriété
-
-- `HTTP 404` https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-2019-rapport-la-valeur-de-laction-pour-le-climat_0.pdf
-  - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
-
-- `HTTP 404` https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/na-54-fiscalite-epargne-ok.pdf
-  - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
-
-### `ec.europa.eu` — 6 liens
-
-- `timeout` https://ec.europa.eu/dorie/fileDownload.do%253Bjsessionid=PQlDJnBTQnW1rRgzzkb1NZQxGJHHHTxFMJL4HWgKLQV5tyB6XF4f!469751194?docId=1123784&amp;cardId=1123780
-  - ↳ `publications/les-arguments-juridiques-en-faveur-dune-conversion-des-titres-de-dette-publique-detenus-par-la-bce-en-investissements-verts.html` — Les arguments juridiques en faveur d’une conversion des titres de dette publique
-
-- `HTTP 404` https://ec.europa.eu/programmes/horizon2020/en/h2020-section/information-and-communication-technologies
-  - ↳ `publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html` — Quand le décideur européen joue le jeu des Big techs…
-
-- `HTTP 404` https://ec.europa.eu/clima/policies/transport_en
-  - ↳ `publications/lhydrogene-bas-carbone-au-service-de-la-transition.html` — L’hydrogène bas carbone au service de la transition
-
-- `HTTP 404` https://ec.europa.eu/clima/policies/transport/vehicles_en
-  - ↳ `publications/lhydrogene-bas-carbone-au-service-de-la-transition.html` — L’hydrogène bas carbone au service de la transition
-
-- `HTTP 404` https://ec.europa.eu/info/sites/info/files/european-green-deal-communication_fr.pdf
-  - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
-
-- `HTTP 404` https://ec.europa.eu/info/sites/info/files/business_economy_euro/banking_and_finance/documents/190618-sustainable-finance-teg-report-taxonomy_en.pdf
-  - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
 
 ### `www.ecologie.gouv.fr` — 5 liens
 
@@ -107,6 +62,23 @@
 - `HTTP 404` https://travail-emploi.gouv.fr/IMG/pdf/l_inspection_du_travail_en_france_2017.pdf
   - ↳ `publications/demondialisation-relocalisation-et-regulation-publique-pourquoi-et-comment.html` — Démondialisation, relocalisation et régulation publique : pourquoi et comment
 
+### `ec.europa.eu` — 5 liens
+
+- `HTTP 404` https://ec.europa.eu/programmes/horizon2020/en/h2020-section/information-and-communication-technologies
+  - ↳ `publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html` — Quand le décideur européen joue le jeu des Big techs…
+
+- `HTTP 404` https://ec.europa.eu/clima/policies/transport_en
+  - ↳ `publications/lhydrogene-bas-carbone-au-service-de-la-transition.html` — L’hydrogène bas carbone au service de la transition
+
+- `HTTP 404` https://ec.europa.eu/clima/policies/transport/vehicles_en
+  - ↳ `publications/lhydrogene-bas-carbone-au-service-de-la-transition.html` — L’hydrogène bas carbone au service de la transition
+
+- `HTTP 404` https://ec.europa.eu/info/sites/info/files/european-green-deal-communication_fr.pdf
+  - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
+
+- `HTTP 404` https://ec.europa.eu/info/sites/info/files/business_economy_euro/banking_and_finance/documents/190618-sustainable-finance-teg-report-taxonomy_en.pdf
+  - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
+
 ### `www.autorite-transports.fr` — 4 liens
 
 - `HTTP 503` https://www.autorite-transports.fr/wp-content/uploads/2023/07/rapport-scenarios-de-long-terme-pour-le-reseau-ferroviaire-francais-12-07-23-final.pdf
@@ -122,20 +94,6 @@
 - `HTTP 503` https://www.autorite-transports.fr/wp-content/uploads/2020/12/synthese-des-comptes-des-concessions-autoroutieres-exercice-2019.pdf
   - ↳ `publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html` — Quelles transformations globales pour une transition écologique effective ?
 
-### `www.diplomatie.gouv.fr` — 4 liens
-
-- `fetch failed` https://www.diplomatie.gouv.fr/IMG/pdf/strategie-humanitaire-fr_cle8c1cde.pdf
-  - ↳ `publications/lunion-europeenne-et-le-sauvetage-des-migrants-naufrages-en-mediterranee-le-droit-comme-rempart-a-lindignite.html` — L’Union européenne et le sauvetage des migrants-naufragés en Méditerranée : le d
-
-- `fetch failed` https://www.diplomatie.gouv.fr/fr/politique-etrangere-de-la-france/action-humanitaire-d-urgence/
-  - ↳ `publications/lunion-europeenne-et-le-sauvetage-des-migrants-naufrages-en-mediterranee-le-droit-comme-rempart-a-lindignite.html` — L’Union européenne et le sauvetage des migrants-naufragés en Méditerranée : le d
-
-- `fetch failed` https://www.diplomatie.gouv.fr/fr/dossiers-pays/armenie/evenements/article/haut-karabagh-declaration-de-la-porte-parole-26-11-20
-  - ↳ `publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html` — Entre un cessez-le-feu et une élection
-
-- `fetch failed` https://www.diplomatie.gouv.fr/fr/dossiers-pays/rwanda/evenements/article/commission-de-recherche-sur-les-archives-francaises-relatives-au-rwanda-et-au-248936
-  - ↳ `publications/repenser-les-relations-avec-les-societes-africaines.html` — Repenser les relations avec les sociétés africaines
-
 ### `www.i4ce.org` — 4 liens
 
 - `HTTP 404` https://www.i4ce.org/wp-content/uploads/2022/07/I4CE-Etude-EvalClimat360%25C2%25B0BudgetEtat-1.pdf&amp;sa=D&amp;source=docs&amp;ust=1716486511321690&amp;usg=AOvVaw1InvZzI0Dee3Lg4KBbZSXr
@@ -150,6 +108,20 @@
 - `HTTP 404` https://www.i4ce.org/wp-core/wp-content/uploads/2018/11/I4CE-Panorama-des-financements-climat-r%25C3%25A9sum%25C3%25A9-2018-FR.pdf
   - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
 
+### `www.diplomatie.gouv.fr` — 4 liens
+
+- `fetch failed` https://www.diplomatie.gouv.fr/IMG/pdf/strategie-humanitaire-fr_cle8c1cde.pdf
+  - ↳ `publications/lunion-europeenne-et-le-sauvetage-des-migrants-naufrages-en-mediterranee-le-droit-comme-rempart-a-lindignite.html` — L’Union européenne et le sauvetage des migrants-naufragés en Méditerranée : le d
+
+- `fetch failed` https://www.diplomatie.gouv.fr/fr/politique-etrangere-de-la-france/action-humanitaire-d-urgence/
+  - ↳ `publications/lunion-europeenne-et-le-sauvetage-des-migrants-naufrages-en-mediterranee-le-droit-comme-rempart-a-lindignite.html` — L’Union européenne et le sauvetage des migrants-naufragés en Méditerranée : le d
+
+- `fetch failed` https://www.diplomatie.gouv.fr/fr/dossiers-pays/armenie/evenements/article/haut-karabagh-declaration-de-la-porte-parole-26-11-20
+  - ↳ `publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html` — Entre un cessez-le-feu et une élection
+
+- `fetch failed` https://www.diplomatie.gouv.fr/fr/dossiers-pays/rwanda/evenements/article/commission-de-recherche-sur-les-archives-francaises-relatives-au-rwanda-et-au-248936
+  - ↳ `publications/repenser-les-relations-avec-les-societes-africaines.html` — Repenser les relations avec les sociétés africaines
+
 ### `www.cafepedagogique.net` — 4 liens
 
 - `HTTP 404` http://www.cafepedagogique.net/lexpresso/Pages/2022/05/12052022Article637879345957248065.aspx
@@ -163,6 +135,20 @@
 
 - `HTTP 404` http://www.cafepedagogique.net/lexpresso/Pages/2021/11/17112021Article637727293811333108.aspx
   - ↳ `publications/un-sursaut-pour-lecole-de-la-republique.html` — Un sursaut pour l’école de la République
+
+### `www.strategie.gouv.fr` — 4 liens
+
+- `HTTP 404` https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-2019-fiscalite-capital-01-10-2019.pdf
+  - ↳ `publications/quand-la-politique-dausterite-conduit-a-degrader-volontairement-le-controle-fiscal-et-lefficacite-de-la-lutte-contre-la-fraude.html` — Quand la politique d’austérité conduit à dégrader volontairement le contrôle fis
+
+- `HTTP 404` https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-2020-dt-consommation-metaux-du-numerique-juin.pdf
+  - ↳ `publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html` — Face au poids croissant du numérique : l’impératif de sobriété
+
+- `HTTP 404` https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-2019-rapport-la-valeur-de-laction-pour-le-climat_0.pdf
+  - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
+
+- `HTTP 404` https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/na-54-fiscalite-epargne-ok.pdf
+  - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
 
 ### `www.ecologique-solidaire.gouv.fr` — 4 liens
 
@@ -237,17 +223,6 @@
 - `timeout` https://www.anah.fr/presse/detail/actualite/evaluation-des-impacts-economiques-du-programme-habiter-mieux/
   - ↳ `publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html` — Quelles transformations globales pour une transition écologique effective ?
 
-### `eur-lex.europa.eu` — 3 liens
-
-- `HTTP 404` https://eur-lex.europa.eu/legal-content/fr/TXT/?qid=1608117147218&amp;uri=COM%3A2020%3A825%3AFIN
-  - ↳ `publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html` — Quand le décideur européen joue le jeu des Big techs…
-
-- `timeout` https://eur-lex.europa.eu/legal-content/FR/ALL/?uri=CELEX%3A12008E107
-  - ↳ `publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html` — Quand le décideur européen joue le jeu des Big techs…
-
-- `timeout` https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A32016R0679
-  - ↳ `publications/lurgence-dune-independance-numerique-revelee-par-lurgence-sanitaire.html` — L’urgence d’une indépendance numérique révélée par l’urgence sanitaire
-
 ### `www.performance-publique.budget.gouv.fr` — 3 liens
 
 - `fetch failed` https://www.performance-publique.budget.gouv.fr/documents-budgetaires/lois-projets-lois-documents-annexes-annee/exercice-2020/projet-loi-finances-2020-mission-aide-publique-developpement
@@ -275,6 +250,14 @@
 - `HTTP 404` https://www.transportenvironment.org/assets/files/2024_03_TE_EV_tariffs_paper.pdf&amp;sa=D&amp;source=docs&amp;ust=1716523040781051&amp;usg=AOvVaw1ppjSg5zRyy2bNt7_aluqk
   - ↳ `publications/debat-des-candidats-le-fact-checking.html` — Débat des candidats : le fact-checking
 
+### `web.archive.org` — 2 liens
+
+- `HTTP 404` http://web.archive.org/web/20241204114149/http://web.archive.org/web/20241204114149/https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-na78-2019-emissions-voitures-meilhan-20juin-bat.pdf
+  - ↳ `publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html` — Face aux pièges de l’écologie « punitive », quelles restrictions les plus effica
+
+- `HTTP 404` http://web.archive.org/web/20241220093922/http://web.archive.org/web/20241220093922/https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-ns_vehicules_electriques_31-05-2018_1816_0.pdf
+  - ↳ `publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html` — Face aux pièges de l’écologie « punitive », quelles restrictions les plus effica
+
 ### `www.lafranceagricole.fr` — 2 liens
 
 - `HTTP 404` https://www.lafranceagricole.fr/franceagrimer/article/843229/la-consommation-de-viande-en-hausse-pour-la-deuxieme-annee-consecutive#:~:text=Les%20Fran%C3%A7ais%20en%20ont%20consomm%C3%A9,%2C3%20%25%20en%202022
@@ -292,14 +275,6 @@
 - `HTTP 404` https://www.terre-net.fr/observatoire-technique-culturale/strategie-technique-culturale/article/la-production-de-betteraves-sucrieres-en-recul-de-15-4-sur-un-an-selon-agreste-217-172048.html
   - ↳ `publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html` — Quelles transformations globales pour une transition écologique effective ?
 
-### `youmatter.world` — 2 liens
-
-- `HTTP 404` https://youmatter.world/fr/secheresse-rendements-agricoles-france-2023/#:~:text=D%C3%A9j%C3%A0%20en%202022%2C%20les%20donn%C3%A9es,depuis%20pr%C3%A8s%20de%2030%20ans
-  - ↳ `publications/institutionnalisons-la-sobriete-hydrique-en-france.html` — Institutionnalisons la sobriété hydrique en France !
-
-- `HTTP 404` https://youmatter.world/fr/definition/forcage-radiatif-definition-origines-impact-sur-le-climat/
-  - ↳ `publications/comment-sadapter-a-la-crise-climatique.html` — Comment s’adapter à la crise climatique ?
-
 ### `www.education.gouv.fr` — 2 liens
 
 - `HTTP 404` https://www.education.gouv.fr/sites/default/files/imported_files/document/depp-ni-2019-19-12-Le-devenir-des-bacheliers-pro-qui-poursuivent-leurs-etudes_1114206.pdf
@@ -316,11 +291,19 @@
 - `HTTP 404` https://www.fonction-publique.gouv.fr/files/files/statistiques/rapports_annuels/2019/Rapport_annuel_FP-2019.pdf
   - ↳ `publications/une-fonction-publique-solide-revalorisee-et-plus-diverse-pour-vivre-bien.html` — Une fonction publique solide, revalorisée et plus diverse pour vivre bien
 
+### `youmatter.world` — 2 liens
+
+- `HTTP 404` https://youmatter.world/fr/secheresse-rendements-agricoles-france-2023/#:~:text=D%C3%A9j%C3%A0%20en%202022%2C%20les%20donn%C3%A9es,depuis%20pr%C3%A8s%20de%2030%20ans
+  - ↳ `publications/institutionnalisons-la-sobriete-hydrique-en-france.html` — Institutionnalisons la sobriété hydrique en France !
+
+- `HTTP 404` https://youmatter.world/fr/definition/forcage-radiatif-definition-origines-impact-sur-le-climat/
+  - ↳ `publications/comment-sadapter-a-la-crise-climatique.html` — Comment s’adapter à la crise climatique ?
+
 ### `larevuedesmedias.ina.fr` — 2 liens
 
 - `fetch failed` http://larevuedesmedias.ina.fr/environnement-jt-information-television-energie-climat-pollution-biodiversite
-  - ↳ `publications/comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias.html` — Comment améliorer le traitement des enjeux écologiques dans les médias ?
   - ↳ `publications/proposition-de-loi-relative-a-la-responsabilite-des-medias-dans-le-traitement-des-enjeux-environnementaux-et-de-durabilite.html` — Proposition de loi relative à la responsabilité des médias dans le traitement de
+  - ↳ `publications/comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias.html` — Comment améliorer le traitement des enjeux écologiques dans les médias ?
 
 - `fetch failed` https://larevuedesmedias.ina.fr/le-cyberespace-un-enjeu-majeur-de-geopolitique
   - ↳ `publications/lurgence-dune-independance-numerique-revelee-par-lurgence-sanitaire.html` — L’urgence d’une indépendance numérique révélée par l’urgence sanitaire
@@ -359,6 +342,16 @@
   - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
   - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
 
+### `dares.travail-emploi.gouv.fr` — 2 liens
+
+- `HTTP 404` https://dares.travail-emploi.gouv.fr/IMG/pdf/Remy.pdf
+  - ↳ `publications/pour-une-garantie-a-lemploi-vert.html` — Pour une garantie à l’emploi vert
+  - ↳ `publications/garantie-emploi.html` — Garantie d'emploi : une idée pour la France
+
+- `HTTP 404` https://dares.travail-emploi.gouv.fr/IMG/pdf/2012-060.pdf
+  - ↳ `publications/pour-une-garantie-a-lemploi-vert.html` — Pour une garantie à l’emploi vert
+  - ↳ `publications/garantie-emploi.html` — Garantie d'emploi : une idée pour la France
+
 ### `data.europa.eu` — 1 lien
 
 - `timeout` https://data.europa.eu/doi/10.2832/16593
@@ -368,11 +361,6 @@
 ### `www.eia.gov` — 1 lien
 
 - `HTTP 503` https://www.eia.gov/international/analysis/special-topics/World_Oil_Transit_Chokepoints
-  - ↳ `publications/trump-israel-iran-petrole.html` — Trump a-t-il autorisé Israël à attaquer l'Iran pour sauver ses producteurs de pé
-
-### `www.rns-pdf.londonstockexchange.com` — 1 lien
-
-- `HTTP 404` https://www.rns-pdf.londonstockexchange.com/rns/6727U_1-2019-4-1.pdf
   - ↳ `publications/trump-israel-iran-petrole.html` — Trump a-t-il autorisé Israël à attaquer l'Iran pour sauver ses producteurs de pé
 
 ### `cartong.pages.gitlab.cartong.org` — 1 lien
@@ -411,11 +399,6 @@
 - `HTTP 503` https://jimdo-storage.global.ssl.fastly.net/file/2837d220-db5d-4ac1-8b2c-fdf9e6f97488/Rapport%2520-%2520La%2520soci%25C3%25A9t%25C3%25A9%2520%25C3%25A0%2520mission,%25205%2520ans%2520de%2520pratique.pdf
   - ↳ `publications/representer-nature-gouvernance.html` — Représenter la nature en entreprise : vers de nouveaux droits
 
-### `nantes.tribunal-administratif.fr` — 1 lien
-
-- `HTTP 404` http://nantes.tribunal-administratif.fr/Le-tribunal-administratif/Contentieux-specifiques
-  - ↳ `publications/sortir-du-paradigme-securitaire-garantir-le-droit-dasile-en-europe.html` — Sortir du paradigme sécuritaire : garantir le droit d’asile en Europe
-
 ### `op.europa.eu` — 1 lien
 
 - `timeout` https://op.europa.eu/en/publication-detail/-/publication/97d6a4ca-5847-11ea-8b81-01aa75ed71a1/language-en/format-PDF/source-119528141
@@ -448,21 +431,15 @@
 - `HTTP 404` https://www.occitanie.developpement-durable.gouv.fr/IMG/pdf/rapportcrhh2023_vf.pdf
   - ↳ `publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html` — Face aux pièges de l’écologie « punitive », quelles restrictions les plus effica
 
+### `nantes.tribunal-administratif.fr` — 1 lien
+
+- `HTTP 404` http://nantes.tribunal-administratif.fr/Le-tribunal-administratif/Contentieux-specifiques
+  - ↳ `publications/sortir-du-paradigme-securitaire-garantir-le-droit-dasile-en-europe.html` — Sortir du paradigme sécuritaire : garantir le droit d’asile en Europe
+
 ### `www.sudouest.fr` — 1 lien
 
 - `fetch failed` https://www.sudouest.fr/environnement/pesticides/eau-plusieurs-captages-d-eau-potable-fermes-a-cause-d-une-pollution-aux-pesticides-15761452.php
   - ↳ `publications/institutionnalisons-la-sobriete-hydrique-en-france-4.html` — Institutionnalisons la sobriété hydrique en France !
-
-### `www.web-agri.fr` — 1 lien
-
-- `HTTP 404` https://www.web-agri.fr/vaches-laitieres/article/168233/chiffres-cles-sur-la-consommation-d-eau-en-elevages-bovins
-  - ↳ `publications/institutionnalisons-la-sobriete-hydrique-en-france-2.html` — Institutionnalisons la sobriété hydrique en France !
-  - ↳ `publications/comment-sadapter-a-la-crise-climatique.html` — Comment s’adapter à la crise climatique ?
-
-### `centre-valdeloire.chambres-agriculture.fr` — 1 lien
-
-- `HTTP 404` https://centre-valdeloire.chambres-agriculture.fr/fileadmin/user_upload/Centre-Val-de-Loire/122_Inst-Centre-Val-de-Loire/Produire_Innover/Recherche_Innovation/CRA_PRDAR/PRDAR_Agronomie/2019/2019_Millet.pdf
-  - ↳ `publications/institutionnalisons-la-sobriete-hydrique-en-france-2.html` — Institutionnalisons la sobriété hydrique en France !
 
 ### `www.copernicus.eu` — 1 lien
 
@@ -479,10 +456,16 @@
 - `HTTP 404` https://www.arte.tv/fr/videos/RC-024617/petrole-un-lobby-tout-puissant/
   - ↳ `publications/laction-climatique-est-elle-soluble-dans-le-petrole.html` — L’action climatique est-elle soluble dans le pétrole ?
 
-### `www.grasshoppergeography.com` — 1 lien
+### `www.web-agri.fr` — 1 lien
 
-- `HTTP 404` https://www.grasshoppergeography.com/collections/our-favourite-river-maps/products/river-basin-map-of-france-with-black-background-fine-art-print
-  - ↳ `publications/institutionnalisons-la-sobriete-hydrique-en-france.html` — Institutionnalisons la sobriété hydrique en France !
+- `HTTP 404` https://www.web-agri.fr/vaches-laitieres/article/168233/chiffres-cles-sur-la-consommation-d-eau-en-elevages-bovins
+  - ↳ `publications/institutionnalisons-la-sobriete-hydrique-en-france-2.html` — Institutionnalisons la sobriété hydrique en France !
+  - ↳ `publications/comment-sadapter-a-la-crise-climatique.html` — Comment s’adapter à la crise climatique ?
+
+### `centre-valdeloire.chambres-agriculture.fr` — 1 lien
+
+- `HTTP 404` https://centre-valdeloire.chambres-agriculture.fr/fileadmin/user_upload/Centre-Val-de-Loire/122_Inst-Centre-Val-de-Loire/Produire_Innover/Recherche_Innovation/CRA_PRDAR/PRDAR_Agronomie/2019/2019_Millet.pdf
+  - ↳ `publications/institutionnalisons-la-sobriete-hydrique-en-france-2.html` — Institutionnalisons la sobriété hydrique en France !
 
 ### `developpement-durable.bsocom.fr` — 1 lien
 
@@ -504,15 +487,10 @@
 - `HTTP 404` http://www.igas.gouv.fr/spip.php?article271
   - ↳ `publications/quelle-strategie-pour-un-logement-abordable-et-durable.html` — Quelle stratégie pour un logement abordable et durable ?
 
-### `www.greenpeace.org` — 1 lien
+### `www.grasshoppergeography.com` — 1 lien
 
-- `HTTP 404` https://www.greenpeace.org/usa/wp-content/uploads/2022/04/In-The-Dark-Climate-Disinfo-Report.pdf
-  - ↳ `publications/comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias.html` — Comment améliorer le traitement des enjeux écologiques dans les médias ?
-
-### `medias.vie-publique.fr` — 1 lien
-
-- `timeout` https://medias.vie-publique.fr/data_storage_s3/rapport/pdf/274683.pdf
-  - ↳ `publications/comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias.html` — Comment améliorer le traitement des enjeux écologiques dans les médias ?
+- `HTTP 404` https://www.grasshoppergeography.com/collections/our-favourite-river-maps/products/river-basin-map-of-france-with-black-background-fine-art-print
+  - ↳ `publications/institutionnalisons-la-sobriete-hydrique-en-france.html` — Institutionnalisons la sobriété hydrique en France !
 
 ### `www.pbc.gov.cn` — 1 lien
 
@@ -523,6 +501,16 @@
 
 - `timeout` http://www.ucl.ac.uk/bartlett/public-purpose/wp2020-09
   - ↳ `publications/les-politiques-de-finance-durable-et-le-climat-ne-pas-confondre-lobjectif-et-loutil.html` — Les politiques de « finance durable » et le climat : ne pas confondre l’objectif
+
+### `www.greenpeace.org` — 1 lien
+
+- `HTTP 404` https://www.greenpeace.org/usa/wp-content/uploads/2022/04/In-The-Dark-Climate-Disinfo-Report.pdf
+  - ↳ `publications/comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias.html` — Comment améliorer le traitement des enjeux écologiques dans les médias ?
+
+### `medias.vie-publique.fr` — 1 lien
+
+- `timeout` https://medias.vie-publique.fr/data_storage_s3/rapport/pdf/274683.pdf
+  - ↳ `publications/comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias.html` — Comment améliorer le traitement des enjeux écologiques dans les médias ?
 
 ### `www.cgt.fr` — 1 lien
 
@@ -539,15 +527,15 @@
 - `HTTP 404` https://www.lesechos.fr/1998/06/la-loi-robien-a-fortement-dope-la-negociation-dentreprise-lannee-derniere-794087%23:~:text=Amplifiant%2525252520la%2525252520tendance%2525252520de%2525252520ces,3%252525252C2%2525252520millions%2525252520de%2525252520salari%25252525C3%25252525A9s
   - ↳ `publications/semaine-de-quatre-jours-le-temps-du-monde-dapres.html` — Semaine de quatre jours : le temps du monde d’après
 
-### `lbapres.godf.org` — 1 lien
-
-- `fetch failed` https://lbapres.godf.org/pour-un-revenu-universel-inconditionnel/
-  - ↳ `publications/retraites-une-reforme-radicalement-solidaire-et-ecologique-est-possible.html` — Retraites : une réforme radicalement solidaire et écologique est possible
-
 ### `www.egalite-femmes-hommes.gouv.fr` — 1 lien
 
 - `HTTP 404` https://www.egalite-femmes-hommes.gouv.fr/initiative/enquete-mutationnelles/
   - ↳ `publications/revaloriser-les-metiers-du-lien-apres-la-crise-un-enjeu-social-economique-politique.html` — Revaloriser les métiers du lien après la crise, un enjeu social, économique, pol
+
+### `lbapres.godf.org` — 1 lien
+
+- `fetch failed` https://lbapres.godf.org/pour-un-revenu-universel-inconditionnel/
+  - ↳ `publications/retraites-une-reforme-radicalement-solidaire-et-ecologique-est-possible.html` — Retraites : une réforme radicalement solidaire et écologique est possible
 
 ### `sdw.ecb.europa.eu` — 1 lien
 
@@ -569,6 +557,11 @@
 - `HTTP 503` http://image-src.bcg.com/images/bcg-the-2017-european-railway-performance-index-apr-2017-2_tcm9-152164.pdf
   - ↳ `publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html` — Quelles transformations globales pour une transition écologique effective ?
 
+### `tarificationprogressivedelenergie.wordpress.com` — 1 lien
+
+- `fetch failed` https://tarificationprogressivedelenergie.wordpress.com/prix-energie-electricite-gaz-tarif-economie-consommation-progressif-bonus-malus-renouvelable-non-lineaire-eolien-pv-photovoltaique-dans-le-monde-carte/californie-crise-californienne-california/
+  - ↳ `publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html` — Quelles transformations globales pour une transition écologique effective ?
+
 ### `www.developpement-durable.gouv.fr` — 1 lien
 
 - `HTTP 404` http://www.developpement-durable.gouv.fr/IMG/pdf/La_revue_cle5c3945_1_-2.pdf
@@ -584,11 +577,6 @@
 - `fetch failed` https://expertises.ademe.fr/professionnels/entreprises/reduire-impacts/reduire-emissions-polluants/emissions-dammoniac-nh3
   - ↳ `publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html` — Quelles transformations globales pour une transition écologique effective ?
 
-### `www.socialter.fr` — 1 lien
-
-- `HTTP 404` https://www.socialter.fr/article/dictionnaire-des-mots-nuisibles
-  - ↳ `publications/la-planification-ecologique-est-vouee-a-lechec-sans-remise-en-question-de-la-decentralisation.html` — La planification écologique est vouée à l’échec sans remise en question de la dé
-
 ### `www.covea.eu` — 1 lien
 
 - `fetch failed` https://www.covea.eu/sites/default/files/2022-04/covea_white_paper_climate_change_effect_on_claims_and_insurance_between_now_and_2050_202201.pdf
@@ -598,6 +586,11 @@
 
 - `HTTP 404` https://www.geolittoral.developpement-durable.gouv.fr/indicateur-national-de-l-erosion-cotiere-r473.html
   - ↳ `publications/comment-sadapter-a-la-crise-climatique.html` — Comment s’adapter à la crise climatique ?
+
+### `www.socialter.fr` — 1 lien
+
+- `HTTP 404` https://www.socialter.fr/article/dictionnaire-des-mots-nuisibles
+  - ↳ `publications/la-planification-ecologique-est-vouee-a-lechec-sans-remise-en-question-de-la-decentralisation.html` — La planification écologique est vouée à l’échec sans remise en question de la dé
 
 ### `www.cohesion-territoires.gouv.fr` — 1 lien
 
@@ -705,10 +698,57 @@
 - `HTTP 404` https://shoudian.bjx.com.cn/html/20210305/1139910.shtml
   - ↳ `publications/le-bitcoin-mirage-monetaire-et-desastre-ecologique.html` — Le bitcoin, mirage monétaire et désastre écologique
 
+### `www.reuters.com` — 1 lien
+
+- `HTTP 404` https://www.reuters.com/article/usa-taxes-yellen-idFRKBN2BU2VS
+  - ↳ `publications/les-etats-unis-les-big-techs-et-le-reste-du-monde.html` — Les États-Unis, les Big techs et le reste du monde…
+
 ### `www.forbes.fr` — 1 lien
 
 - `fetch failed` https://www.forbes.fr/business/comment-les-gafa-ont-renforce-leur-domination/?amp
   - ↳ `publications/les-etats-unis-les-big-techs-et-le-reste-du-monde.html` — Les États-Unis, les Big techs et le reste du monde…
+
+### `www.ran.org` — 1 lien
+
+- `HTTP 404` https://www.ran.org/bankingonclimatechaos2021/
+  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
+  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
+
+### `www.fossilfreestanford.org` — 1 lien
+
+- `HTTP 404` https://www.fossilfreestanford.org/sites/default/files/Unburnable%20Carbon%20final.pdf
+  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
+  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
+
+### `www.afg.asso.fr` — 1 lien
+
+- `HTTP 404` https://www.afg.asso.fr/wp-content/uploads/2020/05/afg-eco-isr-200527web.pdf
+  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
+  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
+
+### `www.ecb.europa.eu` — 1 lien
+
+- `HTTP 404` https://www.ecb.europa.eu/press/blog/date/2021/html/ecb.blog210213~7e26af8606.en.htm
+  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
+  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
+
+### `www.ngfs.net` — 1 lien
+
+- `HTTP 404` https://www.ngfs.net/sites/default/files/medias/documents/ngfs_monetary_policy_operations_final.pdf
+  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
+  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
+
+### `www.bankofengland.co.uk` — 1 lien
+
+- `HTTP 404` https://www.bankofengland.co.uk/KnowledgeBank/climate-change-why-it-matters-to-the-bank-of-england
+  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
+  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
+
+### `static1.squarespace.com` — 1 lien
+
+- `HTTP 404` https://static1.squarespace.com/static/5e0a586857ea746075c561a3/t/60749c60a7297c70eb2273d7/1618254952129/%236+Financial+Stability+Planetary+Emergency.pdf
+  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
+  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
 
 ### `core.ac.uk` — 1 lien
 
@@ -755,71 +795,19 @@
 - `fetch failed` https://www.data-infrastructure.eu/GAIAX/Redaktion/EN/Publications/gaia-x-a-pitch-towards-europe.pdf?__blob=publicationFile&amp;v=6
   - ↳ `publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html` — Quand le décideur européen joue le jeu des Big techs…
 
-### `www.ran.org` — 1 lien
+### `eur-lex.europa.eu` — 1 lien
 
-- `HTTP 404` https://www.ran.org/bankingonclimatechaos2021/
-  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
-  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
-
-### `www.fossilfreestanford.org` — 1 lien
-
-- `HTTP 404` https://www.fossilfreestanford.org/sites/default/files/Unburnable%20Carbon%20final.pdf
-  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
-  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
-
-### `www.afg.asso.fr` — 1 lien
-
-- `HTTP 404` https://www.afg.asso.fr/wp-content/uploads/2020/05/afg-eco-isr-200527web.pdf
-  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
-  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
-
-### `www.ecb.europa.eu` — 1 lien
-
-- `HTTP 404` https://www.ecb.europa.eu/press/blog/date/2021/html/ecb.blog210213~7e26af8606.en.htm
-  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
-  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
-
-### `www.ngfs.net` — 1 lien
-
-- `HTTP 404` https://www.ngfs.net/sites/default/files/medias/documents/ngfs_monetary_policy_operations_final.pdf
-  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
-  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
-
-### `www.bankofengland.co.uk` — 1 lien
-
-- `HTTP 404` https://www.bankofengland.co.uk/KnowledgeBank/climate-change-why-it-matters-to-the-bank-of-england
-  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
-  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
-
-### `static1.squarespace.com` — 1 lien
-
-- `HTTP 404` https://static1.squarespace.com/static/5e0a586857ea746075c561a3/t/60749c60a7297c70eb2273d7/1618254952129/%236+Financial+Stability+Planetary+Emergency.pdf
-  - ↳ `publications/actifs-fossiles-les-nouveaux-subprimes.html` — Actifs fossiles, les nouveaux subprimes ?
-  - ↳ `publications/actifs-fossiles.html` — Actifs fossiles, les nouveaux subprimes ?
-
-### `www.qmul.ac.uk` — 1 lien
-
-- `HTTP 404` https://www.qmul.ac.uk/busman/media/sbm/research/researchcentres/behavioural-finance-working-group/Taffler-et-al.pdf
-  - ↳ `publications/de-la-bulle-internet-1999-2000-a-la-bulle-internaute-2020-2021-une-ouverture-vers-une-autre-economie.html` — De la Bulle Internet (1999-2000) à la bulle Internaute (2020-2021) ?
+- `HTTP 404` https://eur-lex.europa.eu/legal-content/fr/TXT/?qid=1608117147218&amp;uri=COM%3A2020%3A825%3AFIN
+  - ↳ `publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html` — Quand le décideur européen joue le jeu des Big techs…
 
 ### `2degrees-investing.org` — 1 lien
 
 - `fetch failed` https://2degrees-investing.org/
   - ↳ `publications/sortir-de-limpasse-climatique-par-la-defaisance-carbone.html` — Sortir de l’impasse climatique par la défaisance carbone
 
-### `prison.eu.org` — 1 lien
-
-- `HTTP 404` http://prison.eu.org/spip.php?page=imprimer_article&amp;id_article=6698
-  - ↳ `publications/pour-une-nouvelle-politique-carcerale-humaine-et-efficace.html` — Pour une nouvelle politique carcérale, humaine et efficace
-
-### `hudoc.echr.coe.int` — 1 lien
-
-- `HTTP 404` https://hudoc.echr.coe.int/app/conversion/pdf?library=ECHR&amp;id=003-6624854-8792763&amp;filename=Arr%EAt%20J.M.B.%20et%20autres%20c.%20France%20-%20surpopulation%20et%20conditions%20de%20d%E9tention%20inhumaines%20et%20d%E9gradantes%20dans%20les%20prisons.pdf
-  - ↳ `publications/pour-une-nouvelle-politique-carcerale-humaine-et-efficace.html` — Pour une nouvelle politique carcérale, humaine et efficace
-
 ### `donnees.banquemondiale.org` — 1 lien
 
-- `HTTP 500` https://donnees.banquemondiale.org/indicator/IT.NET.USER.ZS
+- `HTTP 502` https://donnees.banquemondiale.org/indicator/IT.NET.USER.ZS
   - ↳ `publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html` — Face au poids croissant du numérique : l’impératif de sobriété
 
 ### `www.icsg.org` — 1 lien
@@ -829,7 +817,7 @@
 
 ### `ccfd-terresolidaire.org` — 1 lien
 
-- `timeout` https://ccfd-terresolidaire.org/nos-combats/partage-des-richesses/rse/minerais-du-sang-la-5243
+- `fetch failed` https://ccfd-terresolidaire.org/nos-combats/partage-des-richesses/rse/minerais-du-sang-la-5243
   - ↳ `publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html` — Face au poids croissant du numérique : l’impératif de sobriété
 
 ### `www.fournisseurs-electricite.com` — 1 lien
@@ -862,15 +850,20 @@
 - `HTTP 404` https://screenrant.com/ps5-xbox-cloud-game-streaming-bad-environ%C2%ADment-climate/
   - ↳ `publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html` — Face au poids croissant du numérique : l’impératif de sobriété
 
-### `lop.parl.ca` — 1 lien
+### `www.qmul.ac.uk` — 1 lien
 
-- `HTTP 404` https://lop.parl.ca/staticfiles/PublicWebsite/Home/ResearchPublications/InBriefs/PDF/2015-51-e.pdf
-  - ↳ `publications/comment-financer-la-dette-covid-tentative-de-trouver-une-bonne-reponse-a-une-mauvaise-question-du-point-de-vue-de-la-theorie-monetaire-moderne-tmm.html` — Comment financer la dette COVID ?
+- `HTTP 404` https://www.qmul.ac.uk/busman/media/sbm/research/researchcentres/behavioural-finance-working-group/Taffler-et-al.pdf
+  - ↳ `publications/de-la-bulle-internet-1999-2000-a-la-bulle-internaute-2020-2021-une-ouverture-vers-une-autre-economie.html` — De la Bulle Internet (1999-2000) à la bulle Internaute (2020-2021) ?
 
-### `www.thisismoney.co.uk` — 1 lien
+### `prison.eu.org` — 1 lien
 
-- `HTTP 503` https://www.thisismoney.co.uk/money/news/article-8801909/Free-money-Bank-England-150bn-UK-debt-disappear.html
-  - ↳ `publications/comment-financer-la-dette-covid-tentative-de-trouver-une-bonne-reponse-a-une-mauvaise-question-du-point-de-vue-de-la-theorie-monetaire-moderne-tmm.html` — Comment financer la dette COVID ?
+- `HTTP 404` http://prison.eu.org/spip.php?page=imprimer_article&amp;id_article=6698
+  - ↳ `publications/pour-une-nouvelle-politique-carcerale-humaine-et-efficace.html` — Pour une nouvelle politique carcérale, humaine et efficace
+
+### `hudoc.echr.coe.int` — 1 lien
+
+- `HTTP 404` https://hudoc.echr.coe.int/app/conversion/pdf?library=ECHR&amp;id=003-6624854-8792763&amp;filename=Arr%EAt%20J.M.B.%20et%20autres%20c.%20France%20-%20surpopulation%20et%20conditions%20de%20d%E9tention%20inhumaines%20et%20d%E9gradantes%20dans%20les%20prisons.pdf
+  - ↳ `publications/pour-une-nouvelle-politique-carcerale-humaine-et-efficace.html` — Pour une nouvelle politique carcérale, humaine et efficace
 
 ### `www.renaissance-armenienne-paris.fr` — 1 lien
 
@@ -892,11 +885,6 @@
 - `HTTP 404` https://www.trt.net.tr/francais/europe/2020/11/23/emmanuel-macron-le-haut-karabagh-est-un-territoire-azeri-1532853
   - ↳ `publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html` — Entre un cessez-le-feu et une élection
 
-### `www.silicon.fr` — 1 lien
-
-- `HTTP 404` https://www.silicon.fr/google-ferme-app-maker-333371.html#
-  - ↳ `publications/pourquoi-le-low-code-est-il-le-symptome-dun-numerique-a-outrance.html` — Pourquoi le low-code est-il le symptôme d’un numérique à outrance ?
-
 ### `webstore.iea.org` — 1 lien
 
 - `timeout` https://webstore.iea.org/download/direct/2803
@@ -917,11 +905,6 @@
 - `HTTP 404` https://www.europarl.europa.eu/thinktank/en/document.html?reference=EPRS_BRI(2020)646180#:~:text=The%20EU%20aims%20to%20cut,achieve%20climate%20neutrality%20by%202050.&amp;text=The%20Fund%20will%20be%20part,a%20public%2Dsector%20loan%20facility
   - ↳ `publications/lhydrogene-bas-carbone-au-service-de-la-transition.html` — L’hydrogène bas carbone au service de la transition
 
-### `www.reuters.com` — 1 lien
-
-- `HTTP 404` https://www.reuters.com/article/shipping-energy-hydrogen-focus-int-idUSKBN27F18U
-  - ↳ `publications/lhydrogene-bas-carbone-au-service-de-la-transition.html` — L’hydrogène bas carbone au service de la transition
-
 ### `www.airbus.com` — 1 lien
 
 - `HTTP 404` https://www.airbus.com/newsroom/stories/hydrogen-aviation-understanding-challenges-to-widespread-adoption.html
@@ -931,6 +914,31 @@
 
 - `fetch failed` http://www.centre-cired.fr/wp-content/uploads/2020/11/201119ElecRenouvFrance2050_Diaporama.pdf
   - ↳ `publications/lhydrogene-bas-carbone-au-service-de-la-transition.html` — L’hydrogène bas carbone au service de la transition
+
+### `lop.parl.ca` — 1 lien
+
+- `HTTP 404` https://lop.parl.ca/staticfiles/PublicWebsite/Home/ResearchPublications/InBriefs/PDF/2015-51-e.pdf
+  - ↳ `publications/comment-financer-la-dette-covid-tentative-de-trouver-une-bonne-reponse-a-une-mauvaise-question-du-point-de-vue-de-la-theorie-monetaire-moderne-tmm.html` — Comment financer la dette COVID ?
+
+### `www.thisismoney.co.uk` — 1 lien
+
+- `HTTP 503` https://www.thisismoney.co.uk/money/news/article-8801909/Free-money-Bank-England-150bn-UK-debt-disappear.html
+  - ↳ `publications/comment-financer-la-dette-covid-tentative-de-trouver-une-bonne-reponse-a-une-mauvaise-question-du-point-de-vue-de-la-theorie-monetaire-moderne-tmm.html` — Comment financer la dette COVID ?
+
+### `www.silicon.fr` — 1 lien
+
+- `HTTP 404` https://www.silicon.fr/google-ferme-app-maker-333371.html#
+  - ↳ `publications/pourquoi-le-low-code-est-il-le-symptome-dun-numerique-a-outrance.html` — Pourquoi le low-code est-il le symptôme d’un numérique à outrance ?
+
+### `146.59.226.237:3838` — 1 lien
+
+- `fetch failed` http://146.59.226.237:3838/
+  - ↳ `publications/utiliser-limpot-abc-pour-une-reforme-dampleur-en-faveur-de-la-justice-fiscale.html` — Utiliser l’impôt abc pour une réforme d’ampleur en faveur de la justice fiscale
+
+### `www.ofce.sciences-po.fr` — 1 lien
+
+- `HTTP 404` https://www.ofce.sciences-po.fr/pdf/revue/6-161OFCE.pdf
+  - ↳ `publications/utiliser-limpot-abc-pour-une-reforme-dampleur-en-faveur-de-la-justice-fiscale.html` — Utiliser l’impôt abc pour une réforme d’ampleur en faveur de la justice fiscale
 
 ### `www.levyinstitute.org` — 1 lien
 
@@ -944,20 +952,15 @@
   - ↳ `publications/pour-une-garantie-a-lemploi-vert.html` — Pour une garantie à l’emploi vert
   - ↳ `publications/garantie-emploi.html` — Garantie d'emploi : une idée pour la France
 
+### `au.int` — 1 lien
+
+- `timeout` https://au.int/en/documents/20141012/key-documents-agenda2063
+  - ↳ `publications/repenser-les-relations-avec-les-societes-africaines.html` — Repenser les relations avec les sociétés africaines
+
 ### `www.saisonafrica2020.com` — 1 lien
 
 - `fetch failed` https://www.saisonafrica2020.com/fr
   - ↳ `publications/repenser-les-relations-avec-les-societes-africaines.html` — Repenser les relations avec les sociétés africaines
-
-### `146.59.226.237:3838` — 1 lien
-
-- `fetch failed` http://146.59.226.237:3838/
-  - ↳ `publications/utiliser-limpot-abc-pour-une-reforme-dampleur-en-faveur-de-la-justice-fiscale.html` — Utiliser l’impôt abc pour une réforme d’ampleur en faveur de la justice fiscale
-
-### `www.ofce.sciences-po.fr` — 1 lien
-
-- `HTTP 404` https://www.ofce.sciences-po.fr/pdf/revue/6-161OFCE.pdf
-  - ↳ `publications/utiliser-limpot-abc-pour-une-reforme-dampleur-en-faveur-de-la-justice-fiscale.html` — Utiliser l’impôt abc pour une réforme d’ampleur en faveur de la justice fiscale
 
 ### `paris.cour-administrative-appel.fr` — 1 lien
 
@@ -1029,6 +1032,26 @@
 - `fetch failed` http://www2.centre-cired.fr/IMG/pdf/rapport_gicf.pdf
   - ↳ `publications/droits-de-tirage-speciaux-covid-19-et-environnement-the-time-is-now-the-question-is-how.html` — Droits de Tirage Spéciaux, Covid-19 et environnement :  The time is now, the que
 
+### `brandnewcongress.org` — 1 lien
+
+- `timeout` https://brandnewcongress.org/Platform
+  - ↳ `publications/etats-unis-leveil-de-la-gauche.html` — États-Unis : L’éveil de la gauche
+
+### `democraticleft.dsausa.org` — 1 lien
+
+- `HTTP 404` https://democraticleft.dsausa.org/files/sites/6/2019/03/DL_2000_V028_01_final.pdf
+  - ↳ `publications/etats-unis-leveil-de-la-gauche.html` — États-Unis : L’éveil de la gauche
+
+### `malegislature.gov` — 1 lien
+
+- `timeout` https://malegislature.gov/Bills/190/H4640/Amendments/House
+  - ↳ `publications/etats-unis-leveil-de-la-gauche.html` — États-Unis : L’éveil de la gauche
+
+### `unfccc.int` — 1 lien
+
+- `timeout` https://unfccc.int/topics/climate-finance/resources/biennial-assessment-of-climate-finance
+  - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
+
 ### `www.bsi-economics.org` — 1 lien
 
 - `HTTP 404` http://www.bsi-economics.org/1000-banque-climat-idee-promesse-nd
@@ -1049,6 +1072,11 @@
 - `HTTP 404` https://www.banque-france.fr/statistiques/situation-mensuelle-monetaire-de-la-banque-de-france-nov-2019
   - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
 
+### `www.imf.org` — 1 lien
+
+- `HTTP 404` https://www.imf.org/~/media/Files/Publications/WP/2019/WPIEA2019133.ashx
+  - ↳ `publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html` — Comment financer une politique ambitieuse de reconstruction écologique ?
+
 ### `labelledemocratie.ouvaton.org` — 1 lien
 
 - `HTTP 404` http://labelledemocratie.ouvaton.org/wordpress/label-hqd/
@@ -1058,18 +1086,3 @@
 
 - `fetch failed` https://www.assemblee-citoyenne-commercy.com/les-propositions-2020
   - ↳ `publications/listes-citoyennes-municipalisme-quelle-democratie-locale-apres-les-gilets-jaunes.html` — Listes citoyennes, municipalisme : Quelle démocratie locale après les gilets jau
-
-### `brandnewcongress.org` — 1 lien
-
-- `timeout` https://brandnewcongress.org/Platform
-  - ↳ `publications/etats-unis-leveil-de-la-gauche.html` — États-Unis : L’éveil de la gauche
-
-### `democraticleft.dsausa.org` — 1 lien
-
-- `HTTP 404` https://democraticleft.dsausa.org/files/sites/6/2019/03/DL_2000_V028_01_final.pdf
-  - ↳ `publications/etats-unis-leveil-de-la-gauche.html` — États-Unis : L’éveil de la gauche
-
-### `malegislature.gov` — 1 lien
-
-- `timeout` https://malegislature.gov/Bills/190/H4640/Amendments/House
-  - ↳ `publications/etats-unis-leveil-de-la-gauche.html` — États-Unis : L’éveil de la gauche

@@ -1,0 +1,3330 @@
+{
+  "generatedAt": "2026-05-01T11:37:25.674Z",
+  "total": 1979,
+  "ok": 1750,
+  "paywalled": 324,
+  "broken": [
+    {
+      "url": "https://vert.eco/articles/nicolas-dufrene-de-linstitut-rousseau-emmanuel-macron-sinteresse-plus-a-la-french-tech-qua-a-la-french-transition",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "presse",
+          "id": "presse-davos-vert",
+          "title": "À Davos, le salut ne viendra pas de ceux qui ont bâti le système"
+        }
+      ]
+    },
+    {
+      "url": "https://data.europa.eu/doi/10.2832/16593",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/offensive-climatique-europeenne-industrial-accelerator-act.html",
+          "id": "offensive-climatique-europeenne-industrial-accelerator-act",
+          "title": "Relancer l’offensive climatique européenne : utiliser l’Industrial Accelerator Act et le Clean Corporate Fleets pour développer des obligations ciblées sur la demande"
+        },
+        {
+          "source": "publications/industrial-accelerator-act.html",
+          "id": "industrial-accelerator-act",
+          "title": "Relancer l'offensive climatique européenne par des obligations ciblées sur la demande"
+        }
+      ]
+    },
+    {
+      "url": "https://www.eia.gov/international/analysis/special-topics/World_Oil_Transit_Chokepoints",
+      "status": 503,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/trump-israel-iran-petrole.html",
+          "id": "trump-israel-iran-petrole",
+          "title": "Trump a-t-il autorisé Israël à attaquer l'Iran pour sauver ses producteurs de pétrole ?"
+        }
+      ]
+    },
+    {
+      "url": "https://cartong.pages.gitlab.cartong.org/learning-corner/fr/5_human_affected_pop_RD/5_5_screening",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/gaza-crise-aide-humanitaire.html",
+          "id": "gaza-crise-aide-humanitaire",
+          "title": "Le déploiement de la « Fondation humanitaire de Gaza » est une étape supplémentaire dans l’effondrement du système international de secours"
+        }
+      ]
+    },
+    {
+      "url": "https://www.rfi.fr/fr/en-bref/20250526-gaza-d%C3%A9mission-du-chef-de-ghf-la-nouvelle-fondation-humanitaire-soutenue-par-washington",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/gaza-crise-aide-humanitaire.html",
+          "id": "gaza-crise-aide-humanitaire",
+          "title": "Le déploiement de la « Fondation humanitaire de Gaza » est une étape supplémentaire dans l’effondrement du système international de secours"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ifri.org/sites/default/files/atoms/files/hecker_137_nuances_de_terrorisme_2018.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/arretons-de-debattre-sur-immigration-parlons-integration.html",
+          "id": "arretons-de-debattre-sur-immigration-parlons-integration",
+          "title": "Arrêtons de débattre sur l’immigration, parlons d’intégration !"
+        },
+        {
+          "source": "publications/immigration-integration.html",
+          "id": "immigration-integration",
+          "title": "Arrêtons de débattre sur l'immigration, parlons d'intégration !"
+        }
+      ]
+    },
+    {
+      "url": "https://www-cairn-info.acces-distant.sciencespo.fr/publications-de-Robert-Castel--27951.htm",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/repondre-a-la-crise-exclusion-sociale.html",
+          "id": "repondre-a-la-crise-exclusion-sociale",
+          "title": "Une planification sociale pour répondre à la crise de l’exclusion sociale"
+        },
+        {
+          "source": "publications/exclusion-sociale.html",
+          "id": "exclusion-sociale",
+          "title": "Répondre à la crise de l'exclusion sociale en France"
+        }
+      ]
+    },
+    {
+      "url": "https://www-cairn-info.acces-distant.sciencespo.fr/revue-specificites.htm",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/repondre-a-la-crise-exclusion-sociale.html",
+          "id": "repondre-a-la-crise-exclusion-sociale",
+          "title": "Une planification sociale pour répondre à la crise de l’exclusion sociale"
+        },
+        {
+          "source": "publications/exclusion-sociale.html",
+          "id": "exclusion-sociale",
+          "title": "Répondre à la crise de l'exclusion sociale en France"
+        }
+      ]
+    },
+    {
+      "url": "https://www-cairn-info.acces-distant.sciencespo.fr/revue-specificites-2014-1.htm",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/repondre-a-la-crise-exclusion-sociale.html",
+          "id": "repondre-a-la-crise-exclusion-sociale",
+          "title": "Une planification sociale pour répondre à la crise de l’exclusion sociale"
+        },
+        {
+          "source": "publications/exclusion-sociale.html",
+          "id": "exclusion-sociale",
+          "title": "Répondre à la crise de l'exclusion sociale en France"
+        }
+      ]
+    },
+    {
+      "url": "https://centredeconomiesorbonne.cnrs.fr/gunther-capelle-blancard-la-taxation-des-transactions-financieres-une-estimation-des-recettes-fiscales-mondiales/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/le-rapport-draghi-un-plan-action-ambigu.html",
+          "id": "le-rapport-draghi-un-plan-action-ambigu",
+          "title": "Le rapport Draghi : un plan d’action ambigu"
+        }
+      ]
+    },
+    {
+      "url": "https://www.autorite-transports.fr/wp-content/uploads/2023/07/rapport-scenarios-de-long-terme-pour-le-reseau-ferroviaire-francais-12-07-23-final.pdf",
+      "status": 503,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/le-nouveau-front-populaire-une-rupture-realiste.html",
+          "id": "le-nouveau-front-populaire-une-rupture-realiste",
+          "title": "LE NOUVEAU FRONT POPULAIRE :  UNE RUPTURE RÉALISTE"
+        },
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://afep.com/wp-content/uploads/2022/12/Code-AFEP-MEDEF-version-de-decembre-2022.pdf",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/representer-nature-gouvernance.html",
+          "id": "representer-nature-gouvernance",
+          "title": "Représenter la nature en entreprise : vers de nouveaux droits"
+        }
+      ]
+    },
+    {
+      "url": "https://hauts-de-france.dreets.gouv.fr/sites/hauts-de-france.dreets.gouv.fr/IMG/pdf/guide_agrement_esus_fevrier_2022_.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/representer-nature-gouvernance.html",
+          "id": "representer-nature-gouvernance",
+          "title": "Représenter la nature en entreprise : vers de nouveaux droits"
+        }
+      ]
+    },
+    {
+      "url": "https://jimdo-storage.global.ssl.fastly.net/file/2837d220-db5d-4ac1-8b2c-fdf9e6f97488/Rapport%2520-%2520La%2520soci%25C3%25A9t%25C3%25A9%2520%25C3%25A0%2520mission,%25205%2520ans%2520de%2520pratique.pdf",
+      "status": 503,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/representer-nature-gouvernance.html",
+          "id": "representer-nature-gouvernance",
+          "title": "Représenter la nature en entreprise : vers de nouveaux droits"
+        }
+      ]
+    },
+    {
+      "url": "https://www.transportenvironment.org/topics/rail&amp;sa=D&amp;source=docs&amp;ust=1716495334742427&amp;usg=AOvVaw0nlNsDEmrnpj5WgXjdVLIC",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/debat-des-candidats-le-fact-checking.html",
+          "id": "debat-des-candidats-le-fact-checking",
+          "title": "Débat des candidats : le fact-checking"
+        }
+      ]
+    },
+    {
+      "url": "https://www.i4ce.org/wp-content/uploads/2022/07/I4CE-Etude-EvalClimat360%25C2%25B0BudgetEtat-1.pdf&amp;sa=D&amp;source=docs&amp;ust=1716486511321690&amp;usg=AOvVaw1InvZzI0Dee3Lg4KBbZSXr",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/debat-des-candidats-le-fact-checking.html",
+          "id": "debat-des-candidats-le-fact-checking",
+          "title": "Débat des candidats : le fact-checking"
+        }
+      ]
+    },
+    {
+      "url": "https://op.europa.eu/en/publication-detail/-/publication/97d6a4ca-5847-11ea-8b81-01aa75ed71a1/language-en/format-PDF/source-119528141",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/debat-des-candidats-le-fact-checking.html",
+          "id": "debat-des-candidats-le-fact-checking",
+          "title": "Débat des candidats : le fact-checking"
+        }
+      ]
+    },
+    {
+      "url": "https://statistiques.pole-emploi.org/bmo/bmopub/217684&amp;sa=D&amp;source=docs&amp;ust=1716488459487704&amp;usg=AOvVaw0fDlVSekcv9VTQowrilkwe",
+      "status": 400,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/debat-des-candidats-le-fact-checking.html",
+          "id": "debat-des-candidats-le-fact-checking",
+          "title": "Débat des candidats : le fact-checking"
+        }
+      ]
+    },
+    {
+      "url": "https://www.bfmtv.com/economie/entreprises/assurance-banque/catastrophes-naturelles-le-prix-des-assurances-augmentera-en-2025_AD-202312280349.html&amp;sa=D&amp;source=docs&amp;ust=1716496088862792&amp;usg=AOvVaw1lnI9lg4BE5F-TCLEmJeoq",
+      "status": 400,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/debat-des-candidats-le-fact-checking.html",
+          "id": "debat-des-candidats-le-fact-checking",
+          "title": "Débat des candidats : le fact-checking"
+        }
+      ]
+    },
+    {
+      "url": "https://vert.eco/articles/budget-2024-des-deputes-proposent-un-isf-vert-pour-trouver-les-milliards-qui-manquent-a-la-transition&amp;sa=D&amp;source=docs&amp;ust=1716523040789625&amp;usg=AOvVaw37HM2DkV3WFweE9NcIwuyD",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/debat-des-candidats-le-fact-checking.html",
+          "id": "debat-des-candidats-le-fact-checking",
+          "title": "Débat des candidats : le fact-checking"
+        },
+        {
+          "source": "publications/debat-des-candidats-le-fact-checking.html",
+          "id": "debat-des-candidats-le-fact-checking",
+          "title": "Débat des candidats : le fact-checking"
+        }
+      ]
+    },
+    {
+      "url": "https://www.transportenvironment.org/assets/files/2024_03_TE_EV_tariffs_paper.pdf&amp;sa=D&amp;source=docs&amp;ust=1716523040781051&amp;usg=AOvVaw1ppjSg5zRyy2bNt7_aluqk",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/debat-des-candidats-le-fact-checking.html",
+          "id": "debat-des-candidats-le-fact-checking",
+          "title": "Débat des candidats : le fact-checking"
+        }
+      ]
+    },
+    {
+      "url": "https://www.diplomatie.gouv.fr/IMG/pdf/strategie-humanitaire-fr_cle8c1cde.pdf",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/lunion-europeenne-et-le-sauvetage-des-migrants-naufrages-en-mediterranee-le-droit-comme-rempart-a-lindignite.html",
+          "id": "lunion-europeenne-et-le-sauvetage-des-migrants-naufrages-en-mediterranee-le-droit-comme-rempart-a-lindignite",
+          "title": "L’Union européenne et le sauvetage des migrants-naufragés en Méditerranée : le droit comme rempart à l’indignité"
+        }
+      ]
+    },
+    {
+      "url": "https://www.diplomatie.gouv.fr/fr/politique-etrangere-de-la-france/action-humanitaire-d-urgence/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/lunion-europeenne-et-le-sauvetage-des-migrants-naufrages-en-mediterranee-le-droit-comme-rempart-a-lindignite.html",
+          "id": "lunion-europeenne-et-le-sauvetage-des-migrants-naufrages-en-mediterranee-le-droit-comme-rempart-a-lindignite",
+          "title": "L’Union européenne et le sauvetage des migrants-naufragés en Méditerranée : le droit comme rempart à l’indignité"
+        }
+      ]
+    },
+    {
+      "url": "https://librairie.ademe.fr/cadic/6527/transitions2050-resume-executif.pdf?modal=false",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        }
+      ]
+    },
+    {
+      "url": "http://web.archive.org/web/20241204114149/http://web.archive.org/web/20241204114149/https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-na78-2019-emissions-voitures-meilhan-20juin-bat.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        },
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        },
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        }
+      ]
+    },
+    {
+      "url": "http://web.archive.org/web/20241220093922/http://web.archive.org/web/20241220093922/https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-ns_vehicules_electriques_31-05-2018_1816_0.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecologie.gouv.fr/sites/default/files/Th%C3%A9ma%20-%20Les%20voitures%20des%20m%C3%A9nages%20modeste%20-%20%20moins%20nombreuses%20mais%20plus%20anciennes_0.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        },
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.grand-est.developpement-durable.gouv.fr/IMG/pdf/0_ppt_enjeux_cotech-crhh_v3.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        },
+        {
+          "source": "publications/quelle-strategie-pour-un-logement-abordable-et-durable.html",
+          "id": "quelle-strategie-pour-un-logement-abordable-et-durable",
+          "title": "Quelle stratégie pour un logement abordable et durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.planbatimentdurable.fr/IMG/pdf/221118_note_sobriete_v_def.pdf",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        },
+        {
+          "source": "publications/quelle-strategie-pour-un-logement-abordable-et-durable.html",
+          "id": "quelle-strategie-pour-un-logement-abordable-et-durable",
+          "title": "Quelle stratégie pour un logement abordable et durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.occitanie.developpement-durable.gouv.fr/IMG/pdf/rapportcrhh2023_vf.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.lafranceagricole.fr/franceagrimer/article/843229/la-consommation-de-viande-en-hausse-pour-la-deuxieme-annee-consecutive#:~:text=Les%20Fran%C3%A7ais%20en%20ont%20consomm%C3%A9,%2C3%20%25%20en%202022",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        },
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://agreste.agriculture.gouv.fr/agreste-web/disaron/GraFra2021Integral/detail/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes.html",
+          "id": "face-aux-pieges-de-lecologie-punitive-quelles-restrictions-les-plus-efficaces-et-justes",
+          "title": "Face aux pièges de l’écologie « punitive », quelles restrictions les plus efficaces et justes ?"
+        },
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "http://nantes.tribunal-administratif.fr/Le-tribunal-administratif/Contentieux-specifiques",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/sortir-du-paradigme-securitaire-garantir-le-droit-dasile-en-europe.html",
+          "id": "sortir-du-paradigme-securitaire-garantir-le-droit-dasile-en-europe",
+          "title": "Sortir du paradigme sécuritaire : garantir le droit d’asile en Europe"
+        }
+      ]
+    },
+    {
+      "url": "https://www.sudouest.fr/environnement/pesticides/eau-plusieurs-captages-d-eau-potable-fermes-a-cause-d-une-pollution-aux-pesticides-15761452.php",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/institutionnalisons-la-sobriete-hydrique-en-france-4.html",
+          "id": "institutionnalisons-la-sobriete-hydrique-en-france-4",
+          "title": "Institutionnalisons la sobriété hydrique en France !"
+        }
+      ]
+    },
+    {
+      "url": "https://www.copernicus.eu/en/news/news/observer-copernicus-data-climate-informed-decisions",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/laction-climatique-est-elle-soluble-dans-le-petrole.html",
+          "id": "laction-climatique-est-elle-soluble-dans-le-petrole",
+          "title": "L’action climatique est-elle soluble dans le pétrole ?"
+        }
+      ]
+    },
+    {
+      "url": "https://opil.ouplaw.com/display/10.1093/law:epil/9780199231690/law-9780199231690-e1568",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/laction-climatique-est-elle-soluble-dans-le-petrole.html",
+          "id": "laction-climatique-est-elle-soluble-dans-le-petrole",
+          "title": "L’action climatique est-elle soluble dans le pétrole ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.arte.tv/fr/videos/RC-024617/petrole-un-lobby-tout-puissant/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/laction-climatique-est-elle-soluble-dans-le-petrole.html",
+          "id": "laction-climatique-est-elle-soluble-dans-le-petrole",
+          "title": "L’action climatique est-elle soluble dans le pétrole ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.lafranceagricole.fr/reforme-de-la-pac/article/756161/les-rgles-de-la-rotation-des-cultures-enfin-finalises",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/institutionnalisons-la-sobriete-hydrique-en-france-2.html",
+          "id": "institutionnalisons-la-sobriete-hydrique-en-france-2",
+          "title": "Institutionnalisons la sobriété hydrique en France !"
+        }
+      ]
+    },
+    {
+      "url": "https://www.web-agri.fr/vaches-laitieres/article/168233/chiffres-cles-sur-la-consommation-d-eau-en-elevages-bovins",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/institutionnalisons-la-sobriete-hydrique-en-france-2.html",
+          "id": "institutionnalisons-la-sobriete-hydrique-en-france-2",
+          "title": "Institutionnalisons la sobriété hydrique en France !"
+        },
+        {
+          "source": "publications/comment-sadapter-a-la-crise-climatique.html",
+          "id": "comment-sadapter-a-la-crise-climatique",
+          "title": "Comment s’adapter à la crise climatique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://centre-valdeloire.chambres-agriculture.fr/fileadmin/user_upload/Centre-Val-de-Loire/122_Inst-Centre-Val-de-Loire/Produire_Innover/Recherche_Innovation/CRA_PRDAR/PRDAR_Agronomie/2019/2019_Millet.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/institutionnalisons-la-sobriete-hydrique-en-france-2.html",
+          "id": "institutionnalisons-la-sobriete-hydrique-en-france-2",
+          "title": "Institutionnalisons la sobriété hydrique en France !"
+        }
+      ]
+    },
+    {
+      "url": "https://www.terre-net.fr/actualite-agricole/economie-social/article/1-degres-celsius-6-de-rendement-en-ble-202-130156.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/institutionnalisons-la-sobriete-hydrique-en-france-2.html",
+          "id": "institutionnalisons-la-sobriete-hydrique-en-france-2",
+          "title": "Institutionnalisons la sobriété hydrique en France !"
+        },
+        {
+          "source": "publications/comment-sadapter-a-la-crise-climatique.html",
+          "id": "comment-sadapter-a-la-crise-climatique",
+          "title": "Comment s’adapter à la crise climatique ?"
+        }
+      ]
+    },
+    {
+      "url": "http://developpement-durable.bsocom.fr/statistiques/ReportFolders/ReportFolders.aspx?sRF_ActivePath=P,13404,13504,13522&amp;sRF_Mode=0&amp;sRF_Expanded=,,P,13404,13504,13522",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/quelle-strategie-pour-un-logement-abordable-et-durable.html",
+          "id": "quelle-strategie-pour-un-logement-abordable-et-durable",
+          "title": "Quelle stratégie pour un logement abordable et durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www2.sgfgas.fr/web/site-public/statistiques",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/quelle-strategie-pour-un-logement-abordable-et-durable.html",
+          "id": "quelle-strategie-pour-un-logement-abordable-et-durable",
+          "title": "Quelle stratégie pour un logement abordable et durable ?"
+        },
+        {
+          "source": "publications/quelle-strategie-pour-un-logement-abordable-et-durable.html",
+          "id": "quelle-strategie-pour-un-logement-abordable-et-durable",
+          "title": "Quelle stratégie pour un logement abordable et durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.banquedesterritoires.fr/sites/default/files/2021-09/perspectives-2021.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelle-strategie-pour-un-logement-abordable-et-durable.html",
+          "id": "quelle-strategie-pour-un-logement-abordable-et-durable",
+          "title": "Quelle stratégie pour un logement abordable et durable ?"
+        },
+        {
+          "source": "publications/quelle-strategie-pour-un-logement-abordable-et-durable.html",
+          "id": "quelle-strategie-pour-un-logement-abordable-et-durable",
+          "title": "Quelle stratégie pour un logement abordable et durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.education.gouv.fr/sites/default/files/imported_files/document/depp-ni-2019-19-12-Le-devenir-des-bacheliers-pro-qui-poursuivent-leurs-etudes_1114206.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelle-strategie-pour-un-logement-abordable-et-durable.html",
+          "id": "quelle-strategie-pour-un-logement-abordable-et-durable",
+          "title": "Quelle stratégie pour un logement abordable et durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.fonction-publique.gouv.fr/files/files/statistiques/rapports_annuels/2016/DGAFP_RA2016_web_signet.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelle-strategie-pour-un-logement-abordable-et-durable.html",
+          "id": "quelle-strategie-pour-un-logement-abordable-et-durable",
+          "title": "Quelle stratégie pour un logement abordable et durable ?"
+        }
+      ]
+    },
+    {
+      "url": "http://www.igas.gouv.fr/spip.php?article271",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelle-strategie-pour-un-logement-abordable-et-durable.html",
+          "id": "quelle-strategie-pour-un-logement-abordable-et-durable",
+          "title": "Quelle stratégie pour un logement abordable et durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.grasshoppergeography.com/collections/our-favourite-river-maps/products/river-basin-map-of-france-with-black-background-fine-art-print",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/institutionnalisons-la-sobriete-hydrique-en-france.html",
+          "id": "institutionnalisons-la-sobriete-hydrique-en-france",
+          "title": "Institutionnalisons la sobriété hydrique en France !"
+        }
+      ]
+    },
+    {
+      "url": "https://youmatter.world/fr/secheresse-rendements-agricoles-france-2023/#:~:text=D%C3%A9j%C3%A0%20en%202022%2C%20les%20donn%C3%A9es,depuis%20pr%C3%A8s%20de%2030%20ans",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/institutionnalisons-la-sobriete-hydrique-en-france.html",
+          "id": "institutionnalisons-la-sobriete-hydrique-en-france",
+          "title": "Institutionnalisons la sobriété hydrique en France !"
+        }
+      ]
+    },
+    {
+      "url": "https://www.autorite-transports.fr/wp-content/uploads/2020/01/plaquette_bilan_ferroviaire_2018-1.pdf",
+      "status": 503,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/pour-un-ministere-du-temps-libere.html",
+          "id": "pour-un-ministere-du-temps-libere",
+          "title": "Pour un ministère du Temps libéré"
+        }
+      ]
+    },
+    {
+      "url": "http://larevuedesmedias.ina.fr/environnement-jt-information-television-energie-climat-pollution-biodiversite",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/proposition-de-loi-relative-a-la-responsabilite-des-medias-dans-le-traitement-des-enjeux-environnementaux-et-de-durabilite.html",
+          "id": "proposition-de-loi-relative-a-la-responsabilite-des-medias-dans-le-traitement-des-enjeux-environnementaux-et-de-durabilite",
+          "title": "Proposition de loi relative à la responsabilité des médias dans le traitement des enjeux environnementaux et de durabilité"
+        },
+        {
+          "source": "publications/comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias.html",
+          "id": "comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias",
+          "title": "Comment améliorer le traitement des enjeux écologiques dans les médias ?"
+        }
+      ]
+    },
+    {
+      "url": "http://www.pbc.gov.cn/english/130721/3131759/index.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/les-politiques-de-finance-durable-et-le-climat-ne-pas-confondre-lobjectif-et-loutil.html",
+          "id": "les-politiques-de-finance-durable-et-le-climat-ne-pas-confondre-lobjectif-et-loutil",
+          "title": "Les politiques de « finance durable » et le climat : ne pas confondre l’objectif et l’outil"
+        }
+      ]
+    },
+    {
+      "url": "http://www.ucl.ac.uk/bartlett/public-purpose/wp2020-09",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/les-politiques-de-finance-durable-et-le-climat-ne-pas-confondre-lobjectif-et-loutil.html",
+          "id": "les-politiques-de-finance-durable-et-le-climat-ne-pas-confondre-lobjectif-et-loutil",
+          "title": "Les politiques de « finance durable » et le climat : ne pas confondre l’objectif et l’outil"
+        }
+      ]
+    },
+    {
+      "url": "https://www.greenpeace.org/usa/wp-content/uploads/2022/04/In-The-Dark-Climate-Disinfo-Report.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias.html",
+          "id": "comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias",
+          "title": "Comment améliorer le traitement des enjeux écologiques dans les médias ?"
+        }
+      ]
+    },
+    {
+      "url": "https://report.ipcc.ch/ar6/wg3/IPCC_AR6_WGIII_Full_Report.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias.html",
+          "id": "comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias",
+          "title": "Comment améliorer le traitement des enjeux écologiques dans les médias ?"
+        }
+      ]
+    },
+    {
+      "url": "https://medias.vie-publique.fr/data_storage_s3/rapport/pdf/274683.pdf",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias.html",
+          "id": "comment-ameliorer-le-traitement-des-enjeux-ecologiques-dans-les-medias",
+          "title": "Comment améliorer le traitement des enjeux écologiques dans les médias ?"
+        }
+      ]
+    },
+    {
+      "url": "https://travail-emploi.gouv.fr/IMG/pdf/rapport-2e-ligne.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/semaine-de-quatre-jours-le-temps-du-monde-dapres.html",
+          "id": "semaine-de-quatre-jours-le-temps-du-monde-dapres",
+          "title": "Semaine de quatre jours : le temps du monde d’après"
+        },
+        {
+          "source": "publications/semaine-de-quatre-jours-le-temps-du-monde-dapres.html",
+          "id": "semaine-de-quatre-jours-le-temps-du-monde-dapres",
+          "title": "Semaine de quatre jours : le temps du monde d’après"
+        }
+      ]
+    },
+    {
+      "url": "https://www.cgt.fr/sites/default/files/2021-11/La%25252520r%252525C3%252525A9duction%25252520du%25252520temps%25252520de%25252520travail%25252520dans%25252520le%25252520monde%25252520-%25252520une%25252520id%252525C3%252525A9e%25252520qui%25252520gagne%25252520du%25252520terrain.pdf",
+      "status": 500,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/semaine-de-quatre-jours-le-temps-du-monde-dapres.html",
+          "id": "semaine-de-quatre-jours-le-temps-du-monde-dapres",
+          "title": "Semaine de quatre jours : le temps du monde d’après"
+        }
+      ]
+    },
+    {
+      "url": "https://www.pactedupouvoirdevivre.fr/projet/propositions/le-pouvoir-de-travailler-digne/9-mettre-en-place-une-banque",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/semaine-de-quatre-jours-le-temps-du-monde-dapres.html",
+          "id": "semaine-de-quatre-jours-le-temps-du-monde-dapres",
+          "title": "Semaine de quatre jours : le temps du monde d’après"
+        }
+      ]
+    },
+    {
+      "url": "https://www.lesechos.fr/1998/06/la-loi-robien-a-fortement-dope-la-negociation-dentreprise-lannee-derniere-794087%23:~:text=Amplifiant%2525252520la%2525252520tendance%2525252520de%2525252520ces,3%252525252C2%2525252520millions%2525252520de%2525252520salari%25252525C3%25252525A9s",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/semaine-de-quatre-jours-le-temps-du-monde-dapres.html",
+          "id": "semaine-de-quatre-jours-le-temps-du-monde-dapres",
+          "title": "Semaine de quatre jours : le temps du monde d’après"
+        }
+      ]
+    },
+    {
+      "url": "http://www.drias-climat.fr/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/lecologie-combat-du-siecle-la-transformation-de-la-finance-na-pas-eu-lieu.html",
+          "id": "lecologie-combat-du-siecle-la-transformation-de-la-finance-na-pas-eu-lieu",
+          "title": "L’écologie, combat du siècle ? La transformation de la finance n’a pas eu lieu"
+        }
+      ]
+    },
+    {
+      "url": "https://www.egalite-femmes-hommes.gouv.fr/initiative/enquete-mutationnelles/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/revaloriser-les-metiers-du-lien-apres-la-crise-un-enjeu-social-economique-politique.html",
+          "id": "revaloriser-les-metiers-du-lien-apres-la-crise-un-enjeu-social-economique-politique",
+          "title": "Revaloriser les métiers du lien après la crise, un enjeu social, économique, politique"
+        }
+      ]
+    },
+    {
+      "url": "https://lbapres.godf.org/pour-un-revenu-universel-inconditionnel/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/retraites-une-reforme-radicalement-solidaire-et-ecologique-est-possible.html",
+          "id": "retraites-une-reforme-radicalement-solidaire-et-ecologique-est-possible",
+          "title": "Retraites : une réforme radicalement solidaire et écologique est possible"
+        }
+      ]
+    },
+    {
+      "url": "https://sdw.ecb.europa.eu/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/sortir-par-le-haut-du-piege-inflationniste.html",
+          "id": "sortir-par-le-haut-du-piege-inflationniste",
+          "title": "Sortir par le haut du piège inflationniste"
+        },
+        {
+          "source": "publications/sortir-par-le-haut-du-piege-inflationniste.html",
+          "id": "sortir-par-le-haut-du-piege-inflationniste",
+          "title": "Sortir par le haut du piège inflationniste"
+        },
+        {
+          "source": "publications/sortir-par-le-haut-du-piege-inflationniste.html",
+          "id": "sortir-par-le-haut-du-piege-inflationniste",
+          "title": "Sortir par le haut du piège inflationniste"
+        },
+        {
+          "source": "publications/sortir-par-le-haut-du-piege-inflationniste.html",
+          "id": "sortir-par-le-haut-du-piege-inflationniste",
+          "title": "Sortir par le haut du piège inflationniste"
+        }
+      ]
+    },
+    {
+      "url": "https://agreste.agriculture.gouv.fr/agreste-web/download/publication/publie/MemSta2020/MementoFrance%202020_V3.pdf",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://agreste.agriculture.gouv.fr/agreste-web/disaron/Dos2104/detail/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        },
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.anah.fr/mediatheque/publications,/",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        },
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.autorite-transports.fr/wp-content/uploads/2021/01/bilan-ferroviaire-2019.pdf",
+      "status": 503,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecologie.gouv.fr/sites/default/files/COI_rapport%20bilan-perspectives%202022%20-%20v21%2003%202022_0.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        },
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://librairie.ademe.fr/urbanisme-et-batiment/4766-marches-et-emplois-concourant-a-la-transition-energetique-dans-le-secteur-du-batiment-residentiel.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.i4ce.org/wp-core/wp-content/uploads/2020/07/I4CE-Relance_FinancementActionClimat-52p-1.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.i4ce.org/wp-core/wp-content/uploads/2019/09/I4CE-Etude-EvalClimat360%C2%B0BudgetEtat.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "http://www.anah.fr/presse/detail/actualite/evaluation-des-impacts-economiques-du-programme-habiter-mieux/",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        },
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.autorite-transports.fr/wp-content/uploads/2020/12/synthese-des-comptes-des-concessions-autoroutieres-exercice-2019.pdf",
+      "status": 503,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.anah.fr/presse/detail/actualite/evaluation-des-impacts-economiques-du-programme-habiter-mieux/",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://odr.inra.fr/intranet/carto_joomla/index.php/reseaux/presporteval/2014-09-22-15-36-42/rapports-devaluation/pdrh-2010-rapports/715-pdrh-partie1-1/file",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.fntp.fr/sites/default/files/content/publication/2018-09_audit_du_reseau_ferre_national_imdm",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "http://image-src.bcg.com/images/bcg-the-2017-european-railway-performance-index-apr-2017-2_tcm9-152164.pdf",
+      "status": 503,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        },
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://tarificationprogressivedelenergie.wordpress.com/prix-energie-electricite-gaz-tarif-economie-consommation-progressif-bonus-malus-renouvelable-non-lineaire-eolien-pv-photovoltaique-dans-le-monde-carte/californie-crise-californienne-california/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://librairie.ademe.fr/produire-autrement/2514-disponibilites-forestieres-pour-l-energie-et-les-materiaux-a-l-horizon-2035.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "http://www.developpement-durable.gouv.fr/IMG/pdf/La_revue_cle5c3945_1_-2.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.actu-transport-logistique.fr/routier/peage-autoroutier-allemand-jackpot-pour-les-caisses-publiques-508221.php",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://travail-emploi.gouv.fr/IMG/pdf/le_pnlti_2016-2018_bilan_intermediaire.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://expertises.ademe.fr/professionnels/entreprises/reduire-impacts/reduire-emissions-polluants/emissions-dammoniac-nh3",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.terre-net.fr/observatoire-technique-culturale/strategie-technique-culturale/article/la-production-de-betteraves-sucrieres-en-recul-de-15-4-sur-un-an-selon-agreste-217-172048.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quelles-transformations-globales-pour-une-transition-ecologique-effective.html",
+          "id": "quelles-transformations-globales-pour-une-transition-ecologique-effective",
+          "title": "Quelles transformations globales pour une transition écologique effective ?"
+        }
+      ]
+    },
+    {
+      "url": "http://www.drias-climat.fr/decouverte",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/comment-sadapter-a-la-crise-climatique.html",
+          "id": "comment-sadapter-a-la-crise-climatique",
+          "title": "Comment s’adapter à la crise climatique ?"
+        },
+        {
+          "source": "publications/comment-sadapter-a-la-crise-climatique.html",
+          "id": "comment-sadapter-a-la-crise-climatique",
+          "title": "Comment s’adapter à la crise climatique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.covea.eu/sites/default/files/2022-04/covea_white_paper_climate_change_effect_on_claims_and_insurance_between_now_and_2050_202201.pdf",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/comment-sadapter-a-la-crise-climatique.html",
+          "id": "comment-sadapter-a-la-crise-climatique",
+          "title": "Comment s’adapter à la crise climatique ?"
+        },
+        {
+          "source": "publications/comment-sadapter-a-la-crise-climatique.html",
+          "id": "comment-sadapter-a-la-crise-climatique",
+          "title": "Comment s’adapter à la crise climatique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://youmatter.world/fr/definition/forcage-radiatif-definition-origines-impact-sur-le-climat/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-sadapter-a-la-crise-climatique.html",
+          "id": "comment-sadapter-a-la-crise-climatique",
+          "title": "Comment s’adapter à la crise climatique ?"
+        }
+      ]
+    },
+    {
+      "url": "http://www.drias-climat.fr/accompagnement/sections/245",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/comment-sadapter-a-la-crise-climatique.html",
+          "id": "comment-sadapter-a-la-crise-climatique",
+          "title": "Comment s’adapter à la crise climatique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.geolittoral.developpement-durable.gouv.fr/indicateur-national-de-l-erosion-cotiere-r473.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-sadapter-a-la-crise-climatique.html",
+          "id": "comment-sadapter-a-la-crise-climatique",
+          "title": "Comment s’adapter à la crise climatique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.socialter.fr/article/dictionnaire-des-mots-nuisibles",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/la-planification-ecologique-est-vouee-a-lechec-sans-remise-en-question-de-la-decentralisation.html",
+          "id": "la-planification-ecologique-est-vouee-a-lechec-sans-remise-en-question-de-la-decentralisation",
+          "title": "La planification écologique est vouée à l’échec sans remise en question de la décentralisation"
+        }
+      ]
+    },
+    {
+      "url": "https://report.ipcc.ch/ar6wg3/pdf/IPCC_AR6_WGIII_SummaryForPolicymakers.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quel-developpement-territorial-a-lere-du-zero-artificialisation-nette.html",
+          "id": "quel-developpement-territorial-a-lere-du-zero-artificialisation-nette",
+          "title": "Quel développement territorial à l’ère du Zéro artificialisation nette ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecologie.gouv.fr/habiter-france-demain",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quel-developpement-territorial-a-lere-du-zero-artificialisation-nette.html",
+          "id": "quel-developpement-territorial-a-lere-du-zero-artificialisation-nette",
+          "title": "Quel développement territorial à l’ère du Zéro artificialisation nette ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecologie.gouv.fr/sites/default/files/CVT_WEbinaire%2024-06-2020_Les%20essentiels.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quel-developpement-territorial-a-lere-du-zero-artificialisation-nette.html",
+          "id": "quel-developpement-territorial-a-lere-du-zero-artificialisation-nette",
+          "title": "Quel développement territorial à l’ère du Zéro artificialisation nette ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.cohesion-territoires.gouv.fr/sites/default/files/2020-08/CVT_Synthese_Webinaire%2024-06-2020_0.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quel-developpement-territorial-a-lere-du-zero-artificialisation-nette.html",
+          "id": "quel-developpement-territorial-a-lere-du-zero-artificialisation-nette",
+          "title": "Quel développement territorial à l’ère du Zéro artificialisation nette ?"
+        }
+      ]
+    },
+    {
+      "url": "https://blagoveshchensk-pererabotka.gazprom.com/about/",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/integration-des-enjeux-climatiques-dans-la-politique-monetaire-de-la-banque-centrale-europeenne-apres-ces-premiers-pas-la-route-reste-encore-longue.html",
+          "id": "integration-des-enjeux-climatiques-dans-la-politique-monetaire-de-la-banque-centrale-europeenne-apres-ces-premiers-pas-la-route-reste-encore-longue",
+          "title": "Intégration des enjeux climatiques dans la politique monétaire de la Banque centrale européenne : après ces premiers pas, la route reste encore longue"
+        },
+        {
+          "source": "publications/politique-monetaire-climat.html",
+          "id": "politique-monetaire-climat",
+          "title": "Pour une politique monetaire au service du climat"
+        }
+      ]
+    },
+    {
+      "url": "https://en-marche.fr/articles/actualites/presentation-candidats-elections-legislatives",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/renouvellement-de-la-representation-politique-ou-sont-les-candidats-citoyens.html",
+          "id": "renouvellement-de-la-representation-politique-ou-sont-les-candidats-citoyens",
+          "title": "Renouvellement de la représentation politique : où sont les candidats citoyens ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.paj-mag.fr/2021/11/29/quatre-maisons-historiques-bientot-detruites-a-foix/?fbclid=IwAR0QQEVQz9xlORiMexsW0q7WeuxyMdhDHcmD9FiPqQUf0FAZEUEt9MKRkQU",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/rechercher-la-bonne-densite-en-ville-par-la-protection-du-patrimoine-bati-et-paysager.html",
+          "id": "rechercher-la-bonne-densite-en-ville-par-la-protection-du-patrimoine-bati-et-paysager",
+          "title": "Rechercher la bonne densité en ville par la protection du patrimoine bâti et paysager"
+        }
+      ]
+    },
+    {
+      "url": "http://www.cafepedagogique.net/lexpresso/Pages/2022/05/12052022Article637879345957248065.aspx",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/jean-michel-blanquer-acheve-son-ministere-par-un-naufrage.html",
+          "id": "jean-michel-blanquer-acheve-son-ministere-par-un-naufrage",
+          "title": "Jean-Michel Blanquer achève son ministère par un naufrage"
+        }
+      ]
+    },
+    {
+      "url": "http://www.cafepedagogique.net/lexpresso/Pages/2022/04/08042022Article637849972165821325.aspx",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/jean-michel-blanquer-acheve-son-ministere-par-un-naufrage.html",
+          "id": "jean-michel-blanquer-acheve-son-ministere-par-un-naufrage",
+          "title": "Jean-Michel Blanquer achève son ministère par un naufrage"
+        }
+      ]
+    },
+    {
+      "url": "https://www.insee.fr/fr/statistiques/2122401",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-la-politique-dausterite-conduit-a-degrader-volontairement-le-controle-fiscal-et-lefficacite-de-la-lutte-contre-la-fraude.html",
+          "id": "quand-la-politique-dausterite-conduit-a-degrader-volontairement-le-controle-fiscal-et-lefficacite-de-la-lutte-contre-la-fraude",
+          "title": "Quand la politique d’austérité conduit à dégrader volontairement le contrôle fiscal et l’efficacité de la lutte contre la fraude"
+        }
+      ]
+    },
+    {
+      "url": "http://www.financespubliques.cgt.fr/sites/default/files/la_lettre_du_controle_fiscal_05_11_2020.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-la-politique-dausterite-conduit-a-degrader-volontairement-le-controle-fiscal-et-lefficacite-de-la-lutte-contre-la-fraude.html",
+          "id": "quand-la-politique-dausterite-conduit-a-degrader-volontairement-le-controle-fiscal-et-lefficacite-de-la-lutte-contre-la-fraude",
+          "title": "Quand la politique d’austérité conduit à dégrader volontairement le contrôle fiscal et l’efficacité de la lutte contre la fraude"
+        }
+      ]
+    },
+    {
+      "url": "https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-2019-fiscalite-capital-01-10-2019.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-la-politique-dausterite-conduit-a-degrader-volontairement-le-controle-fiscal-et-lefficacite-de-la-lutte-contre-la-fraude.html",
+          "id": "quand-la-politique-dausterite-conduit-a-degrader-volontairement-le-controle-fiscal-et-lefficacite-de-la-lutte-contre-la-fraude",
+          "title": "Quand la politique d’austérité conduit à dégrader volontairement le contrôle fiscal et l’efficacité de la lutte contre la fraude"
+        }
+      ]
+    },
+    {
+      "url": "http://www.justice.gouv.fr/justice-penale-11330/loi-du-23-mars-2019-une-reforme-majeure-de-la-justice-penale-32604.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-la-politique-dausterite-conduit-a-degrader-volontairement-le-controle-fiscal-et-lefficacite-de-la-lutte-contre-la-fraude.html",
+          "id": "quand-la-politique-dausterite-conduit-a-degrader-volontairement-le-controle-fiscal-et-lefficacite-de-la-lutte-contre-la-fraude",
+          "title": "Quand la politique d’austérité conduit à dégrader volontairement le contrôle fiscal et l’efficacité de la lutte contre la fraude"
+        }
+      ]
+    },
+    {
+      "url": "https://cndh-niger.org/images/pdf/Rapport_Final_Mission_Investigation_Inates_Ayorou_2020-CNDH-REPPAD-Last%20(2)_2.pdf",
+      "status": 500,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/fin-de-loperation-barkhane-reflexions-sur-sept-ans-et-demi-dengagement-militaire.html",
+          "id": "fin-de-loperation-barkhane-reflexions-sur-sept-ans-et-demi-dengagement-militaire",
+          "title": "Fin de l’opération Barkhane : réflexions sur sept ans et demi d’engagement militaire"
+        }
+      ]
+    },
+    {
+      "url": "http://www.cafepedagogique.net/lexpresso/Pages/2021/12/16122021Article637752343565594094.aspx",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/un-sursaut-pour-lecole-de-la-republique.html",
+          "id": "un-sursaut-pour-lecole-de-la-republique",
+          "title": "Un sursaut pour l’école de la République"
+        }
+      ]
+    },
+    {
+      "url": "http://www.cafepedagogique.net/lexpresso/Pages/2021/11/17112021Article637727293811333108.aspx",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/un-sursaut-pour-lecole-de-la-republique.html",
+          "id": "un-sursaut-pour-lecole-de-la-republique",
+          "title": "Un sursaut pour l’école de la République"
+        }
+      ]
+    },
+    {
+      "url": "https://www.education.gouv.fr/sites/default/files/imported_files/document/depp-2019-EF100-article-03_1221802.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/un-sursaut-pour-lecole-de-la-republique.html",
+          "id": "un-sursaut-pour-lecole-de-la-republique",
+          "title": "Un sursaut pour l’école de la République"
+        }
+      ]
+    },
+    {
+      "url": "https://ipbes.net/news/Media-Release-Global-Assessment-F",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/refonder-lorganisation-de-letat-local-et-mettre-fin-a-la-liberalisation-des-politiques-publiques-environnementales-consecutive-aux-vagues-de-decentralisation.html",
+          "id": "refonder-lorganisation-de-letat-local-et-mettre-fin-a-la-liberalisation-des-politiques-publiques-environnementales-consecutive-aux-vagues-de-decentralisation",
+          "title": "Refonder l’organisation de l’État local et mettre fin à la libéralisation des politiques publiques environnementales consécutive aux vagues de décentralisation"
+        }
+      ]
+    },
+    {
+      "url": "https://mieuxvoter.fr/index.php/2021/12/14/etude-sur-le-jugement-majoritaire/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/et-si-les-elections-presidentielles-se-jouaient-au-jugement-majoritaire.html",
+          "id": "et-si-les-elections-presidentielles-se-jouaient-au-jugement-majoritaire",
+          "title": "Et si les élections présidentielles se jouaient au jugement majoritaire ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.vp880.com/x20c6106a116905/page.html",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/independance-numerique-que-nous-apprend-la-chine.html",
+          "id": "independance-numerique-que-nous-apprend-la-chine",
+          "title": "Indépendance numérique : que nous apprend la Chine ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.creditchina.gov.cn/gerenxinyong/personsearch/?tablename=credit_zgf_zrr_sxbzxr",
+      "status": 412,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/independance-numerique-que-nous-apprend-la-chine.html",
+          "id": "independance-numerique-que-nous-apprend-la-chine",
+          "title": "Indépendance numérique : que nous apprend la Chine ?"
+        }
+      ]
+    },
+    {
+      "url": "http://www.peacecable.net/News/Detail/16579",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/independance-numerique-que-nous-apprend-la-chine.html",
+          "id": "independance-numerique-que-nous-apprend-la-chine",
+          "title": "Indépendance numérique : que nous apprend la Chine ?"
+        }
+      ]
+    },
+    {
+      "url": "https://jingdaily.com/louis-vuitton-wechat-crm/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/independance-numerique-que-nous-apprend-la-chine.html",
+          "id": "independance-numerique-que-nous-apprend-la-chine",
+          "title": "Indépendance numérique : que nous apprend la Chine ?"
+        }
+      ]
+    },
+    {
+      "url": "https://anws.co/ca46q/%7Bc8aff3ef-6a72-4e4f-9bd9-8b0d288264ea%7D",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/energie-quel-cout-actuel-pour-lelectricite-bas-carbone.html",
+          "id": "energie-quel-cout-actuel-pour-lelectricite-bas-carbone",
+          "title": "Énergie : quel coût actuel pour l’électricité bas carbone ?"
+        },
+        {
+          "source": "publications/energie-quel-cout-actuel-pour-lelectricite-bas-carbone.html",
+          "id": "energie-quel-cout-actuel-pour-lelectricite-bas-carbone",
+          "title": "Énergie : quel coût actuel pour l’électricité bas carbone ?"
+        }
+      ]
+    },
+    {
+      "url": "https://anws.co/ca46s/%7Bc8aff3ef-6a72-4e4f-9bd9-8b0d288264ea%7D",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/energie-quel-cout-actuel-pour-lelectricite-bas-carbone.html",
+          "id": "energie-quel-cout-actuel-pour-lelectricite-bas-carbone",
+          "title": "Énergie : quel coût actuel pour l’électricité bas carbone ?"
+        },
+        {
+          "source": "publications/energie-quel-cout-actuel-pour-lelectricite-bas-carbone.html",
+          "id": "energie-quel-cout-actuel-pour-lelectricite-bas-carbone",
+          "title": "Énergie : quel coût actuel pour l’électricité bas carbone ?"
+        }
+      ]
+    },
+    {
+      "url": "https://travail-emploi.gouv.fr/IMG/pdf/dossier_de_presse_-_cnlti_-_8_juillet_2019.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/droit-du-travail-droit-zombie.html",
+          "id": "droit-du-travail-droit-zombie",
+          "title": "Droit du travail, droit zombie"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecologique-solidaire.gouv.fr/sites/default/files/Th%C3%A9ma%20-%20Fiscalit%C3%A9%20environnementale%20-%20Un%20%C3%A9tat%20des%20lieux.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable.html",
+          "id": "comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable",
+          "title": "Comment s’assurer que les entreprises encouragent une consommation plus durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.insee.fr/fr/statistiques/2015759",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable.html",
+          "id": "comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable",
+          "title": "Comment s’assurer que les entreprises encouragent une consommation plus durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.citepa.org/fr/air-et-climat/polluants/effet-de-serre/dioxyde-de-carbone",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable.html",
+          "id": "comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable",
+          "title": "Comment s’assurer que les entreprises encouragent une consommation plus durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecologique-solidaire.gouv.fr/sites/default/files/16140-1_certif-economies-energie_4p_A5_DEF_Web.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable.html",
+          "id": "comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable",
+          "title": "Comment s’assurer que les entreprises encouragent une consommation plus durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecologique-solidaire.gouv.fr/sites/default/files/Th%C3%A9ma%20-%20De%20l%E2%80%99innovation%20instrumentale%20-%20Les%20certificats%20d%E2%80%99%C3%A9conomies%20d%E2%80%99%C3%A9nergie.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable.html",
+          "id": "comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable",
+          "title": "Comment s’assurer que les entreprises encouragent une consommation plus durable ?"
+        }
+      ]
+    },
+    {
+      "url": "http://atee.fr/sites/default/files/C2E/Fichiers/1_rapport_cour_des_commptes_certificats_economies_energie.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable.html",
+          "id": "comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable",
+          "title": "Comment s’assurer que les entreprises encouragent une consommation plus durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://communication.effy.fr/effy-flash-info/certificats-deconomies-denergie-impact-sur-les-prix-des-energies-vs-efficacite-du-dispositif/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable.html",
+          "id": "comment-sassurer-que-les-entreprises-encouragent-une-consommation-plus-durable",
+          "title": "Comment s’assurer que les entreprises encouragent une consommation plus durable ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.pourleco.com/en-vrai/la-fabrique-de-leco/coinbase-entre-en-bourse-les-questions-qui-se-posent#utm_source=newsletter&amp;utm_medium=newsletter&amp;utm_campaign=qqec_23",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/le-bitcoin-mirage-monetaire-et-desastre-ecologique.html",
+          "id": "le-bitcoin-mirage-monetaire-et-desastre-ecologique",
+          "title": "Le bitcoin, mirage monétaire et désastre écologique"
+        }
+      ]
+    },
+    {
+      "url": "http://www.21jingji.com/2021/3-13/2NMDEzODBfMTYyMzQ2Ng.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/le-bitcoin-mirage-monetaire-et-desastre-ecologique.html",
+          "id": "le-bitcoin-mirage-monetaire-et-desastre-ecologique",
+          "title": "Le bitcoin, mirage monétaire et désastre écologique"
+        }
+      ]
+    },
+    {
+      "url": "http://www.revue-banque.fr/banque-strategie/numero-400",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/le-bitcoin-mirage-monetaire-et-desastre-ecologique.html",
+          "id": "le-bitcoin-mirage-monetaire-et-desastre-ecologique",
+          "title": "Le bitcoin, mirage monétaire et désastre écologique"
+        }
+      ]
+    },
+    {
+      "url": "https://www.capital.fr/entreprises-marches/bitcoin-a-10-ans-les-20-grandes-dates-de-son-histoire-1303341",
+      "status": 410,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/le-bitcoin-mirage-monetaire-et-desastre-ecologique.html",
+          "id": "le-bitcoin-mirage-monetaire-et-desastre-ecologique",
+          "title": "Le bitcoin, mirage monétaire et désastre écologique"
+        }
+      ]
+    },
+    {
+      "url": "https://shoudian.bjx.com.cn/html/20210305/1139910.shtml",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/le-bitcoin-mirage-monetaire-et-desastre-ecologique.html",
+          "id": "le-bitcoin-mirage-monetaire-et-desastre-ecologique",
+          "title": "Le bitcoin, mirage monétaire et désastre écologique"
+        }
+      ]
+    },
+    {
+      "url": "https://www.reuters.com/article/usa-taxes-yellen-idFRKBN2BU2VS",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/les-etats-unis-les-big-techs-et-le-reste-du-monde.html",
+          "id": "les-etats-unis-les-big-techs-et-le-reste-du-monde",
+          "title": "Les États-Unis, les Big techs et le reste du monde…"
+        },
+        {
+          "source": "publications/les-etats-unis-les-big-techs-et-le-reste-du-monde.html",
+          "id": "les-etats-unis-les-big-techs-et-le-reste-du-monde",
+          "title": "Les États-Unis, les Big techs et le reste du monde…"
+        },
+        {
+          "source": "publications/les-etats-unis-les-big-techs-et-le-reste-du-monde.html",
+          "id": "les-etats-unis-les-big-techs-et-le-reste-du-monde",
+          "title": "Les États-Unis, les Big techs et le reste du monde…"
+        }
+      ]
+    },
+    {
+      "url": "https://www.forbes.fr/business/comment-les-gafa-ont-renforce-leur-domination/?amp",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/les-etats-unis-les-big-techs-et-le-reste-du-monde.html",
+          "id": "les-etats-unis-les-big-techs-et-le-reste-du-monde",
+          "title": "Les États-Unis, les Big techs et le reste du monde…"
+        },
+        {
+          "source": "publications/les-etats-unis-les-big-techs-et-le-reste-du-monde.html",
+          "id": "les-etats-unis-les-big-techs-et-le-reste-du-monde",
+          "title": "Les États-Unis, les Big techs et le reste du monde…"
+        },
+        {
+          "source": "publications/les-etats-unis-les-big-techs-et-le-reste-du-monde.html",
+          "id": "les-etats-unis-les-big-techs-et-le-reste-du-monde",
+          "title": "Les États-Unis, les Big techs et le reste du monde…"
+        }
+      ]
+    },
+    {
+      "url": "https://reclaimfinance.org/site/en/home-2/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ran.org/bankingonclimatechaos2021/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.fossilfreestanford.org/sites/default/files/Unburnable%20Carbon%20final.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.afg.asso.fr/wp-content/uploads/2020/05/afg-eco-isr-200527web.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://reclaimfinance.org/site/wp-content/uploads/2021/02/NGFS-scenarios-final.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecb.europa.eu/press/blog/date/2021/html/ecb.blog210213~7e26af8606.en.htm",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ngfs.net/sites/default/files/medias/documents/ngfs_monetary_policy_operations_final.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.bankofengland.co.uk/KnowledgeBank/climate-change-why-it-matters-to-the-bank-of-england",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://static1.squarespace.com/static/5e0a586857ea746075c561a3/t/60749c60a7297c70eb2273d7/1618254952129/%236+Financial+Stability+Planetary+Emergency.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/actifs-fossiles-les-nouveaux-subprimes.html",
+          "id": "actifs-fossiles-les-nouveaux-subprimes",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        },
+        {
+          "source": "publications/actifs-fossiles.html",
+          "id": "actifs-fossiles",
+          "title": "Actifs fossiles, les nouveaux subprimes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://core.ac.uk/download/pdf/132277825.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "https://www.cio.bund.de/SharedDocs/Publikationen/DE/Aktuelles/20190919_strategische_marktanalyse.pdf?__blob=publicationFile",
+      "status": 400,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        },
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "http://lists.jammed.com/ISN/1999/05/0016.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "https://c3ugapprod.service-now.com/csm",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ssi.gouv.fr/uploads/2014/12/secnumcloud_referentiel_v3.1_anssi.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        },
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        },
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "https://azure.microsoft.com/fr-fr/resources/azure-for-secure-worldwide-public-sector-cloud-adoption/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "https://www.aiforhumanity.fr/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "https://ec.europa.eu/programmes/horizon2020/en/h2020-section/information-and-communication-technologies",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "https://www.orange.com/sites/orangecom/files/2020-12/newFR-Press-Release-European-space-and-digital-players-to-study-build-of.._.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "https://www.data-infrastructure.eu/GAIAX/Redaktion/EN/Publications/gaia-x-a-pitch-towards-europe.pdf?__blob=publicationFile&amp;v=6",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "https://eur-lex.europa.eu/legal-content/fr/TXT/?qid=1608117147218&amp;uri=COM%3A2020%3A825%3AFIN",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/quand-le-decideur-europeen-joue-le-jeu-des-big-techs.html",
+          "id": "quand-le-decideur-europeen-joue-le-jeu-des-big-techs",
+          "title": "Quand le décideur européen joue le jeu des Big techs…"
+        }
+      ]
+    },
+    {
+      "url": "https://2degrees-investing.org/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/sortir-de-limpasse-climatique-par-la-defaisance-carbone.html",
+          "id": "sortir-de-limpasse-climatique-par-la-defaisance-carbone",
+          "title": "Sortir de l’impasse climatique par la défaisance carbone"
+        }
+      ]
+    },
+    {
+      "url": "https://donnees.banquemondiale.org/indicator/IT.NET.USER.ZS",
+      "status": 502,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "http://www.icsg.org/index.php/press-releases/finish/170-publications-press-releases/2876-2018-10-08-icsg-factbook-2018",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "https://ccfd-terresolidaire.org/nos-combats/partage-des-richesses/rse/minerais-du-sang-la-5243",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "https://www.fournisseurs-electricite.com/guides/consommation/consommation-electrique-moyenne",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "http://www.fondationecolo.org/activites/publications/InegalitesSSD#anchor_9",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "https://www.cellie.fr/2018/10/24/les-datacenters-des-enjeux-economiques-et-en%C2%ADvironnementaux/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "https://www.caissedesdepots.fr/sites/default/files/2021-01/201210_Cahiers%20de%20recherche_2020_DATA_CENTERS_P.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "http://www.senat.fr/espace_presse/actualites/202006/reduire_lempreinte_environnementale_du_numerique_un_etat_des_lieux_inedit_et_une_feuille_de_route_pour_la_france.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecologie.gouv.fr/inventaire-demissions-gaz-effet-serre",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-2020-dt-consommation-metaux-du-numerique-juin.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "https://screenrant.com/ps5-xbox-cloud-game-streaming-bad-environ%C2%ADment-climate/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/face-au-poids-croissant-du-numerique-limperatif-de-sobriete.html",
+          "id": "face-au-poids-croissant-du-numerique-limperatif-de-sobriete",
+          "title": "Face au poids croissant du numérique : l’impératif de sobriété"
+        }
+      ]
+    },
+    {
+      "url": "https://www.qmul.ac.uk/busman/media/sbm/research/researchcentres/behavioural-finance-working-group/Taffler-et-al.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/de-la-bulle-internet-1999-2000-a-la-bulle-internaute-2020-2021-une-ouverture-vers-une-autre-economie.html",
+          "id": "de-la-bulle-internet-1999-2000-a-la-bulle-internaute-2020-2021-une-ouverture-vers-une-autre-economie",
+          "title": "De la Bulle Internet (1999-2000) à la bulle Internaute (2020-2021) ?"
+        },
+        {
+          "source": "publications/de-la-bulle-internet-1999-2000-a-la-bulle-internaute-2020-2021-une-ouverture-vers-une-autre-economie.html",
+          "id": "de-la-bulle-internet-1999-2000-a-la-bulle-internaute-2020-2021-une-ouverture-vers-une-autre-economie",
+          "title": "De la Bulle Internet (1999-2000) à la bulle Internaute (2020-2021) ?"
+        }
+      ]
+    },
+    {
+      "url": "http://prison.eu.org/spip.php?page=imprimer_article&amp;id_article=6698",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/pour-une-nouvelle-politique-carcerale-humaine-et-efficace.html",
+          "id": "pour-une-nouvelle-politique-carcerale-humaine-et-efficace",
+          "title": "Pour une nouvelle politique carcérale, humaine et efficace"
+        }
+      ]
+    },
+    {
+      "url": "https://hudoc.echr.coe.int/app/conversion/pdf?library=ECHR&amp;id=003-6624854-8792763&amp;filename=Arr%EAt%20J.M.B.%20et%20autres%20c.%20France%20-%20surpopulation%20et%20conditions%20de%20d%E9tention%20inhumaines%20et%20d%E9gradantes%20dans%20les%20prisons.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/pour-une-nouvelle-politique-carcerale-humaine-et-efficace.html",
+          "id": "pour-une-nouvelle-politique-carcerale-humaine-et-efficace",
+          "title": "Pour une nouvelle politique carcérale, humaine et efficace"
+        },
+        {
+          "source": "publications/pour-une-nouvelle-politique-carcerale-humaine-et-efficace.html",
+          "id": "pour-une-nouvelle-politique-carcerale-humaine-et-efficace",
+          "title": "Pour une nouvelle politique carcérale, humaine et efficace"
+        }
+      ]
+    },
+    {
+      "url": "http://www.renaissance-armenienne-paris.fr/?p=980",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html",
+          "id": "entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais",
+          "title": "Entre un cessez-le-feu et une élection"
+        },
+        {
+          "source": "publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html",
+          "id": "entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais",
+          "title": "Entre un cessez-le-feu et une élection"
+        }
+      ]
+    },
+    {
+      "url": "https://web.uri.edu/iaics/files/16-Jing-Ke.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html",
+          "id": "entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais",
+          "title": "Entre un cessez-le-feu et une élection"
+        },
+        {
+          "source": "publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html",
+          "id": "entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais",
+          "title": "Entre un cessez-le-feu et une élection"
+        }
+      ]
+    },
+    {
+      "url": "https://guillaumekasbarian.fr/2020/10/24/affronter-le-danger-des-ambitions-imperiales-derdogan/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html",
+          "id": "entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais",
+          "title": "Entre un cessez-le-feu et une élection"
+        },
+        {
+          "source": "publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html",
+          "id": "entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais",
+          "title": "Entre un cessez-le-feu et une élection"
+        }
+      ]
+    },
+    {
+      "url": "https://www.diplomatie.gouv.fr/fr/dossiers-pays/armenie/evenements/article/haut-karabagh-declaration-de-la-porte-parole-26-11-20",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html",
+          "id": "entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais",
+          "title": "Entre un cessez-le-feu et une élection"
+        },
+        {
+          "source": "publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html",
+          "id": "entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais",
+          "title": "Entre un cessez-le-feu et une élection"
+        }
+      ]
+    },
+    {
+      "url": "https://www.trt.net.tr/francais/europe/2020/11/23/emmanuel-macron-le-haut-karabagh-est-un-territoire-azeri-1532853",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html",
+          "id": "entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais",
+          "title": "Entre un cessez-le-feu et une élection"
+        },
+        {
+          "source": "publications/entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais.html",
+          "id": "entre-un-cessez-le-feu-et-une-election-une-analyse-de-la-deuxieme-guerre-du-karabakh-dun-point-de-vue-francais",
+          "title": "Entre un cessez-le-feu et une élection"
+        }
+      ]
+    },
+    {
+      "url": "https://webstore.iea.org/download/direct/2803",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/lhydrogene-bas-carbone-au-service-de-la-transition.html",
+          "id": "lhydrogene-bas-carbone-au-service-de-la-transition",
+          "title": "L’hydrogène bas carbone au service de la transition"
+        }
+      ]
+    },
+    {
+      "url": "http://www.certifhy.eu/images/D1_2_Overview_of_the_market_segmentation_Final_22_June_low-res.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/lhydrogene-bas-carbone-au-service-de-la-transition.html",
+          "id": "lhydrogene-bas-carbone-au-service-de-la-transition",
+          "title": "L’hydrogène bas carbone au service de la transition"
+        }
+      ]
+    },
+    {
+      "url": "https://hydrogeneurope.eu/sites/default/files/Hydrogen%202030_The%20Blueprint.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/lhydrogene-bas-carbone-au-service-de-la-transition.html",
+          "id": "lhydrogene-bas-carbone-au-service-de-la-transition",
+          "title": "L’hydrogène bas carbone au service de la transition"
+        },
+        {
+          "source": "publications/lhydrogene-bas-carbone-au-service-de-la-transition.html",
+          "id": "lhydrogene-bas-carbone-au-service-de-la-transition",
+          "title": "L’hydrogène bas carbone au service de la transition"
+        },
+        {
+          "source": "publications/lhydrogene-bas-carbone-au-service-de-la-transition.html",
+          "id": "lhydrogene-bas-carbone-au-service-de-la-transition",
+          "title": "L’hydrogène bas carbone au service de la transition"
+        }
+      ]
+    },
+    {
+      "url": "https://www.europarl.europa.eu/thinktank/en/document.html?reference=EPRS_BRI(2020)646180#:~:text=The%20EU%20aims%20to%20cut,achieve%20climate%20neutrality%20by%202050.&amp;text=The%20Fund%20will%20be%20part,a%20public%2Dsector%20loan%20facility",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/lhydrogene-bas-carbone-au-service-de-la-transition.html",
+          "id": "lhydrogene-bas-carbone-au-service-de-la-transition",
+          "title": "L’hydrogène bas carbone au service de la transition"
+        }
+      ]
+    },
+    {
+      "url": "https://ec.europa.eu/clima/policies/transport_en",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/lhydrogene-bas-carbone-au-service-de-la-transition.html",
+          "id": "lhydrogene-bas-carbone-au-service-de-la-transition",
+          "title": "L’hydrogène bas carbone au service de la transition"
+        }
+      ]
+    },
+    {
+      "url": "https://ec.europa.eu/clima/policies/transport/vehicles_en",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/lhydrogene-bas-carbone-au-service-de-la-transition.html",
+          "id": "lhydrogene-bas-carbone-au-service-de-la-transition",
+          "title": "L’hydrogène bas carbone au service de la transition"
+        }
+      ]
+    },
+    {
+      "url": "https://www.airbus.com/newsroom/stories/hydrogen-aviation-understanding-challenges-to-widespread-adoption.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/lhydrogene-bas-carbone-au-service-de-la-transition.html",
+          "id": "lhydrogene-bas-carbone-au-service-de-la-transition",
+          "title": "L’hydrogène bas carbone au service de la transition"
+        }
+      ]
+    },
+    {
+      "url": "http://www.centre-cired.fr/wp-content/uploads/2020/11/201119ElecRenouvFrance2050_Diaporama.pdf",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/lhydrogene-bas-carbone-au-service-de-la-transition.html",
+          "id": "lhydrogene-bas-carbone-au-service-de-la-transition",
+          "title": "L’hydrogène bas carbone au service de la transition"
+        }
+      ]
+    },
+    {
+      "url": "https://lop.parl.ca/staticfiles/PublicWebsite/Home/ResearchPublications/InBriefs/PDF/2015-51-e.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-la-dette-covid-tentative-de-trouver-une-bonne-reponse-a-une-mauvaise-question-du-point-de-vue-de-la-theorie-monetaire-moderne-tmm.html",
+          "id": "comment-financer-la-dette-covid-tentative-de-trouver-une-bonne-reponse-a-une-mauvaise-question-du-point-de-vue-de-la-theorie-monetaire-moderne-tmm",
+          "title": "Comment financer la dette COVID ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.thisismoney.co.uk/money/news/article-8801909/Free-money-Bank-England-150bn-UK-debt-disappear.html",
+      "status": 503,
+      "error": null,
+      "category": "5xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-la-dette-covid-tentative-de-trouver-une-bonne-reponse-a-une-mauvaise-question-du-point-de-vue-de-la-theorie-monetaire-moderne-tmm.html",
+          "id": "comment-financer-la-dette-covid-tentative-de-trouver-une-bonne-reponse-a-une-mauvaise-question-du-point-de-vue-de-la-theorie-monetaire-moderne-tmm",
+          "title": "Comment financer la dette COVID ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.silicon.fr/google-ferme-app-maker-333371.html#",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/pourquoi-le-low-code-est-il-le-symptome-dun-numerique-a-outrance.html",
+          "id": "pourquoi-le-low-code-est-il-le-symptome-dun-numerique-a-outrance",
+          "title": "Pourquoi le low-code est-il le symptôme d’un numérique à outrance ?"
+        }
+      ]
+    },
+    {
+      "url": "http://146.59.226.237:3838/",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/utiliser-limpot-abc-pour-une-reforme-dampleur-en-faveur-de-la-justice-fiscale.html",
+          "id": "utiliser-limpot-abc-pour-une-reforme-dampleur-en-faveur-de-la-justice-fiscale",
+          "title": "Utiliser l’impôt abc pour une réforme d’ampleur en faveur de la justice fiscale"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ofce.sciences-po.fr/pdf/revue/6-161OFCE.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/utiliser-limpot-abc-pour-une-reforme-dampleur-en-faveur-de-la-justice-fiscale.html",
+          "id": "utiliser-limpot-abc-pour-une-reforme-dampleur-en-faveur-de-la-justice-fiscale",
+          "title": "Utiliser l’impôt abc pour une réforme d’ampleur en faveur de la justice fiscale"
+        }
+      ]
+    },
+    {
+      "url": "https://dares.travail-emploi.gouv.fr/IMG/pdf/Remy.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/pour-une-garantie-a-lemploi-vert.html",
+          "id": "pour-une-garantie-a-lemploi-vert",
+          "title": "Pour une garantie à l’emploi vert"
+        },
+        {
+          "source": "publications/garantie-emploi.html",
+          "id": "garantie-emploi",
+          "title": "Garantie d'emploi : une idée pour la France"
+        }
+      ]
+    },
+    {
+      "url": "https://dares.travail-emploi.gouv.fr/IMG/pdf/2012-060.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/pour-une-garantie-a-lemploi-vert.html",
+          "id": "pour-une-garantie-a-lemploi-vert",
+          "title": "Pour une garantie à l’emploi vert"
+        },
+        {
+          "source": "publications/garantie-emploi.html",
+          "id": "garantie-emploi",
+          "title": "Garantie d'emploi : une idée pour la France"
+        }
+      ]
+    },
+    {
+      "url": "http://www.levyinstitute.org/pubs/wp_902.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/pour-une-garantie-a-lemploi-vert.html",
+          "id": "pour-une-garantie-a-lemploi-vert",
+          "title": "Pour une garantie à l’emploi vert"
+        },
+        {
+          "source": "publications/garantie-emploi.html",
+          "id": "garantie-emploi",
+          "title": "Garantie d'emploi : une idée pour la France"
+        }
+      ]
+    },
+    {
+      "url": "https://travail-emploi.gouv.fr/IMG/pdf/rapport_igf_igas.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/pour-une-garantie-a-lemploi-vert.html",
+          "id": "pour-une-garantie-a-lemploi-vert",
+          "title": "Pour une garantie à l’emploi vert"
+        },
+        {
+          "source": "publications/garantie-emploi.html",
+          "id": "garantie-emploi",
+          "title": "Garantie d'emploi : une idée pour la France"
+        }
+      ]
+    },
+    {
+      "url": "http://etcld.fr/wp-content/uploads/2018/11/181113_ETCLD_bilan_Interm%C3%A9diaire_email.pd",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/pour-une-garantie-a-lemploi-vert.html",
+          "id": "pour-une-garantie-a-lemploi-vert",
+          "title": "Pour une garantie à l’emploi vert"
+        },
+        {
+          "source": "publications/garantie-emploi.html",
+          "id": "garantie-emploi",
+          "title": "Garantie d'emploi : une idée pour la France"
+        }
+      ]
+    },
+    {
+      "url": "https://www.diplomatie.gouv.fr/fr/dossiers-pays/rwanda/evenements/article/commission-de-recherche-sur-les-archives-francaises-relatives-au-rwanda-et-au-248936",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/repenser-les-relations-avec-les-societes-africaines.html",
+          "id": "repenser-les-relations-avec-les-societes-africaines",
+          "title": "Repenser les relations avec les sociétés africaines"
+        }
+      ]
+    },
+    {
+      "url": "https://au.int/en/documents/20141012/key-documents-agenda2063",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/repenser-les-relations-avec-les-societes-africaines.html",
+          "id": "repenser-les-relations-avec-les-societes-africaines",
+          "title": "Repenser les relations avec les sociétés africaines"
+        }
+      ]
+    },
+    {
+      "url": "https://www.performance-publique.budget.gouv.fr/documents-budgetaires/lois-projets-lois-documents-annexes-annee/exercice-2020/projet-loi-finances-2020-mission-aide-publique-developpement",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/repenser-les-relations-avec-les-societes-africaines.html",
+          "id": "repenser-les-relations-avec-les-societes-africaines",
+          "title": "Repenser les relations avec les sociétés africaines"
+        }
+      ]
+    },
+    {
+      "url": "https://www.performance-publique.budget.gouv.fr/documents-budgetaires/lois-projets-lois-documents-annexes-annee/exercice-2020/projet-loi-finances-2020-mission-action-exterieure-etat",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/repenser-les-relations-avec-les-societes-africaines.html",
+          "id": "repenser-les-relations-avec-les-societes-africaines",
+          "title": "Repenser les relations avec les sociétés africaines"
+        }
+      ]
+    },
+    {
+      "url": "https://www.performance-publique.budget.gouv.fr/sites/performance_publique/files/farandole/ressources/2020/pap/pdf/VM_1_2020.pdf",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/repenser-les-relations-avec-les-societes-africaines.html",
+          "id": "repenser-les-relations-avec-les-societes-africaines",
+          "title": "Repenser les relations avec les sociétés africaines"
+        }
+      ]
+    },
+    {
+      "url": "https://www.saisonafrica2020.com/fr",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/repenser-les-relations-avec-les-societes-africaines.html",
+          "id": "repenser-les-relations-avec-les-societes-africaines",
+          "title": "Repenser les relations avec les sociétés africaines"
+        }
+      ]
+    },
+    {
+      "url": "http://paris.cour-administrative-appel.fr/A-savoir/Communiques/La-Cour-administrative-d-appel-de-Paris-confirme-que-la-societe-Google-Ireland-Limited-n-est-pas-imposable-en-France-au-titre-des-annees-2005-a-2010",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/denoncons-la-convention-fiscale-franco-irlandaise.html",
+          "id": "denoncons-la-convention-fiscale-franco-irlandaise",
+          "title": "Dénonçons la convention fiscale franco-irlandaise"
+        }
+      ]
+    },
+    {
+      "url": "https://seas-at-risk.org/images/pdf/publications/Multi_issue_speed_report.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/faire-atterrir-le-grand-demenagement-du-monde-vers-une-mobilite-post-carbone.html",
+          "id": "faire-atterrir-le-grand-demenagement-du-monde-vers-une-mobilite-post-carbone",
+          "title": "Faire atterrir le grand déménagement du monde : vers une mobilité post-carbone"
+        }
+      ]
+    },
+    {
+      "url": "http://transportrail.canalblog.com/pages/ertms&#8212;europeaniser-la-signalisation-ferroviaire&#8211;/34301115.html",
+      "status": 410,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/faire-atterrir-le-grand-demenagement-du-monde-vers-une-mobilite-post-carbone.html",
+          "id": "faire-atterrir-le-grand-demenagement-du-monde-vers-une-mobilite-post-carbone",
+          "title": "Faire atterrir le grand déménagement du monde : vers une mobilité post-carbone"
+        }
+      ]
+    },
+    {
+      "url": "https://www.vda.de/en/services/Publications/%C2%ABe-fuels%C2%BB-study&#8212;the-potential-of-electricity-based-fuels-for-low-emission-transport-in-the-eu.html",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/faire-atterrir-le-grand-demenagement-du-monde-vers-une-mobilite-post-carbone.html",
+          "id": "faire-atterrir-le-grand-demenagement-du-monde-vers-une-mobilite-post-carbone",
+          "title": "Faire atterrir le grand déménagement du monde : vers une mobilité post-carbone"
+        }
+      ]
+    },
+    {
+      "url": "https://travail-emploi.gouv.fr/IMG/pdf/l_inspection_du_travail_en_france_2017.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/demondialisation-relocalisation-et-regulation-publique-pourquoi-et-comment.html",
+          "id": "demondialisation-relocalisation-et-regulation-publique-pourquoi-et-comment",
+          "title": "Démondialisation, relocalisation et régulation publique : pourquoi et comment"
+        }
+      ]
+    },
+    {
+      "url": "https://www.eenews.net/stories/1062893583",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/profiter-de-la-crise-pour-reduire-durablement-nos-emissions-de-co2.html",
+          "id": "profiter-de-la-crise-pour-reduire-durablement-nos-emissions-de-co2",
+          "title": "Profiter de la crise pour réduire durablement nos émissions de CO2"
+        }
+      ]
+    },
+    {
+      "url": "http://xn--lebtimentperformant-dvb.fr",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/profiter-de-la-crise-pour-reduire-durablement-nos-emissions-de-co2.html",
+          "id": "profiter-de-la-crise-pour-reduire-durablement-nos-emissions-de-co2",
+          "title": "Profiter de la crise pour réduire durablement nos émissions de CO2"
+        }
+      ]
+    },
+    {
+      "url": "https://www.rte-france.com/sites/default/files/bp2017_synthese_17.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/profiter-de-la-crise-pour-reduire-durablement-nos-emissions-de-co2.html",
+          "id": "profiter-de-la-crise-pour-reduire-durablement-nos-emissions-de-co2",
+          "title": "Profiter de la crise pour réduire durablement nos émissions de CO2"
+        }
+      ]
+    },
+    {
+      "url": "http://awsassets.wwfffr.panda.org/downloads/27102016_lpr_2016_rapport_planete_vivante.pdf",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/proteger-la-biodiversite-pour-preserver-notre-sante-et-notre-environnement.html",
+          "id": "proteger-la-biodiversite-pour-preserver-notre-sante-et-notre-environnement",
+          "title": "Protéger la biodiversité pour préserver notre santé et notre environnement"
+        }
+      ]
+    },
+    {
+      "url": "https://uicn.fr/wp-content/uploads/2019/12/resultats-synthetiques-liste-rouge-france.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/proteger-la-biodiversite-pour-preserver-notre-sante-et-notre-environnement.html",
+          "id": "proteger-la-biodiversite-pour-preserver-notre-sante-et-notre-environnement",
+          "title": "Protéger la biodiversité pour préserver notre santé et notre environnement"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ecologique-solidaire.gouv.fr/sites/default/files/Feuille-de-route-Economie-circulaire-50-mesures-pour-economie-100-circulaire.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/accelerer-la-realisation-dune-economie-veritablement-circulaire-a-grande-echelle.html",
+          "id": "accelerer-la-realisation-dune-economie-veritablement-circulaire-a-grande-echelle",
+          "title": "Accélérer la réalisation d’une économie véritablement circulaire à grande échelle"
+        }
+      ]
+    },
+    {
+      "url": "https://larevuedesmedias.ina.fr/le-cyberespace-un-enjeu-majeur-de-geopolitique",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/lurgence-dune-independance-numerique-revelee-par-lurgence-sanitaire.html",
+          "id": "lurgence-dune-independance-numerique-revelee-par-lurgence-sanitaire",
+          "title": "L’urgence d’une indépendance numérique révélée par l’urgence sanitaire"
+        }
+      ]
+    },
+    {
+      "url": "https://www.who.int/tb/features_archive/involuntary_treatment/fr/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/une-maitrise-democratique-de-lurgence-comment-respecter-les-libertes-publiques-en-temps-de-crise.html",
+          "id": "une-maitrise-democratique-de-lurgence-comment-respecter-les-libertes-publiques-en-temps-de-crise",
+          "title": "Une maîtrise démocratique de l’urgence"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ea-reperes.com/wp-content/uploads/2020/04/ImpactConfinement-EHESP-20200322v1.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/une-maitrise-democratique-de-lurgence-comment-respecter-les-libertes-publiques-en-temps-de-crise.html",
+          "id": "une-maitrise-democratique-de-lurgence-comment-respecter-les-libertes-publiques-en-temps-de-crise",
+          "title": "Une maîtrise démocratique de l’urgence"
+        }
+      ]
+    },
+    {
+      "url": "https://www.fonction-publique.gouv.fr/files/files/statistiques/rapports_annuels/2019/Rapport_annuel_FP-2019.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/une-fonction-publique-solide-revalorisee-et-plus-diverse-pour-vivre-bien.html",
+          "id": "une-fonction-publique-solide-revalorisee-et-plus-diverse-pour-vivre-bien",
+          "title": "Une fonction publique solide, revalorisée et plus diverse pour vivre bien"
+        }
+      ]
+    },
+    {
+      "url": "https://positions-revue.fr/le-moment-gilets-jaunes-i-ce-quils-ont-su-dire/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/retour-sur-le-retour-de-letat.html",
+          "id": "retour-sur-le-retour-de-letat",
+          "title": "Retour sur le « retour de l’État »"
+        }
+      ]
+    },
+    {
+      "url": "http://tnova.fr/notes/pour-un-service-public-de-la-sobriete-energetique",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/gerer-les-grandes-infrastructures-dans-linteret-commun-en-periode-de-crise.html",
+          "id": "gerer-les-grandes-infrastructures-dans-linteret-commun-en-periode-de-crise",
+          "title": "Gérer les grandes infrastructures dans l’intérêt commun en période de crise"
+        }
+      ]
+    },
+    {
+      "url": "http://www2.centre-cired.fr/IMG/pdf/rapport_gicf.pdf",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/droits-de-tirage-speciaux-covid-19-et-environnement-the-time-is-now-the-question-is-how.html",
+          "id": "droits-de-tirage-speciaux-covid-19-et-environnement-the-time-is-now-the-question-is-how",
+          "title": "Droits de Tirage Spéciaux, Covid-19 et environnement :  The time is now, the question is how ?"
+        }
+      ]
+    },
+    {
+      "url": "https://brandnewcongress.org/Platform",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/etats-unis-leveil-de-la-gauche.html",
+          "id": "etats-unis-leveil-de-la-gauche",
+          "title": "États-Unis : L’éveil de la gauche"
+        }
+      ]
+    },
+    {
+      "url": "https://democraticleft.dsausa.org/files/sites/6/2019/03/DL_2000_V028_01_final.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/etats-unis-leveil-de-la-gauche.html",
+          "id": "etats-unis-leveil-de-la-gauche",
+          "title": "États-Unis : L’éveil de la gauche"
+        }
+      ]
+    },
+    {
+      "url": "https://malegislature.gov/Bills/190/H4640/Amendments/House",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/etats-unis-leveil-de-la-gauche.html",
+          "id": "etats-unis-leveil-de-la-gauche",
+          "title": "États-Unis : L’éveil de la gauche"
+        }
+      ]
+    },
+    {
+      "url": "https://www.i4ce.org/wp-core/wp-content/uploads/2018/11/I4CE-Panorama-des-financements-climat-r%25C3%25A9sum%25C3%25A9-2018-FR.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://unfccc.int/topics/climate-finance/resources/biennial-assessment-of-climate-finance",
+      "status": 0,
+      "error": "timeout",
+      "category": "timeout",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://ec.europa.eu/info/sites/info/files/european-green-deal-communication_fr.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://ec.europa.eu/info/sites/info/files/business_economy_euro/banking_and_finance/documents/190618-sustainable-finance-teg-report-taxonomy_en.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/fs-2019-rapport-la-valeur-de-laction-pour-le-climat_0.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "http://www.bsi-economics.org/1000-banque-climat-idee-promesse-nd",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://theshiftproject.org/article/assurance-vie-transition-soutient-lamendement-loi-pacte/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.strategie.gouv.fr/sites/strategie.gouv.fr/files/atoms/files/na-54-fiscalite-epargne-ok.pdf",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.vebleninstitute.org/IMG/pdf/aligner_la_politique_monetaire_sur_les_objectifs_climatiques_europeens.pdf",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.banque-france.fr/statistiques/situation-mensuelle-monetaire-de-la-banque-de-france-nov-2019",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.imf.org/~/media/Files/Publications/WP/2019/WPIEA2019133.ashx",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique.html",
+          "id": "comment-financer-une-politique-ambitieuse-de-reconstruction-ecologique",
+          "title": "Comment financer une politique ambitieuse de reconstruction écologique ?"
+        }
+      ]
+    },
+    {
+      "url": "http://labelledemocratie.ouvaton.org/wordpress/label-hqd/",
+      "status": 404,
+      "error": null,
+      "category": "4xx",
+      "refs": [
+        {
+          "source": "publications/listes-citoyennes-municipalisme-quelle-democratie-locale-apres-les-gilets-jaunes.html",
+          "id": "listes-citoyennes-municipalisme-quelle-democratie-locale-apres-les-gilets-jaunes",
+          "title": "Listes citoyennes, municipalisme : Quelle démocratie locale après les gilets jaunes ?"
+        }
+      ]
+    },
+    {
+      "url": "https://www.assemblee-citoyenne-commercy.com/les-propositions-2020",
+      "status": 0,
+      "error": "fetch failed",
+      "category": "fetch_failed",
+      "refs": [
+        {
+          "source": "publications/listes-citoyennes-municipalisme-quelle-democratie-locale-apres-les-gilets-jaunes.html",
+          "id": "listes-citoyennes-municipalisme-quelle-democratie-locale-apres-les-gilets-jaunes",
+          "title": "Listes citoyennes, municipalisme : Quelle démocratie locale après les gilets jaunes ?"
+        }
+      ]
+    }
+  ]
+}
