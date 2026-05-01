@@ -2,8 +2,7 @@ import { useState, useMemo } from 'react';
 import useDebounce from '../../hooks/useDebounce';
 import { COLORS } from '../../utils/constants';
 import RepoPhoto from './RepoPhoto';
-
-const avatarColors = [COLORS.navy, COLORS.sky, COLORS.terra, COLORS.ochre, COLORS.green];
+import PersonIllustration from './PersonIllustration';
 
 function normalize(str) {
   return (str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -37,12 +36,6 @@ export default function AuthorPicker({ authors = [], selected = [], onChange, mu
   };
 
   const selectedAuthors = authors.filter(a => selected.includes(a.id));
-
-  const getInitial = (a) => {
-    if (a.firstName) return a.firstName.charAt(0).toUpperCase();
-    if (a.name) return a.name.charAt(0).toUpperCase();
-    return '?';
-  };
 
   const getDisplayName = (a) => {
     if (a.firstName && a.lastName) return `${a.firstName} ${a.lastName}`;
@@ -91,17 +84,11 @@ export default function AuthorPicker({ authors = [], selected = [], onChange, mu
               className={`author-picker-card${isSelected ? ' selected' : ''}`}
               onClick={() => toggleAuthor(a.id)}
             >
-              <div className="author-picker-avatar" style={{
-                backgroundColor: a.photo ? 'transparent' : avatarColors[i % avatarColors.length],
-                color: '#fff',
-                fontSize: 20,
-                fontFamily: "'Cormorant Garamond', serif",
-                fontWeight: 700,
-              }}>
+              <div className="author-picker-avatar" style={{ overflow: 'hidden' }}>
                 <RepoPhoto
                   photo={a.photoPath || a.photo}
                   alt={getDisplayName(a)}
-                  fallback={<>{getInitial(a)}</>}
+                  fallback={<PersonIllustration name={getDisplayName(a) || a.id} />}
                 />
               </div>
               <div className="author-picker-info">

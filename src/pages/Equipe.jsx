@@ -5,6 +5,7 @@ import { COLORS, normalizeName, namesMatch, findPublicationsForAuthor, canonical
 import usePhoto from '../hooks/usePhoto';
 import RepoPhoto from '../components/shared/RepoPhoto';
 import SearchableSelect from '../components/shared/SearchableSelect';
+import PersonIllustration from '../components/shared/PersonIllustration';
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
 
 const CS_CATEGORIES = [
@@ -33,12 +34,9 @@ function slugify(prenom, nom) {
 
 // ─── Shared avatar component ───
 function Avatar({ photo, prenom, nom, size = 48 }) {
-  const initials = (prenom || '?').charAt(0).toUpperCase();
   const placeholder = (
-    <div className="equipe-avatar equipe-avatar-placeholder" style={{
-      width: size, height: size, fontSize: size * 0.42,
-    }}>
-      {initials}
+    <div className="equipe-avatar" style={{ width: size, height: size, overflow: 'hidden' }}>
+      <PersonIllustration name={`${prenom || ''} ${nom || ''}`.trim() || '?'} />
     </div>
   );
   if (!photo) return placeholder;

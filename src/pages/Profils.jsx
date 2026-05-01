@@ -6,6 +6,7 @@ import { COLORS, normalizeName, namesMatch, findPublicationsForAuthor, canonical
 import useDebounce from '../hooks/useDebounce';
 import usePhoto from '../hooks/usePhoto';
 import RepoPhoto from '../components/shared/RepoPhoto';
+import PersonIllustration from '../components/shared/PersonIllustration';
 import { hasGitHub, githubUploadImage, saveAuthorsToGitHub } from '../services/github';
 
 const emptyForm = { firstName: '', lastName: '', role: '', photo: '', bio: '', email: '' };
@@ -440,19 +441,12 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
                   key={auteur.id}
                   onClick={() => openEdit(auteur)}
                 >
-                  {/* Photo or initial */}
+                  {/* Photo or person illustration fallback */}
                   <div className="auteur-card-photo">
                     <RepoPhoto
                       photo={auteur.photoPath || auteur.photo}
                       alt={getDisplayName(auteur)}
-                      fallback={
-                        <div
-                          className="auteur-card-initials"
-                          style={{ backgroundColor: getAvatarColor(i), display: 'flex' }}
-                        >
-                          {getInitial(auteur)}
-                        </div>
-                      }
+                      fallback={<PersonIllustration name={getDisplayName(auteur) || auteur.id} />}
                     />
                   </div>
 
@@ -506,9 +500,7 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
                 {effectivePreview ? (
                   <img src={effectivePreview} alt="Aperçu" />
                 ) : (
-                  <div className="auteur-modal-initials" style={{ backgroundColor: COLORS.navy }}>
-                    {form.firstName ? form.firstName.charAt(0).toUpperCase() : '?'}
-                  </div>
+                  <PersonIllustration name={`${form.firstName} ${form.lastName}`.trim() || 'nouveau'} />
                 )}
               </div>
               <div style={{ flex: 1 }}>
