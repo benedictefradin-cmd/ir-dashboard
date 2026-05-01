@@ -1,9 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import SearchBar from '../components/shared/SearchBar';
-import { hasGitHub, githubUploadImage, githubGetFile } from '../services/github';
+import { hasGitHub, githubUploadImage, githubListDir } from '../services/github';
 import { SITE_URL } from '../utils/constants';
-import { loadLocal } from '../utils/localStorage';
 import useDebounce from '../hooks/useDebounce';
 
 const MEDIA_FOLDERS = [
@@ -39,9 +38,8 @@ export default function Medias({ toast }) {
     }
     setLoading(true);
     try {
-      const ghToken = loadLocal('ir_github_token', '') || import.meta.env.VITE_GITHUB_TOKEN || '';
-      const ghOwner = loadLocal('ir_github_owner', '') || import.meta.env.VITE_GITHUB_OWNER || 'benedictefradin-cmd';
-      const ghRepo = loadLocal('ir_github_site_repo', '') || import.meta.env.VITE_GITHUB_SITE_REPO || 'institut-rousseau';
+      // Listing via le Worker — plus aucun PAT côté navigateur. Le repo cible
+      // est résolu côté Worker (env.GITHUB_OWNER / GITHUB_SITE_REPO).
       const folders = [
         'assets/images/equipe',
         'assets/images/auteurs',
@@ -55,31 +53,23 @@ export default function Medias({ toast }) {
 
       for (const folder of folders) {
         try {
-          const res = await fetch(
-            `https://api.github.com/repos/${ghOwner}/${ghRepo}/contents/${folder}`,
-            { headers: { 'Authorization': `Bearer ${ghToken}`, 'Accept': 'application/vnd.github.v3+json' } }
-          );
-          if (res.ok) {
-            const files = await res.json();
-            if (Array.isArray(files)) {
-              for (const f of files) {
-                if (f.type === 'file') {
-                  results.push({
-                    name: f.name,
-                    path: f.path,
-                    folder,
-                    size: f.size,
-                    sha: f.sha,
-                    url: `${SITE_URL}/${f.path}`,
-                    rawUrl: f.download_url,
-                    isImage: /\.(jpg|jpeg|png|webp|svg|gif)$/i.test(f.name),
-                    isPdf: /\.pdf$/i.test(f.name),
-                  });
-                }
-              }
+          const items = await githubListDir(folder);
+          for (const f of items) {
+            if (f.type === 'file') {
+              results.push({
+                name: f.name,
+                path: f.path,
+                folder,
+                size: f.size,
+                sha: f.sha,
+                url: `${SITE_URL}/${f.path}`,
+                rawUrl: '',
+                isImage: /\.(jpg|jpeg|png|webp|svg|gif)$/i.test(f.name),
+                isPdf: /\.pdf$/i.test(f.name),
+              });
             }
           }
-        } catch { /* dossier n'existe pas */ }
+        } catch { /* dossier vide ou inaccessible */ }
       }
 
       setMedias(results);

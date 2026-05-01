@@ -875,6 +875,7 @@ export default {
           'Authorization': `token ${githubToken}`,
           'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
+          'User-Agent': 'ir-dashboard-worker',
         };
 
         // Helper : vérifie qu'un chemin est dans la liste blanche du repo site

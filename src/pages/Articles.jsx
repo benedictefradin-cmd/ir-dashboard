@@ -7,7 +7,7 @@ import AuthorPicker from '../components/shared/AuthorPicker';
 import MultiSelect from '../components/shared/MultiSelect';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
-import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL, TARGET_LANGUAGES } from '../utils/constants';
+import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL, TARGET_LANGUAGES, LS_KEYS } from '../utils/constants';
 import { hasGitHub, insertHtmlInPage, formatDateSite, updatePublicationsI18n, updatePublicationsData, categoryColor } from '../services/github';
 import { fetchArticleContent, updateArticleStatus, hasNotion } from '../services/notion';
 import { loadLocal } from '../utils/localStorage';
@@ -205,22 +205,13 @@ export default function Articles({
         slug,
       });
 
-      // 4. Push to GitHub via Worker
-      const workerUrl = loadLocal('worker-url', '') || import.meta.env.VITE_WORKER_URL || '';
-      const githubToken = loadLocal('ir_github_token', '');
-      const githubOwner = loadLocal('ir_github_owner', '');
-      const githubRepo = loadLocal('ir_github_site_repo', '');
-
+      // 4. Push to GitHub via Worker (secret GITHUB_PAT côté serveur)
+      const workerUrl = loadLocal(LS_KEYS.workerUrl, '') || import.meta.env.VITE_WORKER_URL || '';
       let commitSha = null;
-      if (githubToken && githubOwner && githubRepo && workerUrl) {
+      if (workerUrl) {
         const resp = await fetch(`${workerUrl}/api/github/publish`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-GitHub-Token': githubToken,
-            'X-GitHub-Owner': githubOwner,
-            'X-GitHub-Repo': githubRepo,
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             slug,
             html: fullHtml,
@@ -235,7 +226,7 @@ export default function Articles({
         const result = await resp.json();
         commitSha = result.sha;
       } else if (hasGitHub()) {
-        // Fallback to direct GitHub API
+        // Fallback : insertion legacy dans publications.html via Worker
         const cardHtml = `
 <article class="publication-card" data-tags="${(article.tags || []).join(' ')}">
   ${(article.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
@@ -701,20 +692,11 @@ export default function Articles({
                       slug,
                     });
 
-                    const workerUrl = loadLocal('worker-url', '') || import.meta.env.VITE_WORKER_URL || '';
-                    const githubToken = loadLocal('ir_github_token', '');
-                    const githubOwner = loadLocal('ir_github_owner', '');
-                    const githubRepo = loadLocal('ir_github_site_repo', '');
-
-                    if (githubToken && githubOwner && githubRepo && workerUrl) {
+                    const workerUrl = loadLocal(LS_KEYS.workerUrl, '') || import.meta.env.VITE_WORKER_URL || '';
+                    if (workerUrl) {
                       const resp = await fetch(`${workerUrl}/api/github/publish`, {
                         method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'X-GitHub-Token': githubToken,
-                          'X-GitHub-Owner': githubOwner,
-                          'X-GitHub-Repo': githubRepo,
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                           slug,
                           html: fullHtml,

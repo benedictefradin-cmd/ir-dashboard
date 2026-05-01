@@ -216,13 +216,18 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
   const testGitHub = async () => {
     setTesting(prev => ({ ...prev, github: 'loading' }));
     try {
-      const resp = await fetch(`https://api.github.com/repos/${githubOwner}/${githubSiteRepo}`, {
-        headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' },
-      });
-      if (!resp.ok) throw new Error(`GitHub : ${resp.status}`);
-      const repo = await resp.json();
+      // Test côté Worker — vérifie que le secret GITHUB_PAT est bien configuré
+      // et que le repo cible est accessible. Plus de token côté navigateur.
+      const health = await checkHealth();
+      if (!health?.services?.github) {
+        throw new Error('Secret GITHUB_PAT non configuré côté Worker (cf. MIGRATION.md)');
+      }
+      // Lecture d'un fichier test pour confirmer l'accès au repo
+      const { githubGetFile } = await import('../services/github');
+      const file = await githubGetFile('data/publications.json');
+      const data = JSON.parse(file.content);
       setTesting(prev => ({ ...prev, github: 'ok' }));
-      toast(`GitHub connecté — repo ${repo.full_name}`);
+      toast(`GitHub connecté — ${Array.isArray(data) ? data.length : 0} publications dans le repo`);
     } catch (err) {
       setTesting(prev => ({ ...prev, github: 'error' }));
       toast(`Erreur GitHub : ${err.message}`, 'error');

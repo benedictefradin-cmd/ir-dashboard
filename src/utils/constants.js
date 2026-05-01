@@ -198,13 +198,18 @@ export const LS_KEYS = {
 };
 
 // ─── Config par défaut ──────────────────────────────
+// Le Worker URL est la seule variable VITE_* utilisée. Les secrets GitHub /
+// Notion / Brevo sont uniquement côté Worker (jamais dans le bundle public).
 export const DEFAULT_WORKER_URL = import.meta.env.VITE_WORKER_URL || '';
-export const DEFAULT_GITHUB_OWNER = import.meta.env.VITE_GITHUB_OWNER || 'benedictefradin-cmd';
-export const DEFAULT_GITHUB_SITE_REPO = import.meta.env.VITE_GITHUB_SITE_REPO || 'institut-rousseau';
+export const DEFAULT_GITHUB_OWNER = 'benedictefradin-cmd';
+export const DEFAULT_GITHUB_SITE_REPO = 'institut-rousseau';
 export const DEFAULT_PAGE_SIZE = 50;
 
 // ─── Site URL ────────────────────────────────────────
-export const SITE_URL = 'https://institut-rousseau-kb9p.vercel.app';
+// Domaine de prod (CNAME du repo site → Vercel). L'ancienne URL Vercel preview
+// (institut-rousseau-kb9p.vercel.app) ne servait qu'au dev et cassait les liens
+// "Voir sur le site" en prod (cf. AUDIT §3.2).
+export const SITE_URL = 'https://institut-rousseau.fr';
 
 // ─── Photo helpers ───────────────────────────────────
 /**

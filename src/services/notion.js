@@ -10,8 +10,12 @@ function getWorkerUrl() {
 }
 
 function getNotionHeaders() {
-  const token = loadLocal('ir_notion_token', '') || import.meta.env.VITE_NOTION_API_KEY || '';
-  const dbId = loadLocal('ir_notion_db_id', '') || import.meta.env.VITE_NOTION_DATABASE_ID || '';
+  // Notion est en cours de retrait (cf. AUDIT §6 P0). Plus de lecture de
+  // VITE_NOTION_API_KEY (qui se retrouvait dans le bundle public). Le token,
+  // s'il est encore configuré côté Settings, vient uniquement du localStorage
+  // de l'utilisateur connecté. Le module sera supprimé dans un commit ultérieur.
+  const token = loadLocal('ir_notion_token', '');
+  const dbId = loadLocal('ir_notion_db_id', '');
   return {
     'Content-Type': 'application/json',
     'X-Notion-Token': token,
@@ -96,9 +100,13 @@ export function countByStatus(articles) {
 
 /**
  * Vérifie si Notion est configuré.
+ *
+ * Notion est désactivé suite à la décision AUDIT §7 Q5 (avril 2026) :
+ * la base contenait un seul article test sans titre, rien à migrer.
+ * La fonction renvoie toujours false pour neutraliser useNotionSync.
+ * Le code Notion (front + worker) est conservé en cas de réactivation
+ * future, mais aucun appel n'est plus déclenché par défaut.
  */
 export function hasNotion() {
-  const token = loadLocal('ir_notion_token', '') || import.meta.env.VITE_NOTION_API_KEY || '';
-  const dbId = loadLocal('ir_notion_db_id', '') || import.meta.env.VITE_NOTION_DATABASE_ID || '';
-  return !!(token && dbId);
+  return false;
 }
