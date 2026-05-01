@@ -56,6 +56,18 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Notion-Token, X-Notion-Database-Id, X-GitHub-Token, X-GitHub-Owner, X-GitHub-Repo, X-GitHub-User-Token',
 };
 
+// Encode des bytes UTF-8 en base64 sans planter sur les gros payloads.
+// `String.fromCharCode(...utf8)` lève "Maximum call stack size exceeded" dès
+// ~100 ko (limite du nombre d'arguments du spread). On chunke par 8 ko.
+function utf8ToBase64(bytes) {
+  let bin = '';
+  const chunk = 8192;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
+
 export default {
   async fetch(request, env) {
     const cors = corsHeaders(request);
@@ -1137,7 +1149,7 @@ async function handle(request, env) {
             contentBase64 = body.base64.replace(/\n/g, '');
           } else {
             const utf8 = new TextEncoder().encode(body.content);
-            contentBase64 = btoa(String.fromCharCode(...utf8));
+            contentBase64 = utf8ToBase64(utf8);
           }
 
           const putBody = {
@@ -1249,7 +1261,7 @@ async function handle(request, env) {
           }
 
           const utf8 = new TextEncoder().encode(JSON.stringify(body.data, null, 2));
-          const content = btoa(String.fromCharCode(...utf8));
+          const content = utf8ToBase64(utf8);
           const putBody = {
             message: body.message || `Mise à jour ${fileName} depuis le back-office`,
             content,
@@ -1288,7 +1300,7 @@ async function handle(request, env) {
           }
 
           const utf8 = new TextEncoder().encode(html);
-          const content = btoa(String.fromCharCode(...utf8));
+          const content = utf8ToBase64(utf8);
           const putBody = {
             message: commitMessage || `Publish: ${metadata?.title || slug}`,
             content,
