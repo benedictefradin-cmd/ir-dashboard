@@ -4,7 +4,7 @@ import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
-import { formatDateFr } from '../utils/formatters';
+import { formatDateFr, escapeHtml as escAttr } from '../utils/formatters';
 import { COLORS, PRESSE_TYPES } from '../utils/constants';
 import { hasGitHub, insertHtmlInPage, formatDateSite } from '../services/github';
 import useDebounce from '../hooks/useDebounce';
@@ -122,12 +122,15 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
     setPublishingId(item.id);
     try {
       if (hasGitHub()) {
+        // Échappement des champs (cf. AUDIT §4.6) — un titre ou une URL malveillante
+        // ne peuvent plus injecter de balises actives sur presse.html.
+        const safeUrl = item.urlExterne && /^https?:/i.test(item.urlExterne) ? item.urlExterne : '#';
         const cardHtml = `
 <article class="presse-item">
-  <span class="media">${item.media}</span>
-  <h3><a href="${item.urlExterne || '#'}" target="_blank">${item.title}</a></h3>
-  <p class="auteur">${item.auteur || ''}</p>
-  <time>${formatDateSite(item.date)}</time>
+  <span class="media">${escAttr(item.media)}</span>
+  <h3><a href="${escAttr(safeUrl)}" target="_blank" rel="noopener noreferrer">${escAttr(item.title)}</a></h3>
+  <p class="auteur">${escAttr(item.auteur || '')}</p>
+  <time>${escAttr(formatDateSite(item.date))}</time>
 </article>`;
         await insertHtmlInPage('presse.html', cardHtml, `Ajout presse : ${item.title}`);
         toast('Article presse publié sur le site');

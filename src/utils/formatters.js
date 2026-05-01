@@ -51,6 +51,19 @@ export function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// ─── HTML escape ─────────────────────────────────────
+// Échappe les caractères spéciaux pour insertion safe dans du HTML.
+// Indispensable partout où on construit du HTML par template string à partir
+// de saisies utilisateur (cf. AUDIT §4.6). Marche aussi pour les attributs.
+export function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 // ─── Variation pourcentage ────────────────────────────
 export function calcVariation(current, previous) {
   if (!previous || previous === 0) return { pct: 0, direction: 'neutral' };

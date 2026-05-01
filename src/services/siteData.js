@@ -99,23 +99,29 @@ export async function fetchAllSiteData() {
 
 /**
  * Charge le HTML d'une publication et en extrait le corps éditable
- * (entre l'auteur et le bloc de partage). Permet à l'éditeur du back-office
- * de pré-remplir le contenu d'un article existant publié sur le site.
+ * (entre l'auteur et le bloc de partage), plus les éléments structurels
+ * (image hero, bio auteur, lien PDF) à préserver lors d'une republication.
  *
  * @param {string} slug
- * @returns {Promise<{ content: string, sha: string|null, fullHtml: string }>}
+ * @returns {Promise<{
+ *   content: string, sha: string|null, fullHtml: string,
+ *   heroImage: { src: string, alt: string }|null,
+ *   authorBio: string,
+ *   pdfUrl: string,
+ * }>}
  */
 export async function fetchPublicationContent(slug) {
-  if (!slug) return { content: '', sha: null, fullHtml: '' };
+  if (!slug) return { content: '', sha: null, fullHtml: '', heroImage: null, authorBio: '', pdfUrl: '' };
   if (!hasGitHub()) throw new Error('GitHub non configuré');
   const filePath = `publications/${slug}.html`;
   const { content: fullHtml, sha } = await githubGetFile(filePath);
-  return { content: extractArticleBody(fullHtml), sha, fullHtml };
+  const parsed = parseArticleHtml(fullHtml);
+  return { sha, fullHtml, ...parsed };
 }
 
-// Sélecteurs des éléments structurels insérés par buildPublicationHtml
-// qu'on retire avant de présenter le HTML à l'éditeur (l'auteur, le bloc
-// "À lire aussi" et le CTA don/adhésion sont ré-injectés à la republication).
+// Sélecteurs des éléments structurels insérés par buildPublicationHtml qu'on
+// retire avant de remettre le HTML dans l'éditeur (auteur, hero, share, "À lire
+// aussi", CTA don/adhésion sont ré-injectés à la republication).
 const STRUCTURAL_SELECTORS = [
   '.article-hero-img',
   '.article-author-block',
@@ -126,15 +132,39 @@ const STRUCTURAL_SELECTORS = [
   '.article-back',
 ];
 
-function extractArticleBody(html) {
-  if (typeof DOMParser === 'undefined') return '';
+function parseArticleHtml(html) {
+  if (typeof DOMParser === 'undefined') {
+    return { content: '', heroImage: null, authorBio: '', pdfUrl: '' };
+  }
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const root = doc.querySelector('.article-content');
-  if (!root) return '';
+  if (!root) return { content: '', heroImage: null, authorBio: '', pdfUrl: '' };
+
+  // Hero image (figure.article-hero-img > img) — src/alt à conserver.
+  const heroImg = root.querySelector('.article-hero-img img');
+  const heroImage = heroImg
+    ? { src: heroImg.getAttribute('src') || '', alt: heroImg.getAttribute('alt') || '' }
+    : null;
+
+  // Bio courte sous le nom de l'auteur (article-author-bio).
+  const bioEl = root.querySelector('.article-author-bio');
+  const authorBio = bioEl ? bioEl.textContent.trim() : '';
+
+  // Premier lien .pdf trouvé hors blocs structurels — sert à pré-remplir
+  // le champ "Lien PDF" sans ré-injecter de bouton CTA.
+  let pdfUrl = '';
+  const inBody = (el) => !STRUCTURAL_SELECTORS.some(sel => el.closest(sel));
+  for (const a of root.querySelectorAll('a[href]')) {
+    const href = a.getAttribute('href') || '';
+    if (/\.pdf(\?|#|$)/i.test(href) && inBody(a)) { pdfUrl = href; break; }
+  }
+
+  // Retire les blocs structurels avant de renvoyer le HTML éditable.
   STRUCTURAL_SELECTORS.forEach(sel => {
     root.querySelectorAll(sel).forEach(el => el.remove());
   });
-  return root.innerHTML.trim();
+
+  return { content: root.innerHTML.trim(), heroImage, authorBio, pdfUrl };
 }
 
 /**

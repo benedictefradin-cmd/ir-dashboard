@@ -167,14 +167,17 @@ export default function Articles({
         const result = await resp.json();
         commitSha = result.sha;
       } else if (hasGitHub()) {
-        // Fallback : insertion legacy dans publications.html via Worker
+        // Fallback : insertion legacy dans publications.html via Worker. Tous les
+        // champs susceptibles de venir de la saisie utilisateur sont passés par
+        // escAttr() — un titre comme `</h3><script>…</script>` ne casse plus la
+        // page publique (cf. AUDIT §4.6).
         const cardHtml = `
-<article class="publication-card" data-tags="${(article.tags || []).join(' ')}">
-  ${(article.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
-  <span class="type">${pubType}</span>
-  <h3>${article.title}</h3>
-  <p class="meta">${authorNames} — ${todayFr}</p>
-  <p>${article.summary || ''}</p>
+<article class="publication-card" data-tags="${escAttr((article.tags || []).join(' '))}">
+  ${(article.tags || []).map(t => `<span class="tag">${escAttr(t)}</span>`).join('')}
+  <span class="type">${escAttr(pubType)}</span>
+  <h3>${escAttr(article.title)}</h3>
+  <p class="meta">${escAttr(authorNames)} — ${escAttr(todayFr)}</p>
+  <p>${escAttr(article.summary || '')}</p>
 </article>`;
         await insertHtmlInPage('publications.html', cardHtml, `Ajout publication : ${article.title}`);
       }
@@ -213,13 +216,15 @@ export default function Articles({
     if (!pub) { setPublishingId(null); return; }
     try {
       if (hasGitHub()) {
+        // Échappement des champs (cf. AUDIT §4.6).
+        const safePdfUrl = pub.pdfUrl && /^https?:/i.test(pub.pdfUrl) ? pub.pdfUrl : '';
         const cardHtml = `
-<article class="publication-card" data-tags="${(pub.tags || []).join(' ')}">
-  ${(pub.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
-  <span class="type">${pub.type}</span>
-  <h3>${pub.title}</h3>
-  <p class="meta">${pub.author} — ${formatDateSite(pub.date)}</p>
-  <p>${pub.summary || ''}</p>${pub.pdfUrl ? `\n  <a href="${pub.pdfUrl}" target="_blank">Lire le PDF</a>` : ''}
+<article class="publication-card" data-tags="${escAttr((pub.tags || []).join(' '))}">
+  ${(pub.tags || []).map(t => `<span class="tag">${escAttr(t)}</span>`).join('')}
+  <span class="type">${escAttr(pub.type)}</span>
+  <h3>${escAttr(pub.title)}</h3>
+  <p class="meta">${escAttr(pub.author || '')} — ${escAttr(formatDateSite(pub.date))}</p>
+  <p>${escAttr(pub.summary || '')}</p>${safePdfUrl ? `\n  <a href="${escAttr(safePdfUrl)}" target="_blank" rel="noopener noreferrer">Lire le PDF</a>` : ''}
 </article>`;
         await insertHtmlInPage('publications.html', cardHtml, `Ajout publication : ${pub.title}`);
         setArticles(prev => prev.map(a => a.id === id ? { ...a, status: 'published', synced: true } : a));
@@ -250,12 +255,15 @@ export default function Articles({
     const fullHtml = buildPublicationHtml({
       title: formData.title,
       authors: formData.author,
+      authorBio: art.authorBio || '',
       date: dateFr,
       pole,
       type: formData.type,
       summary: formData.summary || '',
       content: formData.content,
       slug,
+      heroImage: art.heroImage || null,
+      pdfUrl: formData.pdfUrl || '',
     });
     const workerUrl = loadLocal(LS_KEYS.workerUrl, '') || import.meta.env.VITE_WORKER_URL || '';
     if (!workerUrl) throw new Error('URL du Worker non configurée');
@@ -276,7 +284,7 @@ export default function Articles({
     // Met aussi à jour publications-data.js pour refléter les nouvelles
     // métadonnées dans la liste publique du site (titre, auteur, résumé…).
     try {
-      const categories = (formData.tags || []).map(t => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+      const categories = (formData.tags || []).map(t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
       await updatePublicationsData({
         id: slug,
         title: formData.title,
@@ -347,10 +355,13 @@ export default function Articles({
     if (art.slug && !art.content && hasGitHub()) {
       setContentLoading(true);
       try {
-        const { content } = await fetchPublicationContent(art.slug);
-        setForm(f => ({ ...f, content }));
-        // Cache dans la liste pour éviter un nouveau fetch si on rouvre l'article.
-        setArticles(prev => prev.map(a => a.id === art.id ? { ...a, content } : a));
+        const { content, heroImage, authorBio, pdfUrl } = await fetchPublicationContent(art.slug);
+        setForm(f => ({ ...f, content, pdfUrl: f.pdfUrl || pdfUrl || '' }));
+        // Cache hero/bio sur l'article (utilisés à la republication) + contenu
+        // pour éviter un nouveau fetch si on rouvre l'article.
+        const enriched = { ...art, content, heroImage, authorBio, pdfUrl: art.pdfUrl || pdfUrl || '' };
+        setEditingArt(enriched);
+        setArticles(prev => prev.map(a => a.id === art.id ? enriched : a));
       } catch (err) {
         toast(`Impossible de charger le contenu : ${err.message}`, 'error');
       } finally {
@@ -753,13 +764,14 @@ export default function Articles({
                         throw new Error(err.error || `GitHub : ${resp.status}`);
                       }
                     } else if (hasGitHub()) {
+                      // Échappement des champs (cf. AUDIT §4.6).
                       const cardHtml = `
-<article class="publication-card" data-tags="${(finalArticle.tags || []).join(' ')}">
-  ${(finalArticle.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
-  <span class="type">${pubType}</span>
-  <h3>${finalArticle.fr.title}</h3>
-  <p class="meta">${authorNames} — ${todayFr}</p>
-  <p>${finalArticle.fr.summary || ''}</p>
+<article class="publication-card" data-tags="${escAttr((finalArticle.tags || []).join(' '))}">
+  ${(finalArticle.tags || []).map(t => `<span class="tag">${escAttr(t)}</span>`).join('')}
+  <span class="type">${escAttr(pubType)}</span>
+  <h3>${escAttr(finalArticle.fr.title)}</h3>
+  <p class="meta">${escAttr(authorNames)} — ${escAttr(todayFr)}</p>
+  <p>${escAttr(finalArticle.fr.summary || '')}</p>
 </article>`;
                       await insertHtmlInPage('publications.html', cardHtml, `Ajout publication : ${finalArticle.fr.title}`);
                     } else {
@@ -1032,7 +1044,7 @@ function escAttr(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function buildPublicationHtml({ title, authors, date, pole, type, summary, content, slug }) {
+function buildPublicationHtml({ title, authors, authorBio, date, pole, type, summary, content, slug, heroImage, pdfUrl }) {
   const tagsArr = Array.isArray(pole) ? pole : (pole ? [pole] : []);
   const typeSuffix = typeBadgeSuffix(type);
   const initials = authorInitials(authors);
@@ -1041,6 +1053,14 @@ function buildPublicationHtml({ title, authors, date, pole, type, summary, conte
   const shareTitle = encodeURIComponent(`${title} — Institut Rousseau`);
   const descEsc = escAttr(summary);
   const titleEsc = escAttr(title);
+  const avatarColor = categoryColor(slugifyTag(tagsArr[0] || ''));
+  const heroHtml = heroImage?.src
+    ? `<figure class="article-hero-img"><img src="${escAttr(heroImage.src)}" alt="${escAttr(heroImage.alt || title)}" loading="lazy"></figure>`
+    : '';
+  const bioHtml = authorBio ? `<div class="article-author-bio">${escAttr(authorBio)}</div>` : '';
+  const pdfCtaHtml = pdfUrl
+    ? `<div class="article-pdf-cta" style="margin:1rem 0 1.5rem;"><a href="${escAttr(pdfUrl)}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:.9rem;">📄 Télécharger le PDF</a></div>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -1107,12 +1127,15 @@ function buildPublicationHtml({ title, authors, date, pole, type, summary, conte
 <section class="section">
   <div class="container">
     <div class="article-content">
+      ${heroHtml}
       ${authors ? `<div class="article-author-block">
-        <div class="article-author-avatar" style="background:linear-gradient(135deg,#2D6A4F,#aaa)">${escAttr(initials)}</div>
+        <div class="article-author-avatar" style="background:linear-gradient(135deg,${avatarColor},#aaa)">${escAttr(initials)}</div>
         <div class="article-author-info">
           <div class="article-author-name">${escAttr(authors)}</div>
+          ${bioHtml}
         </div>
       </div>` : ''}
+      ${pdfCtaHtml}
 
       ${content}
 
