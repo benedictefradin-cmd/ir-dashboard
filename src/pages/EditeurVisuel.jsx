@@ -305,7 +305,7 @@ export default function EditeurVisuel({ toast }) {
               ↻ Recharger
             </button>
             <a
-              href={`https://institut-rousseau.fr/${page.url.replace(/\.html$/, '')}`}
+              href={`https://institut-rousseau-site.vercel.app/${page.url.replace(/\.html$/, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-outline btn-sm"

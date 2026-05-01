@@ -1651,7 +1651,11 @@ const EDIT_MODE_SCRIPT = `
 </script>`;
 
 async function handleSiteProxy(url, env) {
-  const siteUrl = (env.SITE_URL || 'https://institut-rousseau.fr').replace(/\/+$/, '');
+  // institut-rousseau.fr pointe encore (mai 2026) sur l'ancien WordPress.
+  // Le nouveau site statique est hébergé sur le sous-domaine Vercel par défaut
+  // tant que le DNS n'a pas été basculé. Utilise SITE_URL pour pouvoir changer
+  // sans redeploy quand le switch DNS se fera.
+  const siteUrl = (env.SITE_URL || 'https://institut-rousseau-site.vercel.app').replace(/\/+$/, '');
   // Tout ce qui suit /site-proxy/ + query string remontent vers le site live.
   const subPath = url.pathname.slice('/site-proxy/'.length);
   // Garde tous les params sauf `edit` (consommé localement, jamais propagé au site).
