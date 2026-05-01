@@ -63,14 +63,35 @@ function extractHrefs(html) {
   return out;
 }
 
+// User-Agent réaliste : beaucoup de sites (gouv, presse) renvoient 403 sur les
+// requêtes vides ou marquées "node-fetch". On se fait passer pour un Firefox
+// récent — c'est ce que ferait un visiteur humain qui suit le lien.
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14.0; rv:121.0) Gecko/20100101 Firefox/121.0';
+const COMMON_HEADERS = {
+  'User-Agent': UA,
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+};
+
 async function checkUrl(url) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
-    let resp = await fetch(url, { method: 'HEAD', redirect: 'follow', signal: ctrl.signal });
-    // Certains serveurs refusent HEAD (405) — on retente en GET sans télécharger
-    if (resp.status === 405 || resp.status === 403) {
-      resp = await fetch(url, { method: 'GET', redirect: 'follow', signal: ctrl.signal });
+    let resp = await fetch(url, {
+      method: 'HEAD',
+      redirect: 'follow',
+      signal: ctrl.signal,
+      headers: COMMON_HEADERS,
+    });
+    // Certains serveurs refusent HEAD (405) ou bloquent par défaut (403) — on
+    // retente en GET avec les mêmes headers, sans télécharger le corps.
+    if (resp.status === 405 || resp.status === 403 || resp.status === 400) {
+      resp = await fetch(url, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: ctrl.signal,
+        headers: COMMON_HEADERS,
+      });
     }
     return { url, status: resp.status, ok: resp.ok };
   } catch (err) {
@@ -174,15 +195,91 @@ async function main() {
   console.log(`  ✗ ${broken.length} cassés ou injoignables\n`);
 
   if (broken.length) {
-    console.log('─── Liens cassés ───');
-    for (const r of broken.sort((a, b) => (b.status || 0) - (a.status || 0))) {
-      const refs = urlMap.get(r.url) || [];
-      const tag = r.status === 0 ? `[${r.error || 'fail'}]` : `[HTTP ${r.status}]`;
-      console.log(`\n${tag} ${r.url}`);
-      for (const ref of refs.slice(0, 3)) {
-        console.log(`    ↳ ${ref.source} : ${(ref.title || ref.id || '').slice(0, 70)}`);
+    // ─── Stats par catégorie d'erreur (pour prioriser le triage) ───
+    const byCategory = { '4xx': 0, '5xx': 0, timeout: 0, fetch_failed: 0, other: 0 };
+    for (const r of broken) {
+      if (r.status === 0) {
+        if (r.error === 'timeout') byCategory.timeout++;
+        else byCategory.fetch_failed++;
+      } else if (r.status >= 400 && r.status < 500) byCategory['4xx']++;
+      else if (r.status >= 500) byCategory['5xx']++;
+      else byCategory.other++;
+    }
+    console.log('─── Par catégorie ───');
+    console.log(`  4xx (page absente) : ${byCategory['4xx']}`);
+    console.log(`  5xx (serveur KO)   : ${byCategory['5xx']}`);
+    console.log(`  Timeout (>10s)     : ${byCategory.timeout}`);
+    console.log(`  Échec réseau       : ${byCategory.fetch_failed}`);
+
+    // ─── Top des domaines cassés (souvent une seule source pour beaucoup) ───
+    const byDomain = new Map();
+    for (const r of broken) {
+      const host = (() => {
+        try { return new URL(r.url).host; } catch { return '?'; }
+      })();
+      byDomain.set(host, (byDomain.get(host) || 0) + 1);
+    }
+    const topDomains = [...byDomain.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+    console.log('\n─── Top domaines cassés ───');
+    for (const [host, n] of topDomains) console.log(`  ${String(n).padStart(4)} ${host}`);
+
+    // ─── Génération d'un rapport markdown actionnable ───
+    const reportPath = `reports/link-check-${new Date().toISOString().slice(0, 10)}.md`;
+    const lines = [];
+    lines.push(`# Rapport link-checker — ${new Date().toLocaleString('fr-FR')}`);
+    lines.push('');
+    lines.push(`**Total :** ${results.length} URLs externes vérifiées · **${ok} OK** · **${broken.length} cassés**`);
+    lines.push('');
+    lines.push('## Résumé par catégorie');
+    lines.push('| Catégorie | Nombre |');
+    lines.push('|---|--:|');
+    lines.push(`| 4xx (page absente) | ${byCategory['4xx']} |`);
+    lines.push(`| 5xx (serveur KO) | ${byCategory['5xx']} |`);
+    lines.push(`| Timeout (>10s) | ${byCategory.timeout} |`);
+    lines.push(`| Échec réseau | ${byCategory.fetch_failed} |`);
+    lines.push('');
+    lines.push('## Top domaines cassés');
+    lines.push('| # | Domaine |');
+    lines.push('|--:|---|');
+    for (const [host, n] of topDomains) lines.push(`| ${n} | \`${host}\` |`);
+    lines.push('');
+    lines.push('## Détail (groupé par domaine)');
+
+    // Groupe par domaine puis trie : http 4xx d'abord (plus actionnable)
+    const groupedByDomain = new Map();
+    for (const r of broken) {
+      const host = (() => { try { return new URL(r.url).host; } catch { return '?'; } })();
+      if (!groupedByDomain.has(host)) groupedByDomain.set(host, []);
+      groupedByDomain.get(host).push(r);
+    }
+    const sortedDomains = [...groupedByDomain.entries()]
+      .sort((a, b) => b[1].length - a[1].length);
+
+    for (const [host, items] of sortedDomains) {
+      lines.push('');
+      lines.push(`### \`${host}\` — ${items.length} lien${items.length > 1 ? 's' : ''}`);
+      for (const r of items) {
+        const tag = r.status === 0 ? `\`${r.error || 'fail'}\`` : `\`HTTP ${r.status}\``;
+        lines.push('');
+        lines.push(`- ${tag} ${r.url}`);
+        const refs = urlMap.get(r.url) || [];
+        const seenSources = new Set();
+        for (const ref of refs) {
+          const src = ref.source;
+          if (seenSources.has(src)) continue;
+          seenSources.add(src);
+          lines.push(`  - ↳ \`${src}\` — ${(ref.title || ref.id || '').slice(0, 80)}`);
+        }
       }
-      if (refs.length > 3) console.log(`    ↳ +${refs.length - 3} autres`);
+    }
+
+    try {
+      const fs = await import('node:fs/promises');
+      await fs.mkdir('reports', { recursive: true });
+      await fs.writeFile(reportPath, lines.join('\n'));
+      console.log(`\n→ Rapport markdown écrit : ${reportPath}`);
+    } catch (err) {
+      console.warn(`Impossible d'écrire le rapport : ${err.message}`);
     }
   }
 

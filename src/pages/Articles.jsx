@@ -697,6 +697,11 @@ export default function Articles({
                   Chargement de l'article depuis le site…
                 </div>
               )}
+              {editingArt?.slug && editingArt?.status === 'published' && !contentLoading && (
+                <div style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 6 }}>
+                  Article existant : mode HTML par défaut pour préserver les notes de bas de page et balisage avancé. Le mode visuel peut reformater certaines structures complexes.
+                </div>
+              )}
               <RichEditor
                 value={form.content}
                 onChange={(html) => setForm(f => ({ ...f, content: html }))}
@@ -705,6 +710,8 @@ export default function Articles({
                 placeholder={contentLoading ? 'Chargement…' : 'Écrivez votre article ici…'}
                 slug={editingArt?.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}
                 toast={toast}
+                trusted={!!(editingArt?.slug && editingArt?.status === 'published')}
+                defaultMode={editingArt?.slug && editingArt?.status === 'published' ? 'html' : 'visual'}
               />
             </div>
 
