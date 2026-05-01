@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -14,7 +14,6 @@ import Subscript from '@tiptap/extension-subscript';
 import DOMPurify from 'dompurify';
 import EditorToolbar from './EditorToolbar';
 import CodeEditor from './CodeEditor';
-import PreviewPane from './PreviewPane';
 import { githubUploadImage } from '../../services/github';
 import './editor.css';
 
@@ -79,30 +78,35 @@ async function resizeImage(file, maxDim) {
   ));
 }
 
-const ALL_MODES = [
-  { key: 'visual', label: 'Visuel' },
+// Deux modes seulement :
+// - "apercu" : \u00e9diteur WYSIWYG (style Word) avec barre d'outils (TipTap)
+// - "html"   : \u00e9diteur HTML brut (CodeEditor) pour les retouches chirurgicales
+const MODES = [
+  { key: 'apercu', label: 'Aper\u00e7u' },
   { key: 'html', label: 'HTML' },
-  { key: 'preview', label: 'Aper\u00e7u' },
 ];
 
-export default function RichEditor({ value, onChange, title, author, date, placeholder, slug, toast, trusted = false, defaultMode = 'visual' }) {
-  // Pour un contenu de confiance (HTML qui vient du repo site), on cache le
-  // mode visuel : TipTap normaliserait certaines balises (iframe, svg,
-  // structures complexes) et on perdrait le round-trip parfait. HTML +
-  // Aper\u00e7u suffisent pour \u00e9diter et v\u00e9rifier sans rien casser.
-  const MODES = trusted ? ALL_MODES.filter(m => m.key !== 'visual') : ALL_MODES;
-  const initialMode = trusted && defaultMode === 'visual' ? 'html' : defaultMode;
+export default function RichEditor({ value, onChange, title, author, date, placeholder, slug, toast, trusted = false, defaultMode = 'apercu' }) {
+  // En mode trusted (\u00e9dition d'un article existant du site), on d\u00e9marre en
+  // HTML pour pr\u00e9server le contenu byte-perfect. L'utilisateur peut quand
+  // m\u00eame basculer sur Aper\u00e7u pour une \u00e9dition WYSIWYG (avec un avertissement).
+  const initialMode = trusted ? 'html' : defaultMode;
   const [mode, setMode] = useState(initialMode);
   const [htmlCode, setHtmlCode] = useState(value || '');
+  // Premier passage en Aper\u00e7u en mode trusted : on charge le HTML dans TipTap
+  // une seule fois (le parse peut log des warnings sur balises inconnues).
+  const apercuLoadedRef = useRef(!trusted);
+  // Indique si l'utilisateur a r\u00e9ellement modifi\u00e9 le contenu en mode Aper\u00e7u
+  // depuis le dernier setContent. Utilis\u00e9 pour ne PAS \u00e9craser htmlCode avec
+  // la version pars\u00e9e par TipTap si l'utilisateur n'a fait que regarder.
+  const editedInApercuRef = useRef(false);
 
   // Quand le HTML vient de notre propre repo (`trusted`), on saute la
   // sanitization initiale : DOMPurify ne sert qu'à filtrer le HTML
   // collé depuis le presse-papiers (paste handler) ou tapé en mode HTML.
-  // Sanitiser un contenu déjà validé strippe inutilement des `name`/`id`
-  // et finit par le mutiler à chaque round-trip.
-  // En mode trusted, le mode visuel est masqué (cf. MODES) — on initialise
-  // donc l'éditeur TipTap vide pour éviter qu'il parse des balises qu'il
-  // ne connaît pas (iframe, svg…) et logge des warnings dans la console.
+  // En mode trusted, on initialise TipTap vide — le contenu sera chargé
+  // au premier passage sur l'onglet Aperçu, pour ne pas parser inutilement
+  // un HTML potentiellement riche (iframe/svg/table) au mount.
   const safeInitial = trusted ? '' : sanitizeHtml(value || '');
 
   const editor = useEditor({
@@ -157,6 +161,9 @@ export default function RichEditor({ value, onChange, title, author, date, place
       },
     },
     onUpdate: ({ editor }) => {
+      // setContent({ false }) n'appelle pas onUpdate — donc on est ici
+      // uniquement quand l'utilisateur tape dans l'éditeur.
+      editedInApercuRef.current = true;
       const html = editor.getHTML();
       setHtmlCode(html);
       onChange?.(html);
@@ -180,18 +187,30 @@ export default function RichEditor({ value, onChange, title, author, date, place
     }
   }, [value, trusted]);
 
-  // When switching from HTML mode back to visual, sanitize then push.
-  // En mode trusted, on saute la sanitization pour préserver les balises
-  // peu courantes (iframe, svg, attributs name/id…) à l'identique.
+  // Bascule HTML ↔ Aperçu. En allant html→aperçu, on pousse le HTML courant
+  // dans TipTap (parse) sans déclencher onUpdate, donc onChange ne tire pas :
+  // tant que l'utilisateur n'édite pas en Aperçu, le htmlCode reste l'original.
+  // En aperçu→html, on récupère ce que TipTap a (potentiellement reformaté
+  // par les éventuelles éditions de l'utilisateur).
   const handleModeChange = (newMode) => {
-    if (mode === 'html' && newMode !== 'html' && editor) {
+    if (mode === 'html' && newMode === 'apercu' && editor) {
+      // On charge htmlCode dans TipTap (parse). setContent(_, false) ne tire
+      // pas onUpdate — donc editedInApercuRef reste à false jusqu'à la
+      // première frappe utilisateur dans l'Aperçu.
       const next = trusted ? htmlCode : sanitizeHtml(htmlCode);
       editor.commands.setContent(next, false);
-      setHtmlCode(next);
-      onChange?.(next);
+      apercuLoadedRef.current = true;
+      editedInApercuRef.current = false;
     }
-    if (newMode === 'html' && editor) {
-      setHtmlCode(editor.getHTML());
+    if (mode === 'apercu' && newMode === 'html' && editor) {
+      // Si l'utilisateur n'a rien tapé en Aperçu, on garde htmlCode tel quel
+      // (TipTap normalise même sans édition — on n'écrase pas le HTML d'origine
+      // juste parce qu'il a affiché une preview).
+      if (editedInApercuRef.current) {
+        const fromEditor = editor.getHTML();
+        setHtmlCode(fromEditor);
+        onChange?.(fromEditor);
+      }
     }
     setMode(newMode);
   };
@@ -231,8 +250,8 @@ export default function RichEditor({ value, onChange, title, author, date, place
         </div>
       </div>
 
-      {/* Visual mode */}
-      {mode === 'visual' && (
+      {/* Aperçu mode (WYSIWYG style Word avec toolbar) */}
+      {mode === 'apercu' && (
         <>
           <EditorToolbar editor={editor} slug={slug} toast={toast} />
           <div className="rich-editor-content">
@@ -241,19 +260,9 @@ export default function RichEditor({ value, onChange, title, author, date, place
         </>
       )}
 
-      {/* HTML mode */}
+      {/* HTML mode (raw code, byte-perfect) */}
       {mode === 'html' && (
         <CodeEditor value={htmlCode} onChange={handleHtmlChange} />
-      )}
-
-      {/* Preview mode */}
-      {mode === 'preview' && (
-        <PreviewPane
-          html={mode === 'html' ? htmlCode : editor?.getHTML() || ''}
-          title={title}
-          author={author}
-          date={date}
-        />
       )}
     </div>
   );
