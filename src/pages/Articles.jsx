@@ -256,7 +256,7 @@ export default function Articles({
       title: formData.title,
       authors: formData.author,
       authorBio: art.authorBio || '',
-      date: dateFr,
+      date: art.displayDate || dateFr,
       pole,
       type: formData.type,
       summary: formData.summary || '',
@@ -264,6 +264,8 @@ export default function Articles({
       slug,
       heroImage: art.heroImage || null,
       pdfUrl: formData.pdfUrl || '',
+      relatedSection: art.relatedSection || '',
+      avatarColor: art.avatarColor || '',
     });
     const workerUrl = loadLocal(LS_KEYS.workerUrl, '') || import.meta.env.VITE_WORKER_URL || '';
     if (!workerUrl) throw new Error('URL du Worker non configurée');
@@ -355,11 +357,21 @@ export default function Articles({
     if (art.slug && !art.content && hasGitHub()) {
       setContentLoading(true);
       try {
-        const { content, heroImage, authorBio, pdfUrl } = await fetchPublicationContent(art.slug);
-        setForm(f => ({ ...f, content, pdfUrl: f.pdfUrl || pdfUrl || '' }));
-        // Cache hero/bio sur l'article (utilisés à la republication) + contenu
-        // pour éviter un nouveau fetch si on rouvre l'article.
-        const enriched = { ...art, content, heroImage, authorBio, pdfUrl: art.pdfUrl || pdfUrl || '' };
+        const fetched = await fetchPublicationContent(art.slug);
+        setForm(f => ({ ...f, content: fetched.content, pdfUrl: f.pdfUrl || fetched.pdfUrl || '' }));
+        // On garde tout ce qui n'est pas dans le formulaire (hero, bio, date
+        // d'origine, section curée "À lire aussi", couleur avatar) sur
+        // editingArt pour le ré-injecter à la republication.
+        const enriched = {
+          ...art,
+          content: fetched.content,
+          heroImage: fetched.heroImage,
+          authorBio: fetched.authorBio,
+          pdfUrl: art.pdfUrl || fetched.pdfUrl || '',
+          displayDate: fetched.displayDate,
+          relatedSection: fetched.relatedSection,
+          avatarColor: fetched.avatarColor,
+        };
         setEditingArt(enriched);
         setArticles(prev => prev.map(a => a.id === art.id ? enriched : a));
       } catch (err) {
@@ -1044,7 +1056,7 @@ function escAttr(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function buildPublicationHtml({ title, authors, authorBio, date, pole, type, summary, content, slug, heroImage, pdfUrl }) {
+function buildPublicationHtml({ title, authors, authorBio, date, pole, type, summary, content, slug, heroImage, pdfUrl, relatedSection, avatarColor }) {
   const tagsArr = Array.isArray(pole) ? pole : (pole ? [pole] : []);
   const typeSuffix = typeBadgeSuffix(type);
   const initials = authorInitials(authors);
@@ -1053,7 +1065,9 @@ function buildPublicationHtml({ title, authors, authorBio, date, pole, type, sum
   const shareTitle = encodeURIComponent(`${title} — Institut Rousseau`);
   const descEsc = escAttr(summary);
   const titleEsc = escAttr(title);
-  const avatarColor = categoryColor(slugifyTag(tagsArr[0] || ''));
+  // Couleur d'avatar : on garde celle d'origine si on a pu l'extraire,
+  // sinon on retombe sur la couleur de catégorie (fallback pour nouveaux articles).
+  const avatarGradientStart = avatarColor || categoryColor(slugifyTag(tagsArr[0] || ''));
   const heroHtml = heroImage?.src
     ? `<figure class="article-hero-img"><img src="${escAttr(heroImage.src)}" alt="${escAttr(heroImage.alt || title)}" loading="lazy"></figure>`
     : '';
@@ -1061,6 +1075,10 @@ function buildPublicationHtml({ title, authors, authorBio, date, pole, type, sum
   const pdfCtaHtml = pdfUrl
     ? `<div class="article-pdf-cta" style="margin:1rem 0 1.5rem;"><a href="${escAttr(pdfUrl)}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:.9rem;">📄 Télécharger le PDF</a></div>`
     : '';
+  // Section "À lire aussi" curée à la main (préservée du HTML d'origine).
+  // Le `#relatedPubs` ci-dessous est rempli côté client par related.js et
+  // affiche d'autres recommandations automatiques.
+  const relatedHtml = relatedSection || '';
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -1129,7 +1147,7 @@ function buildPublicationHtml({ title, authors, authorBio, date, pole, type, sum
     <div class="article-content">
       ${heroHtml}
       ${authors ? `<div class="article-author-block">
-        <div class="article-author-avatar" style="background:linear-gradient(135deg,${avatarColor},#aaa)">${escAttr(initials)}</div>
+        <div class="article-author-avatar" style="background:linear-gradient(135deg,${avatarGradientStart},#aaa)">${escAttr(initials)}</div>
         <div class="article-author-info">
           <div class="article-author-name">${escAttr(authors)}</div>
           ${bioHtml}
@@ -1151,6 +1169,8 @@ function buildPublicationHtml({ title, authors, authorBio, date, pole, type, sum
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
         </button>
       </div>
+
+      ${relatedHtml}
 
       <div class="article-cta" style="margin:2.5rem 0 1.5rem;padding:1.5rem;background:var(--bg-alt,#f8fafc);border-radius:var(--radius-md,8px);text-align:center;">
         <p style="margin:0 0 .75rem;font-size:.95rem;color:var(--ink);">Vous avez apprécié cette publication ?</p>

@@ -76,6 +76,25 @@ export async function fetchContenu() {
 }
 
 /**
+ * Lit le fichier i18n.json (toutes les traductions du site, 5 langues).
+ * Fichier volumineux (~290 KB), à charger à la demande seulement.
+ * @returns {Promise<{ data: { translations: Object, pageTitles: Object }, sha: string|null }>}
+ */
+export async function fetchI18n() {
+  if (!hasGitHub()) return { data: { translations: {}, pageTitles: {} }, sha: null };
+  const filePath = `${DATA_PATH}/i18n.json`;
+  try {
+    const { content, sha } = await githubGetFile(filePath);
+    const data = JSON.parse(content);
+    shaCache['i18n'] = sha;
+    return { data, sha };
+  } catch (err) {
+    console.warn('[siteData] Impossible de charger i18n:', err.message);
+    return { data: { translations: {}, pageTitles: {} }, sha: null };
+  }
+}
+
+/**
  * Charge toutes les données du site en parallèle.
  * @returns {Promise<{ publications: Array, events: Array, presse: Array, auteurs: Array, contenu: Object }>}
  */
@@ -98,9 +117,10 @@ export async function fetchAllSiteData() {
 }
 
 /**
- * Charge le HTML d'une publication et en extrait le corps éditable
- * (entre l'auteur et le bloc de partage), plus les éléments structurels
- * (image hero, bio auteur, lien PDF) à préserver lors d'une republication.
+ * Charge le HTML d'une publication et en extrait le corps éditable plus
+ * tous les éléments structurels à préserver lors d'une republication
+ * (image hero, bio auteur, lien PDF, date affichée, section "À lire aussi"
+ * curée, couleur d'avatar).
  *
  * @param {string} slug
  * @returns {Promise<{
@@ -108,15 +128,22 @@ export async function fetchAllSiteData() {
  *   heroImage: { src: string, alt: string }|null,
  *   authorBio: string,
  *   pdfUrl: string,
+ *   displayDate: string,
+ *   relatedSection: string,
+ *   avatarColor: string,
  * }>}
  */
 export async function fetchPublicationContent(slug) {
-  if (!slug) return { content: '', sha: null, fullHtml: '', heroImage: null, authorBio: '', pdfUrl: '' };
+  const empty = {
+    content: '', sha: null, fullHtml: '', heroImage: null, authorBio: '',
+    pdfUrl: '', displayDate: '', relatedSection: '', avatarColor: '',
+  };
+  if (!slug) return empty;
   if (!hasGitHub()) throw new Error('GitHub non configuré');
   const filePath = `publications/${slug}.html`;
   const { content: fullHtml, sha } = await githubGetFile(filePath);
   const parsed = parseArticleHtml(fullHtml);
-  return { sha, fullHtml, ...parsed };
+  return { ...empty, sha, fullHtml, ...parsed };
 }
 
 // Sélecteurs des éléments structurels insérés par buildPublicationHtml qu'on
@@ -133,12 +160,10 @@ const STRUCTURAL_SELECTORS = [
 ];
 
 function parseArticleHtml(html) {
-  if (typeof DOMParser === 'undefined') {
-    return { content: '', heroImage: null, authorBio: '', pdfUrl: '' };
-  }
+  if (typeof DOMParser === 'undefined') return {};
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const root = doc.querySelector('.article-content');
-  if (!root) return { content: '', heroImage: null, authorBio: '', pdfUrl: '' };
+  if (!root) return {};
 
   // Hero image (figure.article-hero-img > img) — src/alt à conserver.
   const heroImg = root.querySelector('.article-hero-img img');
@@ -149,6 +174,24 @@ function parseArticleHtml(html) {
   // Bio courte sous le nom de l'auteur (article-author-bio).
   const bioEl = root.querySelector('.article-author-bio');
   const authorBio = bioEl ? bioEl.textContent.trim() : '';
+
+  // Couleur d'avatar — extraite du gradient inline de l'avatar pour ne
+  // pas dériver de la couleur originale en republiant.
+  const avatarEl = root.querySelector('.article-author-avatar');
+  let avatarColor = '';
+  if (avatarEl) {
+    const m = (avatarEl.getAttribute('style') || '').match(/linear-gradient\([^,]+,\s*([^,]+)/i);
+    if (m) avatarColor = m[1].trim();
+  }
+
+  // Section "À lire aussi" curée à la main (à différencier de #relatedPubs
+  // qui est rempli côté client par related.js).
+  const relatedEl = root.querySelector('.related-publications');
+  const relatedSection = relatedEl ? relatedEl.outerHTML : '';
+
+  // Date affichée en page-header ("Mars 2026", "15 mars 2026"…).
+  const headerP = doc.querySelector('section.page-header .container > p');
+  const displayDate = headerP ? headerP.textContent.trim() : '';
 
   // Premier lien .pdf trouvé hors blocs structurels — sert à pré-remplir
   // le champ "Lien PDF" sans ré-injecter de bouton CTA.
@@ -164,7 +207,11 @@ function parseArticleHtml(html) {
     root.querySelectorAll(sel).forEach(el => el.remove());
   });
 
-  return { content: root.innerHTML.trim(), heroImage, authorBio, pdfUrl };
+  return {
+    content: root.innerHTML.trim(),
+    heroImage, authorBio, pdfUrl,
+    displayDate, relatedSection, avatarColor,
+  };
 }
 
 /**

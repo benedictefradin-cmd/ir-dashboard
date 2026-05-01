@@ -9,6 +9,8 @@ import Underline from '@tiptap/extension-underline';
 import { Color } from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Highlight from '@tiptap/extension-highlight';
+import Superscript from '@tiptap/extension-superscript';
+import Subscript from '@tiptap/extension-subscript';
 import DOMPurify from 'dompurify';
 import EditorToolbar from './EditorToolbar';
 import CodeEditor from './CodeEditor';
@@ -28,6 +30,9 @@ const SANITIZE_CONFIG = {
   ALLOWED_ATTR: [
     'href', 'src', 'alt', 'title', 'target', 'rel',
     'class', 'style', 'width', 'height',
+    // id / name : utilisés par les notes de bas de page (`<a name="_ftn1">`,
+    // `<a href="#_ftn1">`). Pas d'exécution possible — pas de risque XSS.
+    'id', 'name',
   ],
   ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   ALLOW_DATA_ATTR: false,
@@ -80,9 +85,16 @@ const MODES = [
   { key: 'preview', label: 'Aper\u00e7u' },
 ];
 
-export default function RichEditor({ value, onChange, title, author, date, placeholder, slug, toast }) {
-  const [mode, setMode] = useState('visual');
+export default function RichEditor({ value, onChange, title, author, date, placeholder, slug, toast, trusted = false, defaultMode = 'visual' }) {
+  const [mode, setMode] = useState(defaultMode);
   const [htmlCode, setHtmlCode] = useState(value || '');
+
+  // Quand le HTML vient de notre propre repo (`trusted`), on saute la
+  // sanitization initiale : DOMPurify ne sert qu'à filtrer le HTML
+  // collé depuis le presse-papiers (paste handler) ou tapé en mode HTML.
+  // Sanitiser un contenu déjà validé strippe inutilement des `name`/`id`
+  // et finit par le mutiler à chaque round-trip.
+  const safeInitial = trusted ? (value || '') : sanitizeHtml(value || '');
 
   const editor = useEditor({
     extensions: [
@@ -97,8 +109,10 @@ export default function RichEditor({ value, onChange, title, author, date, place
       TextStyle,
       Color,
       Highlight.configure({ multicolor: true }),
+      Superscript,
+      Subscript,
     ],
-    content: sanitizeHtml(value || ''),
+    content: safeInitial,
     editorProps: {
       // Sanitize tout HTML collé depuis l'extérieur (un site Web, Word…)
       // pour bloquer les <script>, on*=, javascript: et iframes.
@@ -140,13 +154,16 @@ export default function RichEditor({ value, onChange, title, author, date, place
     },
   });
 
-  // Sync external value changes into editor
+  // Sync external value changes into editor. Pour une source de confiance
+  // (HTML qui vient du repo site), on évite le passage par DOMPurify : il
+  // nous mangerait les `name`/`id` des ancres de notes de bas de page.
   useEffect(() => {
     if (editor && value !== undefined && value !== editor.getHTML()) {
-      editor.commands.setContent(sanitizeHtml(value || ''), false);
+      const next = trusted ? (value || '') : sanitizeHtml(value || '');
+      editor.commands.setContent(next, false);
       setHtmlCode(value || '');
     }
-  }, [value]);
+  }, [value, trusted]);
 
   // When switching from HTML mode back to visual, sanitize then push.
   const handleModeChange = (newMode) => {
