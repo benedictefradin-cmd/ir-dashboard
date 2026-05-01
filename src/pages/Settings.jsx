@@ -1,13 +1,12 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { loadLocal, saveLocal } from '../utils/localStorage';
-import { LS_KEYS, DEFAULT_WORKER_URL, DEFAULT_GITHUB_OWNER, DEFAULT_GITHUB_SITE_REPO } from '../utils/constants';
+import { LS_KEYS, DEFAULT_WORKER_URL } from '../utils/constants';
 import { parseFile, isValidEmail, findDuplicates } from '../services/export';
 import { exportMultiSheet } from '../services/export';
 import { checkHealth } from '../services/api';
 import { testConnection as testTelegram } from '../services/telegram';
 import { addContact as addBrevoContact } from '../services/brevo';
-import { fetchArticles as fetchNotionArticles } from '../services/notion';
 import {
   listUsers, createUser as apiCreateUser, updateUser as apiUpdateUser,
   deleteUser as apiDeleteUser, changeMyPassword,
@@ -18,14 +17,9 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
   const [workerUrl, setWorkerUrl] = useState(() => loadLocal(LS_KEYS.workerUrl, DEFAULT_WORKER_URL));
   const [testing, setTesting] = useState({});
 
-  // ─── Notion config ────────────────────────────
-  const [notionToken, setNotionToken] = useState(() => loadLocal('ir_notion_token', ''));
-  const [notionDbId, setNotionDbId] = useState(() => loadLocal('ir_notion_db_id', ''));
-
-  // ─── GitHub config ────────────────────────────
-  const [githubToken, setGithubToken] = useState(() => loadLocal('ir_github_token', ''));
-  const [githubOwner, setGithubOwner] = useState(() => loadLocal('ir_github_owner', '') || DEFAULT_GITHUB_OWNER);
-  const [githubSiteRepo, setGithubSiteRepo] = useState(() => loadLocal('ir_github_site_repo', '') || DEFAULT_GITHUB_SITE_REPO);
+  // ─── GitHub : tout est secret côté Worker ─────
+  // Le PAT, owner et repo cibles sont configurés via `wrangler secret put`.
+  // Plus aucune valeur sensible ne transite par le navigateur (cf. MIGRATION.md).
 
   // ─── Vercel deploy hook ───────────────────────
   const [deployHook, setDeployHook] = useState(() => loadLocal(LS_KEYS.vercelDeployHook, ''));
@@ -190,29 +184,10 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
   const saveConfig = () => {
     saveLocal(LS_KEYS.workerUrl, workerUrl);
     saveLocal(LS_KEYS.operator, operator);
-    saveLocal('ir_notion_token', notionToken);
-    saveLocal('ir_notion_db_id', notionDbId);
-    saveLocal('ir_github_token', githubToken);
-    saveLocal('ir_github_owner', githubOwner);
-    saveLocal('ir_github_site_repo', githubSiteRepo);
     saveLocal(LS_KEYS.vercelDeployHook, deployHook);
     saveLocal(LS_KEYS.contactAuthToken, contactAuthToken);
     toast('Configuration sauvegardée');
     if (onRefresh) onRefresh();
-  };
-
-  const testNotion = async () => {
-    setTesting(prev => ({ ...prev, notion: 'loading' }));
-    try {
-      saveLocal('ir_notion_token', notionToken);
-      saveLocal('ir_notion_db_id', notionDbId);
-      const articles = await fetchNotionArticles();
-      setTesting(prev => ({ ...prev, notion: 'ok' }));
-      toast(`Notion connecté — ${articles.length} articles trouvés`);
-    } catch (err) {
-      setTesting(prev => ({ ...prev, notion: 'error' }));
-      toast(`Erreur Notion : ${err.message}`, 'error');
-    }
   };
 
   const testGitHub = async () => {
@@ -247,6 +222,8 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
           worker: 'ok',
           brevo: health.services?.brevo ? 'ok' : 'error',
           telegram: health.services?.telegram ? 'ok' : 'error',
+          github: health.services?.github ? 'ok' : 'error',
+          translate: health.services?.translate ? 'ok' : 'error',
         }));
         toast(`Worker connecté — Brevo : ${health.services?.brevo ? '✅' : '❌'}, Telegram : ${health.services?.telegram ? '✅' : '❌'}`);
         if (onRefresh) onRefresh();
@@ -254,6 +231,11 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
         await testTelegram();
         setTesting(prev => ({ ...prev, telegram: 'ok' }));
         toast('Message test envoyé sur Telegram');
+      } else if (service === 'brevo') {
+        const { fetchContacts } = await import('../services/brevo');
+        const data = await fetchContacts(1);
+        setTesting(prev => ({ ...prev, brevo: 'ok' }));
+        toast(`Brevo OK — ${data.count || 0} contacts dans la base`);
       }
     } catch (err) {
       setTesting(prev => ({ ...prev, [service]: 'error' }));
@@ -439,8 +421,8 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
                 {[
                   { key: 'brevo', label: 'Brevo', connected: services?.brevo },
                   { key: 'telegram', label: 'Telegram', connected: services?.telegram },
-                  { key: 'notion', label: 'Notion', connected: !!(notionToken && notionDbId) },
-                  { key: 'github', label: 'GitHub', connected: !!(githubToken && githubOwner && githubSiteRepo) },
+                  { key: 'github', label: 'GitHub', connected: services?.github },
+                  { key: 'translate', label: 'Translate', connected: services?.translate },
                 ].map(({ key, label, connected }) => (
                   <div key={key} style={{ textAlign: 'center', padding: 12, background: 'var(--cream)', borderRadius: 8 }}>
                     <p style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 4 }}>{label} {statusIcon(testing[key] || (connected ? 'ok' : ''))}</p>
@@ -449,9 +431,9 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
                 ))}
               </div>
               <div className="flex-wrap gap-8" style={{ marginBottom: 12 }}>
+                {services?.brevo && <button className="btn btn-outline btn-sm" onClick={() => testService('brevo')} disabled={testing.brevo === 'loading'}>{testing.brevo === 'loading' ? 'Test…' : 'Test Brevo'}</button>}
                 {services?.telegram && <button className="btn btn-outline btn-sm" onClick={() => testService('telegram')}>Test Telegram</button>}
-                {notionToken && notionDbId && <button className="btn btn-outline btn-sm" onClick={testNotion} disabled={testing.notion === 'loading'}>{testing.notion === 'loading' ? 'Test…' : 'Test Notion'}</button>}
-                {githubToken && githubOwner && githubSiteRepo && <button className="btn btn-outline btn-sm" onClick={testGitHub} disabled={testing.github === 'loading'}>{testing.github === 'loading' ? 'Test…' : 'Test GitHub'}</button>}
+                {services?.github && <button className="btn btn-outline btn-sm" onClick={testGitHub} disabled={testing.github === 'loading'}>{testing.github === 'loading' ? 'Test…' : 'Test GitHub'}</button>}
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 12, lineHeight: 1.6 }}>
                 Les clés API sont stockées en secrets sur le Cloudflare Worker (jamais côté client).
@@ -462,21 +444,23 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
 
           <div className="settings-grid" style={{ marginTop: 20 }}>
             <div className="card">
-              <h3 style={{ fontSize: 16, marginBottom: 16 }}>Pipeline Notion {statusIcon(testing.notion || (notionToken && notionDbId ? '' : ''))}</h3>
-              <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 16 }}>Connectez votre base Notion « Publications » pour synchroniser les articles.</p>
-              <div style={{ marginBottom: 12 }}><label>Notion Integration Token</label><input type="password" value={notionToken} onChange={e => setNotionToken(e.target.value)} placeholder="ntn_..." /></div>
-              <div style={{ marginBottom: 12 }}><label>Notion Database ID</label><input value={notionDbId} onChange={e => setNotionDbId(e.target.value)} placeholder="ID dans l'URL Notion" /></div>
-              <button className="btn btn-outline btn-sm" onClick={testNotion} disabled={!notionToken || !notionDbId || testing.notion === 'loading'}>{testing.notion === 'loading' ? 'Test…' : 'Tester la connexion Notion'}</button>
-            </div>
-            <div className="card">
-              <h3 style={{ fontSize: 16, marginBottom: 16 }}>Publication GitHub {statusIcon(testing.github || (githubToken && githubOwner && githubSiteRepo ? '' : ''))}</h3>
-              <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 16 }}>Configurez l'accès GitHub pour publier les articles sur le site.</p>
-              <div style={{ marginBottom: 12 }}><label>GitHub Personal Access Token</label><input type="password" value={githubToken} onChange={e => setGithubToken(e.target.value)} placeholder="ghp_..." /></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                <div><label>Repo Owner</label><input value={githubOwner} onChange={e => setGithubOwner(e.target.value)} placeholder="benedictefradin-cmd" /></div>
-                <div><label>Repo du site</label><input value={githubSiteRepo} onChange={e => setGithubSiteRepo(e.target.value)} placeholder="institut-rousseau" /></div>
-              </div>
-              <button className="btn btn-outline btn-sm" onClick={testGitHub} disabled={!githubToken || !githubOwner || !githubSiteRepo || testing.github === 'loading'}>{testing.github === 'loading' ? 'Test…' : 'Tester la connexion GitHub'}</button>
+              <h3 style={{ fontSize: 16, marginBottom: 16 }}>
+                Publication GitHub {statusIcon(testing.github || (services?.github ? 'ok' : ''))}
+              </h3>
+              <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 12 }}>
+                Le token GitHub est désormais un secret côté Worker (jamais
+                dans le navigateur). Configuration via{' '}
+                <code style={{ fontSize: 11, background: '#f0f0f0', padding: '1px 4px', borderRadius: 3 }}>wrangler secret put GITHUB_PAT</code>.
+                Quand un utilisateur se connecte en OAuth GitHub, ses commits
+                sont en plus attribués à son propre compte (cf. MIGRATION.md).
+              </p>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={testGitHub}
+                disabled={testing.github === 'loading'}
+              >
+                {testing.github === 'loading' ? 'Test…' : 'Tester la connexion GitHub'}
+              </button>
             </div>
             <div className="card">
               <h3 style={{ fontSize: 16, marginBottom: 16 }}>Vercel Deploy Hook {statusIcon(deployHook ? 'ok' : '')}</h3>
@@ -752,8 +736,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
           <div className="card">
             <h3 style={{ fontSize: 16, marginBottom: 16 }}>Informations de debug</h3>
             <p style={{ fontSize: 13, color: 'var(--text-light)' }}>Worker URL : {workerUrl || '(non configuré)'}</p>
-            <p style={{ fontSize: 13, color: 'var(--text-light)' }}>GitHub : {githubOwner}/{githubSiteRepo}</p>
-            <p style={{ fontSize: 13, color: 'var(--text-light)' }}>Notion DB : {notionDbId ? notionDbId.slice(0, 8) + '…' : '(non configuré)'}</p>
+            <p style={{ fontSize: 13, color: 'var(--text-light)' }}>GitHub repo cible : configuré côté Worker (secrets GITHUB_OWNER / GITHUB_SITE_REPO)</p>
           </div>
         </>)}
       </div>

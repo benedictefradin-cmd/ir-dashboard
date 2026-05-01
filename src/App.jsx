@@ -35,7 +35,6 @@ import {
 import { loadLocal, saveLocal } from './utils/localStorage';
 import { LS_KEYS, COLORS } from './utils/constants';
 import { getActivity, logActivity } from './utils/activity';
-import useNotionSync from './hooks/useNotionSync';
 import logoSvg from './assets/logo.svg';
 
 
@@ -132,8 +131,13 @@ export default function App() {
   const [services, setServices] = useState({ brevo: false, telegram: false, github: hasGitHub() });
   const [loading, setLoading] = useState(true);
 
-  // Notion sync
-  const { notionArticles, notionCounts, notionLoading, notionError, syncNotion, notionConfigured } = useNotionSync();
+  // Notion retiré — stubs vides pour ne pas casser les pages qui reçoivent
+  // encore ces props. Le code mort sera nettoyé en P1 (cf. AUDIT §7 Q5).
+  const notionArticles = [];
+  const notionCounts = {};
+  const notionLoading = false;
+  const notionConfigured = false;
+  const syncNotion = null;
 
   const toast = useCallback((message, type = 'success') => {
     const id = Date.now() + Math.random();

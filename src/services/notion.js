@@ -1,112 +1,29 @@
-// ─── Notion API — Pipeline de publication ──────────────
-// Toutes les requêtes passent par le Worker Cloudflare.
-// Les tokens Notion sont stockés dans localStorage et envoyés via headers.
+// ─── Notion : intégration retirée ──────────────────────
+// Décision AUDIT §7 Q5 : la base Notion ne contenait pas d'articles à
+// migrer, l'utilisateur ne s'en sert plus. Toutes les fonctions sont
+// maintenues comme stubs no-op pour ne pas casser les imports résiduels
+// dans Articles.jsx ; elles seront retirées avec Articles.jsx lors du
+// nettoyage complet de l'écran éditorial.
+//
+// Les routes /api/notion/* du Worker restent en place (dormantes) au cas
+// où une réactivation serait demandée. Aucun appel ne les déclenche.
 
-import { loadLocal } from '../utils/localStorage';
-import { DEFAULT_WORKER_URL, LS_KEYS } from '../utils/constants';
-
-function getWorkerUrl() {
-  return loadLocal(LS_KEYS.workerUrl, null) || DEFAULT_WORKER_URL;
-}
-
-function getNotionHeaders() {
-  // Notion est en cours de retrait (cf. AUDIT §6 P0). Plus de lecture de
-  // VITE_NOTION_API_KEY (qui se retrouvait dans le bundle public). Le token,
-  // s'il est encore configuré côté Settings, vient uniquement du localStorage
-  // de l'utilisateur connecté. Le module sera supprimé dans un commit ultérieur.
-  const token = loadLocal('ir_notion_token', '');
-  const dbId = loadLocal('ir_notion_db_id', '');
-  return {
-    'Content-Type': 'application/json',
-    'X-Notion-Token': token,
-    'X-Notion-Database-Id': dbId,
-  };
-}
-
-/**
- * Récupère tous les articles de la base Notion.
- */
-export async function fetchArticles() {
-  const workerUrl = getWorkerUrl();
-  if (!workerUrl) throw new Error('Worker URL non configurée');
-
-  const resp = await fetch(`${workerUrl}/api/notion/articles`, {
-    headers: getNotionHeaders(),
-  });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error || `Erreur Notion ${resp.status}`);
-  }
-  const data = await resp.json();
-  return data.articles || [];
-}
-
-/**
- * Récupère le contenu HTML d'un article Notion.
- */
-export async function fetchArticleContent(pageId) {
-  const workerUrl = getWorkerUrl();
-  if (!workerUrl) throw new Error('Worker URL non configurée');
-
-  const resp = await fetch(`${workerUrl}/api/notion/articles/${pageId}/content`, {
-    headers: getNotionHeaders(),
-  });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error || `Erreur contenu Notion ${resp.status}`);
-  }
-  return resp.json(); // { html, wordCount }
-}
-
-/**
- * Met à jour le statut d'un article dans Notion.
- */
-export async function updateArticleStatus(pageId, status, publishDate, authors) {
-  const workerUrl = getWorkerUrl();
-  if (!workerUrl) throw new Error('Worker URL non configurée');
-
-  const body = { status };
-  if (publishDate) body.publishDate = publishDate;
-  if (authors) body.authors = authors;
-
-  const resp = await fetch(`${workerUrl}/api/notion/articles/${pageId}/status`, {
-    method: 'PATCH',
-    headers: getNotionHeaders(),
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error || `Erreur mise à jour Notion ${resp.status}`);
-  }
-  return resp.json();
-}
-
-/**
- * Compte les articles par statut.
- */
-export function countByStatus(articles) {
-  const counts = { draft: 0, writing: 0, review: 0, ready: 0, published: 0, archived: 0 };
-  for (const a of articles) {
-    const s = (a.status || '').toLowerCase();
-    if (s === 'idée' || s === 'idee') counts.draft++;
-    else if (s === 'en rédaction' || s === 'en redaction') counts.writing++;
-    else if (s === 'prêt à relire' || s === 'pret a relire') counts.review++;
-    else if (s === 'prêt à publier' || s === 'pret a publier') counts.ready++;
-    else if (s === 'publié' || s === 'publie') counts.published++;
-    else if (s === 'archivé' || s === 'archive') counts.archived++;
-  }
-  return counts;
-}
-
-/**
- * Vérifie si Notion est configuré.
- *
- * Notion est désactivé suite à la décision AUDIT §7 Q5 (avril 2026) :
- * la base contenait un seul article test sans titre, rien à migrer.
- * La fonction renvoie toujours false pour neutraliser useNotionSync.
- * Le code Notion (front + worker) est conservé en cas de réactivation
- * future, mais aucun appel n'est plus déclenché par défaut.
- */
 export function hasNotion() {
   return false;
+}
+
+export async function fetchArticles() {
+  return [];
+}
+
+export async function fetchArticleContent() {
+  return { html: '', wordCount: 0 };
+}
+
+export async function updateArticleStatus() {
+  return { success: false, disabled: true };
+}
+
+export function countByStatus() {
+  return { draft: 0, writing: 0, review: 0, ready: 0, published: 0, archived: 0 };
 }

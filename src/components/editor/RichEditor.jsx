@@ -38,6 +38,42 @@ function sanitizeHtml(html) {
   return DOMPurify.sanitize(html, SANITIZE_CONFIG);
 }
 
+// Helpers drag&drop image (mêmes specs que ImageInsertModal : redim 2000px max).
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const v = r.result || '';
+      const i = v.indexOf(',');
+      resolve(i >= 0 ? v.slice(i + 1) : v);
+    };
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+async function resizeImage(file, maxDim) {
+  if (file.type === 'image/svg+xml') return file;
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) return file;
+  const { width, height } = bitmap;
+  if (width <= maxDim && height <= maxDim) {
+    bitmap.close?.();
+    return file;
+  }
+  const ratio = Math.min(maxDim / width, maxDim / height);
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close?.();
+  const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+  return new Promise(resolve => canvas.toBlob(
+    blob => resolve(blob ? new File([blob], file.name, { type: mime }) : file),
+    mime,
+    mime === 'image/jpeg' ? 0.9 : undefined
+  ));
+}
+
 const MODES = [
   { key: 'visual', label: 'Visuel' },
   { key: 'html', label: 'HTML' },
