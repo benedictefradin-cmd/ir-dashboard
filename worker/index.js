@@ -744,7 +744,7 @@ export default {
 
           while (hasMore) {
             const body = {
-              sorts: [{ property: 'Dernière modif.', direction: 'descending' }],
+              sorts: [{ timestamp: 'last_edited_time', direction: 'descending' }],
               page_size: 100,
             };
             if (startCursor) body.start_cursor = startCursor;
