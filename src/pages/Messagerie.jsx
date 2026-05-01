@@ -3,7 +3,7 @@ import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { EMAIL_TEMPLATES, COLORS, LS_KEYS } from '../utils/constants';
 import { loadLocal, saveLocal } from '../utils/localStorage';
-import { sendBulkEmail } from '../services/brevo';
+import { sendBulkEmail, sendEmail } from '../services/brevo';
 import { sendMessage, sendChannelMessage, fetchMessages } from '../services/telegram';
 
 export default function Messagerie({ subscribers = [], presse = [], auteurs = [], events = [], services, toast }) {
@@ -13,6 +13,8 @@ export default function Messagerie({ subscribers = [], presse = [], auteurs = []
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testEmail, setTestEmail] = useState(() => loadLocal('ir_test_send_email', ''));
   const [showPreview, setShowPreview] = useState(false);
   const [history, setHistory] = useState(() => loadLocal(LS_KEYS.messageHistory, []));
   const [inbox, setInbox] = useState([]);
@@ -110,6 +112,53 @@ export default function Messagerie({ subscribers = [], presse = [], auteurs = []
   }, [selectedSegments, activeSubscribers, subscribers, presseContacts, auteursContacts, eventInscrits]);
 
   const recipientCount = recipientList.length;
+
+  /**
+   * Test send : envoie le message à une seule adresse (ou au chat privé admin
+   * pour Telegram) pour valider le rendu avant l'envoi de masse. Pas de
+   * persistence dans l'historique, pas de comptage, pas d'effet sur la cible.
+   */
+  const handleTestSend = async () => {
+    if (!body.trim()) return toast('Le message est vide', 'error');
+    if (channel === 'email') {
+      if (!subject.trim()) return toast("L'objet est requis", 'error');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail.trim())) {
+        return toast('Saisis une adresse email de test valide', 'error');
+      }
+    }
+    setTesting(true);
+    try {
+      saveLocal('ir_test_send_email', testEmail.trim());
+      if (channel === 'email') {
+        if (!services?.brevo) {
+          toast('Brevo non connecté — test simulé', 'success');
+        } else {
+          const htmlContent = body.replace(/\n/g, '<br>');
+          await sendEmail({
+            to: [{ email: testEmail.trim() }],
+            subject: `[TEST] ${subject}`,
+            htmlContent: `<div style="font-family: 'Source Sans 3', Arial, sans-serif; line-height: 1.6; color: #1a2744;"><p style="background:#fef3c7;padding:8px;border-radius:4px;font-size:13px;color:#92400e;margin-bottom:16px;">⚠️ Email de test — pas envoyé aux abonnés</p>${htmlContent}</div>`,
+            sender: { name: 'Institut Rousseau (test)', email: 'contact@institut-rousseau.fr' },
+          });
+          toast(`Test envoyé à ${testEmail.trim()}`);
+        }
+      } else if (channel === 'telegram-channel' || channel === 'telegram-private') {
+        // Pour Telegram on redirige vers le chat privé admin (TELEGRAM_CHAT_ID)
+        // au lieu du canal public, ce qui donne un aperçu sans publier.
+        if (!services?.telegram) {
+          toast('Telegram non connecté — test simulé', 'success');
+        } else {
+          const prefix = channel === 'telegram-channel' ? '🧪 [TEST canal]\n\n' : '🧪 [TEST]\n\n';
+          await sendMessage(null, prefix + body);
+          toast('Test envoyé sur le chat privé admin');
+        }
+      }
+    } catch (err) {
+      toast(`Erreur test : ${err.message}`, 'error');
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!body.trim()) return toast('Le message est vide', 'error');
@@ -355,6 +404,45 @@ export default function Messagerie({ subscribers = [], presse = [], auteurs = []
                   {body.length} / 280
                 </div>
               )}
+            </div>
+
+            {/* Test send : envoie une seule fois pour valider le rendu avant
+                d'envoyer à toute la cible. Telegram redirige vers le chat privé. */}
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                alignItems: 'center',
+                padding: 12,
+                background: 'var(--cream)',
+                borderRadius: 8,
+                marginTop: 12,
+                border: '1px solid var(--border)',
+                flexWrap: 'wrap',
+              }}
+            >
+              <span style={{ fontSize: 12, color: 'var(--text-light)' }}>🧪 Test :</span>
+              {channel === 'email' ? (
+                <input
+                  type="email"
+                  value={testEmail}
+                  onChange={e => setTestEmail(e.target.value)}
+                  placeholder="adresse@exemple.com"
+                  style={{ flex: 1, minWidth: 200, fontSize: 13 }}
+                />
+              ) : (
+                <span style={{ flex: 1, fontSize: 12, color: 'var(--text-light)' }}>
+                  → envoyé sur le chat privé admin (pas sur le canal public)
+                </span>
+              )}
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={handleTestSend}
+                disabled={testing || !body.trim()}
+                title="Envoie un seul message pour tester le rendu"
+              >
+                {testing ? 'Envoi test…' : 'Envoyer un test'}
+              </button>
             </div>
 
             <div className="msg-editor-actions">
