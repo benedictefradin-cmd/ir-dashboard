@@ -265,29 +265,47 @@ export async function updatePublicationsI18n(slug, entry) {
   return githubPutFile(path, newContent, file.sha, `Traductions publication : ${slug}`);
 }
 
+const PUBLICATIONS_DATA_PATH = 'assets/js/publications-data.js';
+
+function parsePublicationsData(source) {
+  const match = source.match(/window\.PUBLICATIONS_DATA\s*=\s*(\[[\s\S]*\])\s*;?\s*$/);
+  if (!match) throw new Error('Format inattendu dans publications-data.js');
+  try {
+    return JSON.parse(match[1]);
+  } catch {
+    // Fallback tolérant : JSON5 accepte les clés non-quotées et virgules
+    // traînantes, sans exécuter de code (contrairement à `new Function`).
+    try {
+      return JSON5.parse(match[1]);
+    } catch (e) {
+      throw new Error(`Parsing publications-data.js : ${e.message}`);
+    }
+  }
+}
+
+/**
+ * Lit la liste des publications depuis `assets/js/publications-data.js`.
+ * C'est la source unique consommée par le site (publications.js, featured.js,
+ * related.js, thematic-pubs.js, main.js).
+ * @returns {Promise<{ data: Array, sha: string|null }>}
+ */
+export async function fetchPublicationsList() {
+  try {
+    const file = await githubGetFile(PUBLICATIONS_DATA_PATH);
+    return { data: parsePublicationsData(file.content), sha: file.sha };
+  } catch (err) {
+    console.warn('[github] Impossible de charger publications-data.js:', err.message);
+    return { data: [], sha: null };
+  }
+}
+
 /**
  * Met à jour `assets/js/publications-data.js` pour enregistrer une nouvelle
  * publication dans la liste officielle du site.
  */
 export async function updatePublicationsData(entry) {
-  const path = 'assets/js/publications-data.js';
-  const file = await githubGetFile(path);
-
-  const match = file.content.match(/window\.PUBLICATIONS_DATA\s*=\s*(\[[\s\S]*\])\s*;?\s*$/);
-  if (!match) throw new Error('Format inattendu dans publications-data.js');
-
-  let arr;
-  try {
-    arr = JSON.parse(match[1]);
-  } catch {
-    // Fallback tolérant : JSON5 accepte les clés non-quotées et les virgules
-    // traînantes du JS, sans exécuter de code (contrairement à `new Function`).
-    try {
-      arr = JSON5.parse(match[1]);
-    } catch (e) {
-      throw new Error(`Parsing publications-data.js : ${e.message}`);
-    }
-  }
+  const file = await githubGetFile(PUBLICATIONS_DATA_PATH);
+  const arr = parsePublicationsData(file.content);
 
   const idx = arr.findIndex(p => p.id === entry.id);
   if (idx >= 0) {
@@ -297,7 +315,7 @@ export async function updatePublicationsData(entry) {
   }
 
   const newContent = `window.PUBLICATIONS_DATA = ${JSON.stringify(arr, null, 2)};\n`;
-  return githubPutFile(path, newContent, file.sha, `Publication ajoutée : ${entry.title}`);
+  return githubPutFile(PUBLICATIONS_DATA_PATH, newContent, file.sha, `Publication ajoutée : ${entry.title}`);
 }
 
 // ─── Helpers d'affichage ───────────────────────────────

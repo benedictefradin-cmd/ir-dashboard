@@ -3,7 +3,7 @@
 // (passe par le Worker ou directement via GitHub API).
 // Quand on sauvegarde, un commit est créé → Vercel redéploie le site.
 
-import { githubGetFile, githubPutFile, hasGitHub } from './github';
+import { githubGetFile, githubPutFile, hasGitHub, fetchPublicationsList } from './github';
 import { resolvePhotoUrl } from '../utils/constants';
 
 const DATA_PATH = 'data';
@@ -13,11 +13,18 @@ const shaCache = {};
 
 /**
  * Lit un fichier JSON depuis le repo du site.
+ * Cas particulier `publications` : la source unique est
+ * `assets/js/publications-data.js` (consommée par le site), pas un JSON.
  * @param {'publications' | 'events' | 'presse' | 'auteurs'} dataType
- * @returns {Promise<Array>}
+ * @returns {Promise<{ data: Array, sha: string|null }>}
  */
 export async function fetchSiteData(dataType) {
   if (!hasGitHub()) return { data: [], sha: null };
+  if (dataType === 'publications') {
+    const result = await fetchPublicationsList();
+    if (result.sha) shaCache[dataType] = result.sha;
+    return result;
+  }
   const filePath = `${DATA_PATH}/${dataType}.json`;
   try {
     const { content, sha } = await githubGetFile(filePath);
@@ -39,6 +46,9 @@ export async function fetchSiteData(dataType) {
  */
 export async function saveSiteData(dataType, data, message) {
   if (!hasGitHub()) throw new Error('GitHub non configuré');
+  if (dataType === 'publications') {
+    throw new Error('Les publications s’écrivent via updatePublicationsData() dans assets/js/publications-data.js, pas via data/publications.json (supprimé).');
+  }
   const filePath = `${DATA_PATH}/${dataType}.json`;
   const content = JSON.stringify(data, null, 2);
   const commitMsg = message || `Mise à jour ${dataType} depuis le back-office`;

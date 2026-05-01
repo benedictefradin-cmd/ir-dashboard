@@ -188,7 +188,10 @@ export default function PublishWithTranslation({ article, onPublished, onClose, 
         })
         .map(l => l.code);
 
-      onPublished?.(finalArticle);
+      // IMPORTANT: await — sans ça la modale se fermerait avant la fin du push
+      // GitHub. Un refresh pendant ce délai tuerait la requête et l'article
+      // (qui n'existe qu'en mémoire React) disparaîtrait sans être commité.
+      await onPublished?.(finalArticle);
       onClose();
     } catch (err) {
       toast(`Erreur publication : ${err.message}`, 'error');

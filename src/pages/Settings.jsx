@@ -212,9 +212,8 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
         throw new Error('Secret GITHUB_PAT non configuré côté Worker (cf. MIGRATION.md)');
       }
       // Lecture d'un fichier test pour confirmer l'accès au repo
-      const { githubGetFile } = await import('../services/github');
-      const file = await githubGetFile('data/publications.json');
-      const data = JSON.parse(file.content);
+      const { fetchPublicationsList } = await import('../services/github');
+      const { data } = await fetchPublicationsList();
       setTesting(prev => ({ ...prev, github: 'ok' }));
       toast(`GitHub connecté — ${Array.isArray(data) ? data.length : 0} publications dans le repo`);
     } catch (err) {

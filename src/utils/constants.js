@@ -207,10 +207,11 @@ export const DEFAULT_GITHUB_SITE_REPO = 'institut-rousseau';
 export const DEFAULT_PAGE_SIZE = 50;
 
 // ─── Site URL ────────────────────────────────────────
-// Domaine de prod (CNAME du repo site → Vercel). L'ancienne URL Vercel preview
-// (institut-rousseau-kb9p.vercel.app) ne servait qu'au dev et cassait les liens
-// "Voir sur le site" en prod (cf. AUDIT §3.2).
-export const SITE_URL = 'https://institut-rousseau.fr';
+// Tant que le DNS `institut-rousseau.fr` pointe encore sur l'ancien WordPress,
+// les liens "Voir ↗" renvoient 404. On pointe donc temporairement sur le
+// déploiement Vercel du nouveau site, qui sert bien data/publications.json.
+// À rebasculer sur https://institut-rousseau.fr une fois la bascule DNS faite.
+export const SITE_URL = 'https://institut-rousseau-kb9p.vercel.app';
 
 // ─── Photo helpers ───────────────────────────────────
 /**

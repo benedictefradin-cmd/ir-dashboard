@@ -4,9 +4,9 @@ import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
-import { formatDateFr, escapeHtml as escAttr } from '../utils/formatters';
-import { COLORS, PRESSE_TYPES } from '../utils/constants';
-import { hasGitHub, insertHtmlInPage, formatDateSite } from '../services/github';
+import { formatDateFr } from '../utils/formatters';
+import { PRESSE_TYPES } from '../utils/constants';
+import { hasGitHub } from '../services/github';
 import useDebounce from '../hooks/useDebounce';
 import { useConfirm } from '../components/shared/ConfirmDialog';
 import { humanizeError } from '../utils/errors';
@@ -131,22 +131,21 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
     toast('Entrée presse supprimée');
   };
 
+  // Le site lit `data/presse.json` (assets/js/presse.js) et écrase le contenu
+  // statique de presse.html — d'où une seule action utile : pousser le JSON
+  // entier. Le bouton "Publier" sur une ligne déclenche donc la même chose
+  // que "Publier tout" : un commit du fichier presse.json à jour.
+  const presseToJson = (list) => list.map(({ id, type, title, auteur, media, date, urlExterne, urlInterne }) => ({
+    id, type, title, auteur, media, date,
+    url: urlExterne || '',
+    urlInterne: urlInterne || '',
+  }));
+
   const publishItem = async (item) => {
     setPublishingId(item.id);
     try {
-      if (hasGitHub()) {
-        // Échappement des champs (cf. AUDIT §4.6) — un titre ou une URL malveillante
-        // ne peuvent plus injecter de balises actives sur presse.html.
-        const safeUrl = item.urlExterne && /^https?:/i.test(item.urlExterne) ? item.urlExterne : '#';
-        const cardHtml = `
-<article class="presse-item">
-  <span class="media">${escAttr(item.media)}</span>
-  <h3><a href="${escAttr(safeUrl)}" target="_blank" rel="noopener noreferrer">${escAttr(item.title)}</a></h3>
-  <p class="auteur">${escAttr(item.auteur || '')}</p>
-  <time>${escAttr(formatDateSite(item.date))}</time>
-</article>`;
-        await insertHtmlInPage('presse.html', cardHtml, `Ajout presse : ${item.title}`);
-        toast('Article presse publié sur le site');
+      if (hasGitHub() && saveToSite) {
+        await saveToSite('presse', presseToJson(presse), `Publication presse : ${item.title}`);
       } else {
         await new Promise(r => setTimeout(r, 1500));
         toast('Article presse publié (simulation)');
@@ -228,7 +227,7 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
         <div className="flex-center gap-8">
           <ServiceBadge service="github" />
           {saveToSite && hasGitHub() && (
-            <button className="btn btn-green" onClick={() => saveToSite('presse', presse.map(({ id, type, title, auteur, media, date, urlExterne, urlInterne }) => ({ id, type, title, auteur, media, date, url: urlExterne || '', urlInterne: urlInterne || '' })))}>
+            <button className="btn btn-green" onClick={() => saveToSite('presse', presseToJson(presse), 'Mise à jour presse depuis le back-office')}>
               Publier tout sur le site
             </button>
           )}
