@@ -8,14 +8,30 @@ binding = "CONTACT_SUBMISSIONS"
 id = "539bcd0d0e2c43eda11a6994a3375880"
 
 # Secrets à configurer avec : wrangler secret put <NOM>
-# BREVO_API_KEY
-# TELEGRAM_BOT_TOKEN
-# TELEGRAM_CHAT_ID
-# TELEGRAM_CHANNEL_ID
-# CONTACT_AUTH_TOKEN (Bearer token pour les endpoints back-office sollicitations)
 #
-# Auth dashboard (gestion des comptes) :
-# - Aucun secret requis. Les comptes sont stockés dans CONTACT_SUBMISSIONS sous
-#   le préfixe `auth:` (auth:user:*, auth:user_login:*, auth:session:*, auth:_users_index).
-# - Bootstrap : si aucun utilisateur n'existe, le premier login `admin / IR2026!`
-#   crée automatiquement le compte admin initial. Changez le mot de passe ensuite.
+# Brevo / Telegram :
+# - BREVO_API_KEY
+# - TELEGRAM_BOT_TOKEN
+# - TELEGRAM_CHAT_ID
+# - TELEGRAM_CHANNEL_ID
+#
+# Sollicitations (Bearer token back-office) :
+# - CONTACT_AUTH_TOKEN  (déprécié — sera remplacé par sessions OAuth)
+#
+# GitHub — proxy serveur (jamais côté navigateur) :
+# - GITHUB_PAT          PAT Fine-grained avec Contents: Read+Write sur le repo site
+# - GITHUB_OWNER        Owner du repo site (ex: institut-rousseau ou benedictefradin-cmd)
+# - GITHUB_SITE_REPO    Nom du repo site (ex: institut-rousseau)
+#
+# OAuth GitHub (dashboard login) :
+# - GITHUB_OAUTH_CLIENT_ID      Client ID de l'OAuth App GitHub
+# - GITHUB_OAUTH_CLIENT_SECRET  Client Secret de l'OAuth App GitHub
+# - ALLOWED_GITHUB_USERS        Liste blanche d'usernames séparés par virgules
+#
+# Traduction (optionnel) :
+# - DEEPL_API_KEY
+# - ANTHROPIC_API_KEY
+#
+# Auth login/mdp (legacy — à retirer après bascule complète OAuth) :
+# - Aucun secret requis. Comptes stockés dans CONTACT_SUBMISSIONS sous le préfixe
+#   `auth:` (auth:user:*, auth:user_login:*, auth:session:*, auth:_users_index).

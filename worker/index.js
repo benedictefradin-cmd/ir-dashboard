@@ -848,15 +848,27 @@ export default {
 
       // ═══════════════════════════════════════════
       // GITHUB — Site data & publish
+      //
+      // Priorité au secret Worker (env.GITHUB_PAT) pour ne jamais
+      // exposer de token côté navigateur. Fallback sur le header
+      // X-GitHub-Token pendant la transition (pour ne pas casser
+      // les anciennes versions du front qui envoyaient leur token).
+      // À retirer une fois que le front ne pousse plus de token.
+      //
+      // De même pour owner/repo : priorité aux env.GITHUB_OWNER /
+      // env.GITHUB_SITE_REPO (secrets), fallback sur les headers.
       // ═══════════════════════════════════════════
 
       if (path.startsWith('/api/github/')) {
-        const githubToken = request.headers.get('X-GitHub-Token');
-        const owner = request.headers.get('X-GitHub-Owner');
-        const repo = request.headers.get('X-GitHub-Repo');
+        const githubToken = env.GITHUB_PAT || request.headers.get('X-GitHub-Token');
+        const owner = env.GITHUB_OWNER || request.headers.get('X-GitHub-Owner');
+        const repo = env.GITHUB_SITE_REPO || request.headers.get('X-GitHub-Repo');
 
         if (!githubToken) {
-          return json({ error: 'Token GitHub manquant.' }, 400);
+          return json({ error: 'Token GitHub non configuré côté Worker (secret GITHUB_PAT manquant).' }, 503);
+        }
+        if (!owner || !repo) {
+          return json({ error: 'Owner ou repo GitHub non configuré (secrets GITHUB_OWNER / GITHUB_SITE_REPO manquants).' }, 503);
         }
 
         const githubHeaders = {
@@ -865,35 +877,85 @@ export default {
           'Content-Type': 'application/json',
         };
 
-        // ─── GET /api/github/data/:file ─── (lire un fichier JSON du site)
-        const dataMatch = path.match(/^\/api\/github\/data\/(.+)$/);
-        if (dataMatch && request.method === 'GET') {
-          if (!owner || !repo) return json({ error: 'Owner ou repo GitHub manquant.' }, 400);
-          const fileName = decodeURIComponent(dataMatch[1]);
-          const allowed = ['publications.json', 'events.json', 'presse.json', 'auteurs.json'];
-          if (!allowed.includes(fileName)) return json({ error: 'Fichier non autorisé.' }, 403);
+        // Helper : vérifie qu'un chemin est dans la liste blanche du repo site
+        // (pas de remontée vers .github/, pas d'accès aux workflows, pas de tokens stockés).
+        const isAllowedPath = (p) => {
+          if (!p || typeof p !== 'string') return false;
+          if (p.includes('..')) return false;
+          if (p.startsWith('/')) return false;
+          // Dossiers et fichiers autorisés (édition par le back-office)
+          const allowedPrefixes = [
+            'data/', 'publications/', 'assets/images/', 'assets/img/',
+            'assets/pdf/', 'assets/css/', 'assets/js/', 'includes/', 'images/',
+          ];
+          const allowedFiles = [
+            'index.html', '404.html', 'sitemap.xml', 'rss.xml', 'robots.txt',
+            'manifest.json', 'vercel.json', 'search-index.json', 'CNAME',
+          ];
+          // Toute page .html à la racine est éditable (about, contact, équipe...)
+          if (/^[a-z0-9-]+\.html$/i.test(p)) return true;
+          if (allowedFiles.includes(p)) return true;
+          return allowedPrefixes.some(prefix => p.startsWith(prefix));
+        };
 
-          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/data/${fileName}`;
+        // ─── GET /api/github/contents/* ─── lecture générique (texte ou binaire)
+        // Query: ?binary=1 pour récupérer un data URL (images privées du repo)
+        const contentsMatch = path.match(/^\/api\/github\/contents\/(.+)$/);
+        if (contentsMatch && request.method === 'GET') {
+          const filePath = decodeURIComponent(contentsMatch[1]);
+          if (!isAllowedPath(filePath)) {
+            return json({ error: `Chemin non autorisé : ${filePath}` }, 403);
+          }
+          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
           const resp = await fetch(apiUrl, { headers: githubHeaders });
           if (!resp.ok) return json({ error: `GitHub : ${resp.status}` }, resp.status);
-          const file = await resp.json();
-          const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
-          return json({ data: JSON.parse(content), sha: file.sha });
+          const meta = await resp.json();
+
+          // Bascule vers /git/blobs/{sha} pour les fichiers > 1 Mo (l'API contents
+          // ne renvoie pas le champ `content` au-delà de cette limite).
+          let base64 = (meta.content || '').replace(/\n/g, '');
+          if (!base64 && meta.sha) {
+            const blobResp = await fetch(
+              `https://api.github.com/repos/${owner}/${repo}/git/blobs/${meta.sha}`,
+              { headers: githubHeaders }
+            );
+            if (!blobResp.ok) return json({ error: `GitHub blob : ${blobResp.status}` }, blobResp.status);
+            const blob = await blobResp.json();
+            base64 = (blob.content || '').replace(/\n/g, '');
+          }
+
+          // Mode binaire (images) : retourne directement le data URL pour <img>
+          if (url.searchParams.get('binary') === '1') {
+            const ext = (filePath.split('.').pop() || 'jpg').toLowerCase();
+            const mime = ext === 'png' ? 'image/png'
+              : ext === 'webp' ? 'image/webp'
+              : ext === 'svg' ? 'image/svg+xml'
+              : ext === 'gif' ? 'image/gif'
+              : 'image/jpeg';
+            return json({ dataUrl: `data:${mime};base64,${base64}`, sha: meta.sha });
+          }
+
+          // Mode texte : décode UTF-8 (utilise TextDecoder, pas escape/unescape déprécié)
+          const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+          const content = new TextDecoder('utf-8').decode(bytes);
+          return json({ content, sha: meta.sha });
         }
 
-        // ─── PUT /api/github/data/:file ─── (écrire un fichier JSON du site)
-        if (dataMatch && request.method === 'PUT') {
-          if (!owner || !repo) return json({ error: 'Owner ou repo GitHub manquant.' }, 400);
-          const fileName = decodeURIComponent(dataMatch[1]);
-          const allowed = ['publications.json', 'events.json', 'presse.json', 'auteurs.json'];
-          if (!allowed.includes(fileName)) return json({ error: 'Fichier non autorisé.' }, 403);
-
+        // ─── PUT /api/github/contents/* ─── écriture générique (texte ou base64)
+        // Body: { content?: string, base64?: string, sha?: string, message?: string }
+        if (contentsMatch && request.method === 'PUT') {
+          const filePath = decodeURIComponent(contentsMatch[1]);
+          if (!isAllowedPath(filePath)) {
+            return json({ error: `Chemin non autorisé : ${filePath}` }, 403);
+          }
           const body = await request.json();
-          if (!body.data) return json({ error: 'Données manquantes (champ "data" requis).' }, 400);
+          if (body.content === undefined && !body.base64) {
+            return json({ error: 'Champ "content" (texte) ou "base64" (binaire) requis.' }, 400);
+          }
 
-          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/data/${fileName}`;
+          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
 
-          // Récupérer le SHA actuel
+          // Récupération du SHA si pas fourni (mise à jour d'un fichier existant)
           let currentSha = body.sha || null;
           if (!currentSha) {
             const checkResp = await fetch(apiUrl, { headers: githubHeaders });
@@ -903,7 +965,125 @@ export default {
             }
           }
 
-          const content = btoa(unescape(encodeURIComponent(JSON.stringify(body.data, null, 2))));
+          // Encodage UTF-8 → base64 (sans escape/unescape déprécié)
+          let contentBase64;
+          if (body.base64) {
+            contentBase64 = body.base64.replace(/\n/g, '');
+          } else {
+            const utf8 = new TextEncoder().encode(body.content);
+            contentBase64 = btoa(String.fromCharCode(...utf8));
+          }
+
+          const putBody = {
+            message: body.message || `Mise à jour ${filePath} depuis le back-office`,
+            content: contentBase64,
+            branch: 'main',
+          };
+          if (currentSha) putBody.sha = currentSha;
+
+          const putResp = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: githubHeaders,
+            body: JSON.stringify(putBody),
+          });
+          if (!putResp.ok) {
+            const err = await putResp.json().catch(() => ({}));
+            return json({ error: err.message || `GitHub : ${putResp.status}` }, putResp.status);
+          }
+          const result = await putResp.json();
+          return json({ success: true, sha: result.content?.sha });
+        }
+
+        // ─── DELETE /api/github/contents/* ─── suppression générique
+        if (contentsMatch && request.method === 'DELETE') {
+          const filePath = decodeURIComponent(contentsMatch[1]);
+          if (!isAllowedPath(filePath)) {
+            return json({ error: `Chemin non autorisé : ${filePath}` }, 403);
+          }
+          const body = await request.json().catch(() => ({}));
+          const sha = body.sha;
+          if (!sha) return json({ error: 'SHA requis pour la suppression.' }, 400);
+
+          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+          const delResp = await fetch(apiUrl, {
+            method: 'DELETE',
+            headers: githubHeaders,
+            body: JSON.stringify({
+              message: body.message || `Suppression ${filePath} depuis le back-office`,
+              sha,
+              branch: 'main',
+            }),
+          });
+          if (!delResp.ok) {
+            const err = await delResp.json().catch(() => ({}));
+            return json({ error: err.message || `GitHub : ${delResp.status}` }, delResp.status);
+          }
+          return json({ success: true });
+        }
+
+        // ─── GET /api/github/list/* ─── liste les fichiers d'un dossier
+        const listMatch = path.match(/^\/api\/github\/list\/(.+)$/);
+        if (listMatch && request.method === 'GET') {
+          const dirPath = decodeURIComponent(listMatch[1]);
+          if (!isAllowedPath(dirPath + '/')) {
+            return json({ error: `Chemin non autorisé : ${dirPath}` }, 403);
+          }
+          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${dirPath}`;
+          const resp = await fetch(apiUrl, { headers: githubHeaders });
+          if (!resp.ok) return json({ error: `GitHub : ${resp.status}` }, resp.status);
+          const items = await resp.json();
+          // L'API retourne un objet pour un fichier, un tableau pour un dossier
+          if (!Array.isArray(items)) return json({ error: 'Pas un dossier' }, 400);
+          return json({
+            items: items.map(i => ({
+              name: i.name,
+              path: i.path,
+              type: i.type,
+              size: i.size,
+              sha: i.sha,
+            })),
+          });
+        }
+
+        // ─── GET /api/github/data/:file ─── (legacy : lire un JSON du site)
+        // Conservé pour compat ; le nouveau front utilise /api/github/contents/data/:file.
+        const dataMatch = path.match(/^\/api\/github\/data\/(.+)$/);
+        if (dataMatch && request.method === 'GET') {
+          const fileName = decodeURIComponent(dataMatch[1]);
+          const allowed = ['publications.json', 'events.json', 'presse.json', 'auteurs.json', 'contenu.json'];
+          if (!allowed.includes(fileName)) return json({ error: 'Fichier non autorisé.' }, 403);
+
+          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/data/${fileName}`;
+          const resp = await fetch(apiUrl, { headers: githubHeaders });
+          if (!resp.ok) return json({ error: `GitHub : ${resp.status}` }, resp.status);
+          const file = await resp.json();
+          const bytes = Uint8Array.from(atob(file.content.replace(/\n/g, '')), c => c.charCodeAt(0));
+          const content = new TextDecoder('utf-8').decode(bytes);
+          return json({ data: JSON.parse(content), sha: file.sha });
+        }
+
+        // ─── PUT /api/github/data/:file ─── (legacy : écrire un JSON du site)
+        if (dataMatch && request.method === 'PUT') {
+          const fileName = decodeURIComponent(dataMatch[1]);
+          const allowed = ['publications.json', 'events.json', 'presse.json', 'auteurs.json', 'contenu.json'];
+          if (!allowed.includes(fileName)) return json({ error: 'Fichier non autorisé.' }, 403);
+
+          const body = await request.json();
+          if (!body.data) return json({ error: 'Données manquantes (champ "data" requis).' }, 400);
+
+          const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/data/${fileName}`;
+
+          let currentSha = body.sha || null;
+          if (!currentSha) {
+            const checkResp = await fetch(apiUrl, { headers: githubHeaders });
+            if (checkResp.ok) {
+              const existing = await checkResp.json();
+              currentSha = existing.sha;
+            }
+          }
+
+          const utf8 = new TextEncoder().encode(JSON.stringify(body.data, null, 2));
+          const content = btoa(String.fromCharCode(...utf8));
           const putBody = {
             message: body.message || `Mise à jour ${fileName} depuis le back-office`,
             content,
@@ -925,23 +1105,15 @@ export default {
           return json({ success: true, sha: result.content?.sha });
         }
 
-        // ─── POST /api/github/publish ───
+        // ─── POST /api/github/publish ─── (publication d'un article HTML pré-rendu)
         if (path === '/api/github/publish' && request.method === 'POST') {
-          if (!owner || !repo) {
-            return json({ error: 'Owner ou repo GitHub manquant.' }, 400);
-          }
-
           const body = await request.json();
           const { slug, html, metadata, commitMessage } = body;
-
-          if (!slug || !html) {
-            return json({ error: 'Slug et HTML requis.' }, 400);
-          }
+          if (!slug || !html) return json({ error: 'Slug et HTML requis.' }, 400);
 
           const filePath = `publications/${slug}.html`;
           const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
 
-          // Check if file exists (get SHA for update)
           let existingSha = null;
           const checkResp = await fetch(apiUrl, { headers: githubHeaders });
           if (checkResp.ok) {
@@ -949,8 +1121,8 @@ export default {
             existingSha = existing.sha;
           }
 
-          // Create or update file
-          const content = btoa(unescape(encodeURIComponent(html)));
+          const utf8 = new TextEncoder().encode(html);
+          const content = btoa(String.fromCharCode(...utf8));
           const putBody = {
             message: commitMessage || `Publish: ${metadata?.title || slug}`,
             content,
@@ -978,12 +1150,9 @@ export default {
           });
         }
 
-        // ─── GET /api/github/check/:slug ───
+        // ─── GET /api/github/check/:slug ─── (vérifie l'existence d'une publication)
         const checkMatch = path.match(/^\/api\/github\/check\/(.+)$/);
         if (checkMatch && request.method === 'GET') {
-          if (!owner || !repo) {
-            return json({ error: 'Owner ou repo GitHub manquant.' }, 400);
-          }
           const slug = decodeURIComponent(checkMatch[1]);
           const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/publications/${slug}.html`;
           const resp = await fetch(apiUrl, { headers: githubHeaders });
@@ -1004,8 +1173,11 @@ export default {
           services: {
             brevo: !!env.BREVO_API_KEY,
             telegram: !!env.TELEGRAM_BOT_TOKEN,
-            github: true,
+            // github = true tant que le secret GITHUB_PAT est configuré
+            // (le mode header X-GitHub-Token reste accepté en transition)
+            github: !!env.GITHUB_PAT,
             translate: !!(env.DEEPL_API_KEY || env.ANTHROPIC_API_KEY),
+            githubOAuth: !!(env.GITHUB_OAUTH_CLIENT_ID && env.GITHUB_OAUTH_CLIENT_SECRET),
           },
         });
       }
