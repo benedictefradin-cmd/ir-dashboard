@@ -27,6 +27,7 @@ import { fetchSollicitations } from './services/contact';
 import { fetchAllCalendar, saveCalendar } from './services/calendar';
 import { fetchAllSiteData, normalizePublications, normalizeEvents, normalizePresse, normalizeAuteurs, saveSiteData } from './services/siteData';
 import { hasGitHub } from './services/github';
+import { login as apiLogin, logout as apiLogout, fetchMe, getToken } from './services/auth';
 import { loadLocal, saveLocal } from './utils/localStorage';
 import { LS_KEYS, COLORS } from './utils/constants';
 import { getActivity, logActivity } from './utils/activity';
@@ -39,21 +40,31 @@ import logoSvg from './assets/logo.svg';
 // ─── MAIN APP ──────────────────────────────────────────
 export default function App() {
   // Auth
-  const [loggedIn, setLoggedIn] = useState(() => {
-    const session = sessionStorage.getItem('ir-auth');
-    if (session) {
-      try {
-        const { ts } = JSON.parse(session);
-        if (Date.now() - ts < 15 * 60 * 1000) return true;
-      } catch { /* invalid */ }
-      sessionStorage.removeItem('ir-auth');
-    }
-    return false;
-  });
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authChecking, setAuthChecking] = useState(true);
   const [loginId, setLoginId] = useState('');
   const [loginPw, setLoginPw] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [loginBusy, setLoginBusy] = useState(false);
   const lastActivity = useRef(Date.now());
+
+  // Vérifier le token au démarrage
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!getToken()) { setAuthChecking(false); return; }
+      try {
+        const { user } = await fetchMe();
+        if (!cancelled && user) {
+          setCurrentUser(user);
+          setLoggedIn(true);
+        }
+      } catch { /* token invalide → non connecté */ }
+      if (!cancelled) setAuthChecking(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Tab & toast
   const [tab, setTab] = useState(() => loadLocal(LS_KEYS.activeTab, 'dashboard'));
@@ -98,30 +109,33 @@ export default function App() {
   }, []);
 
   // Auth handlers
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (loginId === 'admin' && loginPw === 'IR2026!') {
+    setLoginError('');
+    setLoginBusy(true);
+    try {
+      const { user } = await apiLogin(loginId, loginPw);
+      setCurrentUser(user);
       setLoggedIn(true);
-      setLoginError('');
-      sessionStorage.setItem('ir-auth', JSON.stringify({ ts: Date.now() }));
       lastActivity.current = Date.now();
-    } else {
-      setLoginError('Identifiants incorrects');
+      setLoginPw('');
+    } catch (err) {
+      setLoginError(err.message || 'Identifiants incorrects');
+    } finally {
+      setLoginBusy(false);
     }
   };
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    await apiLogout();
     setLoggedIn(false);
-    sessionStorage.removeItem('ir-auth');
+    setCurrentUser(null);
   }, []);
 
-  // Inactivity timer
+  // Inactivity timer (15 min sans activité → déconnexion)
   useEffect(() => {
     if (!loggedIn) return;
-    const resetTimer = () => {
-      lastActivity.current = Date.now();
-      sessionStorage.setItem('ir-auth', JSON.stringify({ ts: Date.now() }));
-    };
+    const resetTimer = () => { lastActivity.current = Date.now(); };
     const check = setInterval(() => {
       if (Date.now() - lastActivity.current > 15 * 60 * 1000) handleLogout();
     }, 30000);
@@ -290,6 +304,15 @@ export default function App() {
     settings: 0,
   };
 
+  // Vérification du token en cours
+  if (authChecking) {
+    return (
+      <div className="login-wrapper fade-in">
+        <div style={{ color: 'var(--text-light)' }}>Vérification de la session…</div>
+      </div>
+    );
+  }
+
   // Login screen
   if (!loggedIn) {
     return (
@@ -298,10 +321,12 @@ export default function App() {
           <img src={logoSvg} alt="Institut Rousseau" style={{ height: 40, marginBottom: 24 }} />
           <p className="login-sub">Back-office</p>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <input placeholder="Identifiant" value={loginId} onChange={e => setLoginId(e.target.value)} style={{ width: '100%' }} />
-            <input placeholder="Mot de passe" type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} style={{ width: '100%' }} />
+            <input placeholder="Identifiant" value={loginId} onChange={e => setLoginId(e.target.value)} style={{ width: '100%' }} autoComplete="username" />
+            <input placeholder="Mot de passe" type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} style={{ width: '100%' }} autoComplete="current-password" />
             {loginError && <p className="login-error">{loginError}</p>}
-            <button type="submit" className="btn btn-primary" style={{ padding: '10px 32px', fontSize: 15 }}>Se connecter</button>
+            <button type="submit" className="btn btn-primary" style={{ padding: '10px 32px', fontSize: 15 }} disabled={loginBusy}>
+              {loginBusy ? 'Connexion…' : 'Se connecter'}
+            </button>
           </form>
         </div>
       </div>
@@ -363,6 +388,7 @@ export default function App() {
           subscribers={subscribers} services={services}
           onImportSubscribers={(items) => setSubscribers(prev => [...items, ...prev])}
           onRefresh={loadData} toast={toast}
+          currentUser={currentUser}
         />;
       default:
         return <Dashboard
@@ -388,6 +414,8 @@ export default function App() {
       presse={presse}
       subscribers={subscribers}
       sollicitations={sollicitations}
+      currentUser={currentUser}
+      onLogout={handleLogout}
     >
       <Suspense fallback={<div className="page-body" style={{ textAlign: 'center', padding: 60, color: 'var(--text-light)' }}>Chargement…</div>}>
         {renderPage()}

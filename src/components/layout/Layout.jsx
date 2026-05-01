@@ -7,6 +7,7 @@ import { LS_KEYS, SITE_URL } from '../../utils/constants';
 export default function Layout({
   activeTab, onTabChange, badges, toasts, onRemoveToast, children,
   articles, events, presse, subscribers, sollicitations,
+  currentUser, onLogout,
 }) {
   const [collapsed, setCollapsed] = useState(() => loadLocal(LS_KEYS.sidebarCollapsed, false));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -128,6 +129,15 @@ export default function Layout({
             <a href={SITE_URL} target="_blank" rel="noopener noreferrer" className="site-link">
               Voir le site &#8599;
             </a>
+            {currentUser && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-light)' }}>
+                <span style={{ fontWeight: 600, color: 'var(--navy)' }}>{currentUser.name}</span>
+                {currentUser.role === 'admin' && (
+                  <span className="badge badge-sky" style={{ fontSize: 10 }}>admin</span>
+                )}
+                <button className="btn btn-outline btn-sm" onClick={onLogout} title="Se déconnecter">Déconnexion</button>
+              </span>
+            )}
           </div>
         </div>
 

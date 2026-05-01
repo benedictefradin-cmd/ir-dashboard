@@ -33,6 +33,159 @@ export default {
     try {
 
       // ═══════════════════════════════════════════
+      // AUTH — comptes utilisateurs (PBKDF2 + sessions KV)
+      // ═══════════════════════════════════════════
+
+      if (path.startsWith('/api/auth/')) {
+        if (!env.CONTACT_SUBMISSIONS) {
+          return json({ error: 'KV non configuré' }, 503);
+        }
+        const kv = env.CONTACT_SUBMISSIONS;
+
+        // ─── POST /api/auth/login ───
+        if (path === '/api/auth/login' && request.method === 'POST') {
+          // Rate limiting : max 10 tentatives / 15 min / IP
+          const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+          const rlWindow = Math.floor(Date.now() / (15 * 60 * 1000));
+          const rlKey = `auth:rl:${ip}:${rlWindow}`;
+          const rlCount = parseInt(await kv.get(rlKey) || '0', 10);
+          if (rlCount >= 10) {
+            return json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' }, 429);
+          }
+
+          const { login, password } = await request.json();
+          if (!login || !password) return json({ error: 'Identifiants requis' }, 400);
+
+          const indexRaw = await kv.get('auth:_users_index');
+          const index = indexRaw ? JSON.parse(indexRaw) : [];
+
+          // Bootstrap : si aucun utilisateur et identifiants par défaut, seed admin
+          if (index.length === 0) {
+            if (login === 'admin' && password === 'IR2026!') {
+              const seeded = await createUser(kv, { login: 'admin', name: 'Admin', password: 'IR2026!', role: 'admin' });
+              const token = await createSession(kv, seeded.id);
+              return json({ token, user: publicUser(seeded), bootstrapped: true });
+            }
+            await kv.put(rlKey, String(rlCount + 1), { expirationTtl: 15 * 60 });
+            return json({ error: 'Aucun utilisateur. Connectez-vous avec admin / IR2026! pour initialiser.' }, 401);
+          }
+
+          const userId = await kv.get(`auth:user_login:${login.toLowerCase()}`);
+          const userRaw = userId ? await kv.get(`auth:user:${userId}`) : null;
+          const user = userRaw ? JSON.parse(userRaw) : null;
+          const ok = user ? await verifyPassword(password, user.passwordHash) : false;
+          if (!ok) {
+            await kv.put(rlKey, String(rlCount + 1), { expirationTtl: 15 * 60 });
+            return json({ error: 'Identifiants invalides' }, 401);
+          }
+
+          const token = await createSession(kv, user.id);
+          return json({ token, user: publicUser(user) });
+        }
+
+        // ─── Toutes les autres routes nécessitent une session ───
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+        const session = token ? await getSession(kv, token) : null;
+        if (!session) return json({ error: 'Non autorisé' }, 401);
+        const meRaw = await kv.get(`auth:user:${session.userId}`);
+        if (!meRaw) return json({ error: 'Utilisateur introuvable' }, 401);
+        const me = JSON.parse(meRaw);
+
+        // ─── POST /api/auth/logout ───
+        if (path === '/api/auth/logout' && request.method === 'POST') {
+          await kv.delete(`auth:session:${token}`);
+          return json({ ok: true });
+        }
+
+        // ─── GET /api/auth/me ───
+        if (path === '/api/auth/me' && request.method === 'GET') {
+          return json({ user: publicUser(me) });
+        }
+
+        // ─── PATCH /api/auth/me/password ─── (changer son propre mdp)
+        if (path === '/api/auth/me/password' && request.method === 'PATCH') {
+          const { currentPassword, newPassword } = await request.json();
+          if (!currentPassword || !newPassword) return json({ error: 'Champs requis' }, 400);
+          if (newPassword.length < 8) return json({ error: 'Mot de passe trop court (min 8 caractères)' }, 400);
+          const ok = await verifyPassword(currentPassword, me.passwordHash);
+          if (!ok) return json({ error: 'Mot de passe actuel incorrect' }, 401);
+          me.passwordHash = await hashPassword(newPassword);
+          me.updatedAt = new Date().toISOString();
+          await kv.put(`auth:user:${me.id}`, JSON.stringify(me));
+          // Invalide les autres sessions, garde la session courante
+          await invalidateUserSessions(kv, me.id, token);
+          return json({ ok: true });
+        }
+
+        // ─── GET /api/auth/users ─── (admin)
+        if (path === '/api/auth/users' && request.method === 'GET') {
+          if (me.role !== 'admin') return json({ error: 'Accès admin requis' }, 403);
+          const indexRaw = await kv.get('auth:_users_index');
+          const index = indexRaw ? JSON.parse(indexRaw) : [];
+          return json({ users: index });
+        }
+
+        // ─── POST /api/auth/users ─── (admin)
+        if (path === '/api/auth/users' && request.method === 'POST') {
+          if (me.role !== 'admin') return json({ error: 'Accès admin requis' }, 403);
+          const { login, name, password, role } = await request.json();
+          if (!login || !name || !password) return json({ error: 'login, name, password requis' }, 400);
+          if (password.length < 8) return json({ error: 'Mot de passe trop court (min 8 caractères)' }, 400);
+          const existing = await kv.get(`auth:user_login:${login.toLowerCase()}`);
+          if (existing) return json({ error: 'Identifiant déjà utilisé' }, 409);
+          const created = await createUser(kv, { login, name, password, role: role === 'admin' ? 'admin' : 'editor' });
+          return json({ user: publicUser(created) }, 201);
+        }
+
+        // ─── PATCH /api/auth/users/:id ─── (admin, ou self pour name)
+        const userIdMatch = path.match(/^\/api\/auth\/users\/([^/]+)$/);
+        if (userIdMatch && request.method === 'PATCH') {
+          const id = decodeURIComponent(userIdMatch[1]);
+          if (me.role !== 'admin' && me.id !== id) return json({ error: 'Accès refusé' }, 403);
+          const targetRaw = await kv.get(`auth:user:${id}`);
+          if (!targetRaw) return json({ error: 'Utilisateur introuvable' }, 404);
+          const target = JSON.parse(targetRaw);
+          const updates = await request.json();
+          if (updates.name !== undefined) target.name = updates.name;
+          if (updates.role !== undefined && me.role === 'admin') {
+            target.role = updates.role === 'admin' ? 'admin' : 'editor';
+          }
+          let passwordChanged = false;
+          if (updates.password !== undefined && me.role === 'admin') {
+            if (updates.password.length < 8) return json({ error: 'Mot de passe trop court (min 8 caractères)' }, 400);
+            target.passwordHash = await hashPassword(updates.password);
+            passwordChanged = true;
+          }
+          target.updatedAt = new Date().toISOString();
+          await kv.put(`auth:user:${id}`, JSON.stringify(target));
+          await updateUserIndex(kv, target);
+          // Reset par admin → invalide toutes les sessions de l'utilisateur cible
+          if (passwordChanged) await invalidateUserSessions(kv, target.id);
+          return json({ user: publicUser(target) });
+        }
+
+        // ─── DELETE /api/auth/users/:id ─── (admin, pas soi-même)
+        if (userIdMatch && request.method === 'DELETE') {
+          if (me.role !== 'admin') return json({ error: 'Accès admin requis' }, 403);
+          const id = decodeURIComponent(userIdMatch[1]);
+          if (id === me.id) return json({ error: 'Impossible de supprimer son propre compte' }, 400);
+          const targetRaw = await kv.get(`auth:user:${id}`);
+          if (!targetRaw) return json({ error: 'Utilisateur introuvable' }, 404);
+          const target = JSON.parse(targetRaw);
+          await kv.delete(`auth:user:${id}`);
+          await kv.delete(`auth:user_login:${target.login.toLowerCase()}`);
+          const indexRaw = await kv.get('auth:_users_index');
+          const index = indexRaw ? JSON.parse(indexRaw) : [];
+          await kv.put('auth:_users_index', JSON.stringify(index.filter(u => u.id !== id)));
+          await invalidateUserSessions(kv, id);
+          return json({ ok: true });
+        }
+
+        return json({ error: 'Route auth inconnue' }, 404);
+      }
+
+      // ═══════════════════════════════════════════
       // BREVO
       // ═══════════════════════════════════════════
 
@@ -983,6 +1136,122 @@ function json(data, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
+}
+
+// ═══ Auth helpers ════════════════════════════════════
+// Format hash : pbkdf2$<iters>$<saltHex>$<hashHex>
+
+const PBKDF2_ITERS = 100000;
+const SESSION_TTL_SECONDS = 12 * 3600;
+
+function bytesToHex(bytes) {
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function hexToBytes(hex) {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.substr(i * 2, 2), 16);
+  return out;
+}
+
+async function hashPassword(password, saltHex) {
+  const salt = saltHex ? hexToBytes(saltHex) : crypto.getRandomValues(new Uint8Array(16));
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERS, hash: 'SHA-256' },
+    key,
+    256
+  );
+  return `pbkdf2$${PBKDF2_ITERS}$${bytesToHex(salt)}$${bytesToHex(new Uint8Array(bits))}`;
+}
+
+async function verifyPassword(password, stored) {
+  if (!stored || typeof stored !== 'string') return false;
+  const parts = stored.split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2') return false;
+  const computed = await hashPassword(password, parts[2]);
+  // Comparaison à temps constant
+  if (computed.length !== stored.length) return false;
+  let diff = 0;
+  for (let i = 0; i < computed.length; i++) diff |= computed.charCodeAt(i) ^ stored.charCodeAt(i);
+  return diff === 0;
+}
+
+function randomToken(bytes = 32) {
+  return bytesToHex(crypto.getRandomValues(new Uint8Array(bytes)));
+}
+
+function publicUser(u) {
+  return { id: u.id, login: u.login, name: u.name, role: u.role, createdAt: u.createdAt, updatedAt: u.updatedAt };
+}
+
+async function createUser(kv, { login, name, password, role }) {
+  const id = `usr_${Date.now()}_${randomToken(4)}`;
+  const passwordHash = await hashPassword(password);
+  const user = {
+    id,
+    login,
+    name,
+    role: role === 'admin' ? 'admin' : 'editor',
+    passwordHash,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  await kv.put(`auth:user:${id}`, JSON.stringify(user));
+  await kv.put(`auth:user_login:${login.toLowerCase()}`, id);
+  const indexRaw = await kv.get('auth:_users_index');
+  const index = indexRaw ? JSON.parse(indexRaw) : [];
+  index.push({ id, login, name, role: user.role, createdAt: user.createdAt });
+  await kv.put('auth:_users_index', JSON.stringify(index));
+  return user;
+}
+
+async function updateUserIndex(kv, user) {
+  const indexRaw = await kv.get('auth:_users_index');
+  const index = indexRaw ? JSON.parse(indexRaw) : [];
+  const i = index.findIndex(u => u.id === user.id);
+  const entry = { id: user.id, login: user.login, name: user.name, role: user.role, createdAt: user.createdAt };
+  if (i >= 0) index[i] = entry; else index.push(entry);
+  await kv.put('auth:_users_index', JSON.stringify(index));
+}
+
+async function createSession(kv, userId) {
+  const token = randomToken(32);
+  const expiresAt = Date.now() + SESSION_TTL_SECONDS * 1000;
+  await kv.put(`auth:session:${token}`, JSON.stringify({ userId, expiresAt }), { expirationTtl: SESSION_TTL_SECONDS });
+  return token;
+}
+
+async function getSession(kv, token) {
+  const raw = await kv.get(`auth:session:${token}`);
+  if (!raw) return null;
+  const session = JSON.parse(raw);
+  if (session.expiresAt && session.expiresAt < Date.now()) {
+    await kv.delete(`auth:session:${token}`);
+    return null;
+  }
+  return session;
+}
+
+// Invalide toutes les sessions actives d'un utilisateur (sauf optionnellement la session courante).
+// Utilisé après un changement / reset de mot de passe.
+async function invalidateUserSessions(kv, userId, keepToken = null) {
+  let cursor;
+  do {
+    const list = await kv.list({ prefix: 'auth:session:', cursor });
+    for (const k of list.keys) {
+      const token = k.name.slice('auth:session:'.length);
+      if (keepToken && token === keepToken) continue;
+      const raw = await kv.get(k.name);
+      if (!raw) continue;
+      try {
+        const s = JSON.parse(raw);
+        if (s.userId === userId) await kv.delete(k.name);
+      } catch { /* ignore */ }
+    }
+    cursor = list.list_complete ? null : list.cursor;
+  } while (cursor);
 }
 
 // ═══ Notion property extractors ══════════════════════

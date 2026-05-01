@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { loadLocal, saveLocal } from '../utils/localStorage';
 import { LS_KEYS, DEFAULT_WORKER_URL, DEFAULT_GITHUB_OWNER, DEFAULT_GITHUB_SITE_REPO } from '../utils/constants';
@@ -8,8 +8,12 @@ import { checkHealth } from '../services/api';
 import { testConnection as testTelegram } from '../services/telegram';
 import { addContact as addBrevoContact } from '../services/brevo';
 import { fetchArticles as fetchNotionArticles } from '../services/notion';
+import {
+  listUsers, createUser as apiCreateUser, updateUser as apiUpdateUser,
+  deleteUser as apiDeleteUser, changeMyPassword,
+} from '../services/auth';
 
-export default function Settings({ subscribers, services, onImportSubscribers, onRefresh, toast }) {
+export default function Settings({ subscribers, services, onImportSubscribers, onRefresh, toast, currentUser }) {
   // ─── Config API ───────────────────────────────
   const [workerUrl, setWorkerUrl] = useState(() => loadLocal(LS_KEYS.workerUrl, DEFAULT_WORKER_URL));
   const [testing, setTesting] = useState({});
@@ -49,12 +53,128 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
 
   const [activeSettingsTab, setActiveSettingsTab] = useState('connexions');
 
+  const isAdmin = currentUser?.role === 'admin';
   const SETTINGS_TABS = [
     { key: 'connexions', label: 'Connexions API' },
+    { key: 'utilisateurs', label: 'Utilisateurs' },
     { key: 'import', label: 'Import / Export' },
     { key: 'automations', label: 'Automatisations' },
     { key: 'avance', label: 'Avancé' },
   ];
+
+  // ─── Utilisateurs ────────────────────────────
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState('');
+  const [newUser, setNewUser] = useState({ login: '', name: '', password: '', role: 'editor' });
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [resetTarget, setResetTarget] = useState(null); // {id, login}
+  const [resetPassword, setResetPassword] = useState('');
+  // Mot de passe perso
+  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
+  const [pwBusy, setPwBusy] = useState(false);
+
+  const refreshUsers = async () => {
+    if (!isAdmin) return;
+    setUsersLoading(true);
+    setUsersError('');
+    try {
+      const data = await listUsers();
+      setUsers(data.users || []);
+    } catch (err) {
+      setUsersError(err.message || 'Erreur de chargement');
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSettingsTab === 'utilisateurs' && isAdmin) refreshUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSettingsTab, isAdmin]);
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    if (!newUser.login.trim() || !newUser.name.trim() || newUser.password.length < 8) {
+      toast('Champs requis (mot de passe min 8 caractères)', 'error');
+      return;
+    }
+    setCreatingUser(true);
+    try {
+      await apiCreateUser({
+        login: newUser.login.trim(),
+        name: newUser.name.trim(),
+        password: newUser.password,
+        role: newUser.role,
+      });
+      toast(`Compte "${newUser.login}" créé`);
+      setNewUser({ login: '', name: '', password: '', role: 'editor' });
+      refreshUsers();
+    } catch (err) {
+      toast(err.message || 'Erreur création', 'error');
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (u) => {
+    if (!confirm(`Supprimer définitivement le compte "${u.login}" ?`)) return;
+    try {
+      await apiDeleteUser(u.id);
+      toast(`Compte "${u.login}" supprimé`);
+      refreshUsers();
+    } catch (err) {
+      toast(err.message || 'Erreur suppression', 'error');
+    }
+  };
+
+  const handleToggleRole = async (u) => {
+    const nextRole = u.role === 'admin' ? 'editor' : 'admin';
+    try {
+      await apiUpdateUser(u.id, { role: nextRole });
+      toast(`Rôle de "${u.login}" changé en ${nextRole}`);
+      refreshUsers();
+    } catch (err) {
+      toast(err.message || 'Erreur', 'error');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (resetPassword.length < 8) {
+      toast('Mot de passe trop court (min 8 caractères)', 'error');
+      return;
+    }
+    try {
+      await apiUpdateUser(resetTarget.id, { password: resetPassword });
+      toast(`Mot de passe de "${resetTarget.login}" réinitialisé`);
+      setResetTarget(null);
+      setResetPassword('');
+    } catch (err) {
+      toast(err.message || 'Erreur', 'error');
+    }
+  };
+
+  const handleChangeMyPassword = async (e) => {
+    e.preventDefault();
+    if (pwForm.next.length < 8) {
+      toast('Mot de passe trop court (min 8 caractères)', 'error');
+      return;
+    }
+    if (pwForm.next !== pwForm.confirm) {
+      toast('Les mots de passe ne correspondent pas', 'error');
+      return;
+    }
+    setPwBusy(true);
+    try {
+      await changeMyPassword(pwForm.current, pwForm.next);
+      toast('Mot de passe modifié');
+      setPwForm({ current: '', next: '', confirm: '' });
+    } catch (err) {
+      toast(err.message || 'Erreur', 'error');
+    } finally {
+      setPwBusy(false);
+    }
+  };
 
   const toggleAutomation = (key) => {
     setAutomations(prev => {
@@ -369,6 +489,148 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
           <div style={{ marginTop: 20 }}>
             <button className="btn btn-primary btn-lg" onClick={saveConfig}>Sauvegarder la configuration</button>
           </div>
+        </>)}
+
+        {/* ═══ ONGLET UTILISATEURS ═══ */}
+        {activeSettingsTab === 'utilisateurs' && (<>
+          {/* Mon mot de passe — disponible pour tout le monde */}
+          <div className="card mb-16">
+            <h3 style={{ fontSize: 16, marginBottom: 8 }}>Mon mot de passe</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 12 }}>
+              Connecté en tant que <strong>{currentUser?.name}</strong> ({currentUser?.login}) — rôle <strong>{currentUser?.role}</strong>
+            </p>
+            <form onSubmit={handleChangeMyPassword} style={{ display: 'grid', gap: 8, maxWidth: 420 }}>
+              <input type="password" placeholder="Mot de passe actuel" value={pwForm.current} onChange={e => setPwForm({ ...pwForm, current: e.target.value })} autoComplete="current-password" />
+              <input type="password" placeholder="Nouveau mot de passe (min 8 caractères)" value={pwForm.next} onChange={e => setPwForm({ ...pwForm, next: e.target.value })} autoComplete="new-password" />
+              <input type="password" placeholder="Confirmer le nouveau mot de passe" value={pwForm.confirm} onChange={e => setPwForm({ ...pwForm, confirm: e.target.value })} autoComplete="new-password" />
+              <div>
+                <button type="submit" className="btn btn-primary" disabled={pwBusy || !pwForm.current || !pwForm.next}>
+                  {pwBusy ? 'Modification…' : 'Changer mon mot de passe'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {!isAdmin && (
+            <div className="card">
+              <p style={{ fontSize: 13, color: 'var(--text-light)' }}>
+                Seuls les administrateurs peuvent gérer les comptes des autres utilisateurs.
+              </p>
+            </div>
+          )}
+
+          {isAdmin && (<>
+            {/* Liste utilisateurs */}
+            <div className="card mb-16">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ fontSize: 16, margin: 0 }}>Comptes ({users.length})</h3>
+                <button className="btn btn-outline btn-sm" onClick={refreshUsers} disabled={usersLoading}>
+                  {usersLoading ? 'Chargement…' : 'Rafraîchir'}
+                </button>
+              </div>
+              {usersError && <p style={{ color: 'var(--danger)', fontSize: 13 }}>{usersError}</p>}
+              {users.length === 0 && !usersLoading && !usersError && (
+                <p style={{ fontSize: 13, color: 'var(--text-light)' }}>Aucun compte enregistré.</p>
+              )}
+              {users.length > 0 && (
+                <table className="data-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr>
+                      <th>Identifiant</th>
+                      <th>Nom</th>
+                      <th>Rôle</th>
+                      <th>Créé le</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map(u => {
+                      const isMe = u.id === currentUser?.id;
+                      return (
+                        <tr key={u.id}>
+                          <td><strong>{u.login}</strong>{isMe && <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--text-light)' }}>(vous)</span>}</td>
+                          <td>{u.name}</td>
+                          <td>
+                            <span className={`badge ${u.role === 'admin' ? 'badge-sky' : 'badge-gray'}`}>{u.role}</span>
+                          </td>
+                          <td style={{ fontSize: 12, color: 'var(--text-light)' }}>
+                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '—'}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div className="flex-wrap gap-8" style={{ justifyContent: 'flex-end' }}>
+                              <button className="btn btn-outline btn-sm" onClick={() => { setResetTarget(u); setResetPassword(''); }}>
+                                Réinit. mdp
+                              </button>
+                              {!isMe && (
+                                <button className="btn btn-outline btn-sm" onClick={() => handleToggleRole(u)}>
+                                  {u.role === 'admin' ? '→ editor' : '→ admin'}
+                                </button>
+                              )}
+                              {!isMe && (
+                                <button className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteUser(u)}>
+                                  Supprimer
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Création */}
+            <div className="card mb-16">
+              <h3 style={{ fontSize: 16, marginBottom: 12 }}>Créer un compte</h3>
+              <form onSubmit={handleCreateUser} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label>Identifiant</label>
+                  <input value={newUser.login} onChange={e => setNewUser({ ...newUser, login: e.target.value })} placeholder="ex : marie" autoComplete="off" />
+                </div>
+                <div>
+                  <label>Nom complet</label>
+                  <input value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} placeholder="ex : Marie Durand" autoComplete="off" />
+                </div>
+                <div>
+                  <label>Mot de passe (min 8)</label>
+                  <input type="password" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} autoComplete="new-password" />
+                </div>
+                <div>
+                  <label>Rôle</label>
+                  <select value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}>
+                    <option value="editor">editor (accès dashboard)</option>
+                    <option value="admin">admin (gère les comptes)</option>
+                  </select>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <button type="submit" className="btn btn-primary" disabled={creatingUser}>
+                    {creatingUser ? 'Création…' : 'Créer le compte'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Modal réinit. mdp */}
+            {resetTarget && (
+              <div className="card" style={{ borderColor: 'var(--ochre)' }}>
+                <h3 style={{ fontSize: 16, marginBottom: 12 }}>Réinitialiser le mot de passe — {resetTarget.login}</h3>
+                <input
+                  type="password"
+                  placeholder="Nouveau mot de passe (min 8 caractères)"
+                  value={resetPassword}
+                  onChange={e => setResetPassword(e.target.value)}
+                  style={{ maxWidth: 420 }}
+                  autoComplete="new-password"
+                />
+                <div className="flex-wrap gap-8" style={{ marginTop: 12 }}>
+                  <button className="btn btn-primary" onClick={handleResetPassword}>Confirmer</button>
+                  <button className="btn btn-outline" onClick={() => { setResetTarget(null); setResetPassword(''); }}>Annuler</button>
+                </div>
+              </div>
+            )}
+          </>)}
         </>)}
 
         {/* ═══ ONGLET IMPORT / EXPORT ═══ */}

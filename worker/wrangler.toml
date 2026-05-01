@@ -2,7 +2,7 @@ name = "ir-dashboard-api"
 main = "index.js"
 compatibility_date = "2024-01-01"
 
-# KV Namespace pour les sollicitations
+# KV Namespace partagé : sollicitations + calendrier + comptes utilisateurs (préfixe auth:)
 [[kv_namespaces]]
 binding = "CONTACT_SUBMISSIONS"
 id = "539bcd0d0e2c43eda11a6994a3375880"
@@ -13,3 +13,9 @@ id = "539bcd0d0e2c43eda11a6994a3375880"
 # TELEGRAM_CHAT_ID
 # TELEGRAM_CHANNEL_ID
 # CONTACT_AUTH_TOKEN (Bearer token pour les endpoints back-office sollicitations)
+#
+# Auth dashboard (gestion des comptes) :
+# - Aucun secret requis. Les comptes sont stockés dans CONTACT_SUBMISSIONS sous
+#   le préfixe `auth:` (auth:user:*, auth:user_login:*, auth:session:*, auth:_users_index).
+# - Bootstrap : si aucun utilisateur n'existe, le premier login `admin / IR2026!`
+#   crée automatiquement le compte admin initial. Changez le mot de passe ensuite.
