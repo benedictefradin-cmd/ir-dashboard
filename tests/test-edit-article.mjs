@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 // Probe ciblé : login + ouverture d'un article existant + vérif que l'éditeur
-// charge le contenu, propose le mode HTML, et que le HTML est non-vide.
+// charge le contenu en mode HTML, et compare au résultat d'une extraction
+// directe (Node + JSDOM) du même article — round-trip exact attendu.
 import { chromium } from 'playwright';
+import { readFileSync } from 'node:fs';
+import { JSDOM } from 'jsdom';
 
-const BASE = process.argv[2] || 'http://[::1]:5173';
+const BASE = process.argv[2] || 'http://localhost:5173';
 const SLUG = process.argv[3] || 'critique-liberale-liberalisme';
+const SOURCE_HTML_PATH = `/Users/mb/Documents/GitHub/institut-rousseau/publications/${SLUG}.html`;
 
 const log = (...a) => console.log('•', ...a);
 const errs = [];
@@ -29,89 +33,72 @@ await page.fill('input[placeholder="Identifiant"]', 'admin');
 await page.fill('input[placeholder="Mot de passe"]', 'IR2026!');
 await page.click('button[type=submit]');
 
-// Attendre soit nav-item, soit erreur
 try {
   await page.waitForSelector('.nav-item', { timeout: 30000 });
   log('login OK');
 } catch (e) {
-  const html = await page.content();
-  console.error('LOGIN FAIL — page snippet:');
-  console.error(html.slice(0, 2000));
-  await browser.close();
-  process.exit(1);
+  console.error('LOGIN FAIL'); await browser.close(); process.exit(1);
 }
 
-await page.waitForTimeout(3000); // laisser loadData() finir
+await page.waitForTimeout(4000);
 
 log('open Publications tab');
 await page.click('.nav-item:has-text("Publications")');
 await page.waitForTimeout(1500);
 
-log('search slug:', SLUG);
-const titleCell = await page.$(`tr:has-text("${SLUG}"), tr td:has-text("${SLUG}")`);
-if (!titleCell) {
-  // fallback : chercher un article via search
-  await page.fill('input[placeholder*="Rechercher"]', SLUG.split('-')[0]);
-  await page.waitForTimeout(800);
-}
+await page.waitForTimeout(2500); // laisse DataTable rendre les ~250 lignes
 
-log('click first Éditer button');
-const editBtn = await page.$('button:has-text("Éditer")');
+log('locate row for slug:', SLUG);
+const editBtn = await page.$(`tr:has(a[href*="/${SLUG}.html"]) button:has-text("Éditer")`);
 if (!editBtn) {
-  console.error('No Éditer button found');
-  await page.screenshot({ path: '/tmp/no-edit.png' });
-  await browser.close();
-  process.exit(1);
+  await page.fill('input[placeholder*="Rechercher une publication"]', SLUG.split('-')[0]);
+  await page.waitForTimeout(1200);
+  const fallback = await page.$('button:has-text("Éditer")');
+  if (!fallback) { console.error('No Éditer button'); await browser.close(); process.exit(1); }
+  await fallback.click();
+} else {
+  await editBtn.click();
 }
-await editBtn.click();
 await page.waitForSelector('.modal', { timeout: 5000 });
 log('modal opened');
 
-// Attendre que le chargement du contenu termine
-log('waiting for content load…');
-for (let i = 0; i < 30; i++) {
-  const loading = await page.$('text=Chargement de l\'article depuis le site');
-  if (!loading) break;
+log('wait for content load…');
+for (let i = 0; i < 60; i++) {
+  const loadingMsg = await page.$('text=Chargement de l\'article depuis le site');
+  if (!loadingMsg) break;
   await page.waitForTimeout(500);
 }
+await page.waitForTimeout(1000);
 
-// Vérifier les onglets de l'éditeur
 const tabs = await page.$$eval('.rich-editor-mode-btn', els => els.map(e => e.textContent.trim()));
-log('editor tabs:', tabs.join(' | '));
-const visualTabHidden = !tabs.includes('Visuel');
-log('visual tab hidden (trusted mode):', visualTabHidden);
-
-// Mode actif
 const activeTab = await page.$eval('.rich-editor-mode-btn.active', e => e.textContent.trim()).catch(() => null);
-log('active tab:', activeTab);
+log('tabs:', tabs.join(' | '), '| active:', activeTab);
 
-// Lire le contenu HTML — soit dans le CodeEditor (textarea/codemirror), soit prendre dans le state
-let htmlContent = '';
-const codeArea = await page.$('.code-editor textarea, .CodeMirror textarea, textarea, [contenteditable]');
-if (codeArea) {
-  htmlContent = await page.evaluate(el => el.value || el.textContent || '', codeArea);
-}
-// Fallback : récupérer le state via un attribut
-if (!htmlContent || htmlContent.length < 50) {
-  // Essayer la zone d'édition CodeMirror
-  htmlContent = await page.evaluate(() => {
-    const ta = document.querySelector('.code-editor textarea, textarea');
-    if (ta && ta.value) return ta.value;
-    const cm = document.querySelector('.CodeMirror');
-    if (cm && cm.CodeMirror) return cm.CodeMirror.getValue();
-    return '';
-  });
-}
-log('html content length:', htmlContent.length);
-log('html preview:', htmlContent.slice(0, 200).replace(/\s+/g, ' '));
+// Debug : titre actuellement édité
+const editedTitle = await page.$eval('.modal input[value]', el => el.value).catch(() => '?');
+log('edited title:', editedTitle);
 
-// Vérifications
+const bodyHtml = await page.$eval('.code-editor-textarea', el => el.value).catch(() => '');
+log('body HTML length:', bodyHtml.length);
+
+// Extraction directe pour comparaison
+const source = readFileSync(SOURCE_HTML_PATH, 'utf8');
+const dom = new JSDOM(source);
+const root = dom.window.document.querySelector('.article-content');
+const STRIP = ['.article-hero-img', '.article-author-block', '.article-share',
+               '.related-publications', '.article-cta', '#relatedPubs', '.article-back'];
+STRIP.forEach(sel => root.querySelectorAll(sel).forEach(el => el.remove()));
+const expectedBody = root.innerHTML.trim();
+log('expected body length:', expectedBody.length);
+
 const checks = [];
-checks.push(['HTML chargé', htmlContent.length > 200]);
-checks.push(['Pas de balise structurelle dans le body', !htmlContent.includes('article-author-block') && !htmlContent.includes('article-share')]);
-checks.push(['Sup/notes préservés', /<sup>|<a name="_ftn|name="_ftn/.test(htmlContent) || htmlContent.includes('<p>')]);
-checks.push(['Mode visuel masqué', visualTabHidden]);
-checks.push(['Mode HTML actif par défaut', activeTab === 'HTML']);
+checks.push(['Mode visuel masqué', !tabs.includes('Visuel')]);
+checks.push(['Mode HTML actif', activeTab === 'HTML']);
+checks.push(['Body chargé (>1000 chars)', bodyHtml.length > 1000]);
+checks.push(['Body match extraction directe', bodyHtml === expectedBody]);
+checks.push(['<sup> préservés', /<sup>/i.test(bodyHtml)]);
+checks.push(['name="_ftn préservés', /name="_ftn/.test(bodyHtml)]);
+checks.push(['footnotes-section présent', /footnotes-section/.test(bodyHtml)]);
 checks.push(['Pas d\'erreurs JS', pageErrs.length === 0]);
 
 console.log('\n=== Résultats ===');
@@ -120,12 +107,20 @@ for (const [name, ok] of checks) {
   console.log(`${ok ? '✓' : '✗'} ${name}`);
   if (!ok) pass = false;
 }
+if (!pass && bodyHtml.length > 0) {
+  // Trouver première divergence
+  let i = 0;
+  while (i < Math.min(bodyHtml.length, expectedBody.length) && bodyHtml[i] === expectedBody[i]) i++;
+  console.log(`\nDivergence à l'offset ${i}/${Math.max(bodyHtml.length, expectedBody.length)}`);
+  console.log('  dashboard:', JSON.stringify(bodyHtml.slice(Math.max(0, i-30), i+80)));
+  console.log('  expected :', JSON.stringify(expectedBody.slice(Math.max(0, i-30), i+80)));
+}
 if (errs.length) {
-  console.log('\nConsole errors (' + errs.length + '):');
+  console.log('\nConsole errors:');
   errs.slice(0, 5).forEach(e => console.log('  -', e));
 }
 if (pageErrs.length) {
-  console.log('\nPage errors (' + pageErrs.length + '):');
+  console.log('\nPage errors:');
   pageErrs.slice(0, 5).forEach(e => console.log('  -', e));
 }
 
