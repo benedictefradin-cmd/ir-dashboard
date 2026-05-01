@@ -86,6 +86,27 @@ async function handle(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
 
+  // ═══════════════════════════════════════════
+  // SITE PROXY — sert le site institut-rousseau dans une iframe
+  // depuis le dashboard, en injectant un mode édition cliquable.
+  //
+  // Pourquoi : le site déployé envoie `X-Frame-Options: DENY`. On ne peut
+  // donc pas iframe-er https://institut-rousseau.fr depuis le dashboard.
+  // Ce proxy va chercher la page, retire XFO, ajoute une CSP qui n'autorise
+  // QUE notre dashboard à iframe-er, et — si `?edit=1` — injecte un petit
+  // script qui surligne les `[data-i18n]`, capture les clics et les
+  // postMessage-e vers le parent (le dashboard).
+  //
+  // Pas d'auth sur le proxy lui-même : la page servie est publique de toute
+  // façon, et la CSP frame-ancestors empêche un site tiers de l'iframe-er.
+  // Les vraies modifications passent par les autres routes du Worker, qui
+  // restent gardées par la session OAuth GitHub.
+  // ═══════════════════════════════════════════
+
+  if (path.startsWith('/site-proxy/')) {
+    return handleSiteProxy(url, env);
+  }
+
   try {
 
       // ═══════════════════════════════════════════
@@ -1488,6 +1509,208 @@ function json(data, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
+}
+
+// ═══ Site preview proxy ═════════════════════════════
+// Origines autorisées à iframer le proxy. Reste en synchro avec ALLOWED_ORIGINS
+// (côté CORS) — la liste minimale des dashboards légitimes.
+const FRAME_ANCESTORS = [
+  "'self'",
+  'https://benedictefradin-cmd.github.io',
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:4173',
+];
+
+const EDIT_MODE_SCRIPT = `
+<script>
+(function () {
+  if (window.parent === window) return;
+  var origin = '*';
+
+  var style = document.createElement('style');
+  style.textContent = [
+    '[data-i18n] {',
+    '  outline: 1px dashed rgba(255, 100, 0, 0.35);',
+    '  outline-offset: 2px;',
+    '  cursor: pointer !important;',
+    '  transition: outline 80ms ease, background-color 80ms ease;',
+    '}',
+    '[data-i18n]:hover {',
+    '  outline: 2px solid rgba(255, 100, 0, 0.95);',
+    '  background-color: rgba(255, 220, 100, 0.18);',
+    '}',
+    '[data-i18n].ir-editing {',
+    '  outline: 2px solid rgb(255, 100, 0) !important;',
+    '  background-color: rgba(255, 220, 100, 0.32) !important;',
+    '}',
+    'a, button, summary { cursor: pointer !important; }',
+  ].join('\\n');
+  document.head.appendChild(style);
+
+  function send(msg) {
+    try { window.parent.postMessage(msg, origin); } catch (e) {}
+  }
+
+  document.addEventListener('click', function (e) {
+    var i18nEl = e.target.closest && e.target.closest('[data-i18n]');
+    if (i18nEl) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.querySelectorAll('.ir-editing').forEach(function (el) {
+        el.classList.remove('ir-editing');
+      });
+      i18nEl.classList.add('ir-editing');
+      var key = i18nEl.getAttribute('data-i18n');
+      var html = i18nEl.innerHTML;
+      var text = i18nEl.textContent;
+      var rect = i18nEl.getBoundingClientRect();
+      send({
+        type: 'ir-edit-click',
+        key: key,
+        html: html,
+        text: text,
+        tag: i18nEl.tagName.toLowerCase(),
+        rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+      });
+      return;
+    }
+    var link = e.target.closest && e.target.closest('a[href]');
+    if (link) {
+      var href = link.getAttribute('href');
+      if (href && href.charAt(0) !== '#') {
+        e.preventDefault();
+        e.stopPropagation();
+        send({ type: 'ir-navigate-request', href: href });
+      }
+    }
+  }, true);
+
+  document.addEventListener('submit', function (e) { e.preventDefault(); }, true);
+
+  var livePatch = Object.create(null);
+  function applyLivePatch(key, lang) {
+    var value = livePatch[key] && livePatch[key][lang];
+    if (value === undefined) return;
+    document.querySelectorAll('[data-i18n="' + CSS.escape(key) + '"]').forEach(function (el) {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.placeholder = value;
+      } else if (value.indexOf('<') !== -1) {
+        el.innerHTML = value;
+      } else {
+        el.textContent = value;
+      }
+    });
+  }
+  function currentLang() { return localStorage.getItem('lang') || 'fr'; }
+
+  window.addEventListener('message', function (e) {
+    var msg = e.data;
+    if (!msg || typeof msg !== 'object') return;
+    if (msg.type === 'ir-reload-i18n') {
+      if (typeof window.__irReloadTranslations === 'function') {
+        window.__irReloadTranslations().then(function () {
+          Object.keys(livePatch).forEach(function (k) { applyLivePatch(k, currentLang()); });
+        });
+      } else {
+        window.location.reload();
+      }
+    } else if (msg.type === 'ir-clear-selection') {
+      document.querySelectorAll('.ir-editing').forEach(function (el) {
+        el.classList.remove('ir-editing');
+      });
+    } else if (msg.type === 'ir-apply-live' && msg.key && msg.lang) {
+      if (!livePatch[msg.key]) livePatch[msg.key] = {};
+      livePatch[msg.key][msg.lang] = msg.value || '';
+      if (msg.lang === currentLang()) applyLivePatch(msg.key, msg.lang);
+    } else if (msg.type === 'ir-revert-live' && msg.key && msg.lang) {
+      if (livePatch[msg.key]) {
+        delete livePatch[msg.key][msg.lang];
+        if (Object.keys(livePatch[msg.key]).length === 0) delete livePatch[msg.key];
+      }
+      if (typeof window.__irReloadTranslations === 'function') {
+        window.__irReloadTranslations();
+      }
+    }
+  });
+
+  function announceReady() {
+    send({
+      type: 'ir-edit-ready',
+      page: document.documentElement.getAttribute('data-page') || '',
+      url: window.location.pathname,
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', announceReady);
+  } else {
+    announceReady();
+  }
+})();
+</script>`;
+
+async function handleSiteProxy(url, env) {
+  const siteUrl = (env.SITE_URL || 'https://institut-rousseau.fr').replace(/\/+$/, '');
+  // Tout ce qui suit /site-proxy/ + query string remontent vers le site live.
+  const subPath = url.pathname.slice('/site-proxy/'.length);
+  // Garde tous les params sauf `edit` (consommé localement, jamais propagé au site).
+  const passthroughQs = new URLSearchParams(url.search);
+  passthroughQs.delete('edit');
+  const editMode = url.searchParams.get('edit') === '1';
+  const qs = passthroughQs.toString();
+  const targetUrl = `${siteUrl}/${subPath}${qs ? '?' + qs : ''}`;
+
+  let upstream;
+  try {
+    upstream = await fetch(targetUrl, {
+      headers: { 'User-Agent': 'ir-dashboard-edit-proxy/1.0' },
+      redirect: 'follow',
+    });
+  } catch (err) {
+    return new Response(`Site upstream injoignable: ${err.message}`, { status: 502 });
+  }
+
+  const contentType = upstream.headers.get('Content-Type') || '';
+  const isHtml = contentType.includes('text/html');
+  const cspFrameAncestors = `frame-ancestors ${FRAME_ANCESTORS.join(' ')}`;
+
+  if (!isHtml) {
+    // Asset (CSS/JS/image/PDF/JSON) — pass-through, mais nettoie les
+    // headers anti-iframe que le site applique globalement.
+    const passHeaders = new Headers(upstream.headers);
+    passHeaders.delete('X-Frame-Options');
+    passHeaders.delete('Content-Security-Policy');
+    return new Response(upstream.body, { status: upstream.status, headers: passHeaders });
+  }
+
+  let html = await upstream.text();
+
+  // <base href> : tous les chemins relatifs du site (CSS, JS, images, fetch
+  // de data/i18n.json…) résolvent contre le site live, donc le proxy n'a
+  // qu'à servir l'HTML — les assets descendent en direct de Vercel.
+  const baseTag = `<base href="${siteUrl}/">`;
+  if (/<head[^>]*>/i.test(html)) {
+    html = html.replace(/<head([^>]*)>/i, (m) => `${m}\n${baseTag}`);
+  } else {
+    html = baseTag + html;
+  }
+
+  if (editMode) {
+    if (html.includes('</body>')) {
+      html = html.replace('</body>', EDIT_MODE_SCRIPT + '</body>');
+    } else {
+      html += EDIT_MODE_SCRIPT;
+    }
+  }
+
+  const headers = new Headers();
+  headers.set('Content-Type', 'text/html; charset=utf-8');
+  headers.set('Content-Security-Policy', cspFrameAncestors);
+  headers.set('Cache-Control', 'no-store');
+  // Pas de X-Frame-Options : la CSP frame-ancestors la remplace.
+
+  return new Response(html, { status: 200, headers });
 }
 
 // ═══ Auth helpers ════════════════════════════════════

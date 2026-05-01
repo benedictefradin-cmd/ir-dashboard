@@ -288,6 +288,33 @@ async function main() {
       await fs.mkdir('reports', { recursive: true });
       await fs.writeFile(reportPath, lines.join('\n'));
       console.log(`\n→ Rapport markdown écrit : ${reportPath}`);
+
+      // Sortie JSON pour les scripts (fix-broken-links.mjs etc.) — contient
+      // l'état de chaque URL cassée et les fichiers qui la référencent.
+      const jsonPath = reportPath.replace(/\.md$/, '.json');
+      const jsonReport = {
+        generatedAt: new Date().toISOString(),
+        total: results.length,
+        ok,
+        paywalled: paywalled.length,
+        broken: broken.map(r => ({
+          url: r.url,
+          status: r.status,
+          error: r.error || null,
+          // category : 4xx (probable 404 — fixable via Wayback) / 5xx /
+          // timeout / fetch_failed. Permet aux scripts de filtrer.
+          category: r.status === 0
+            ? (r.error === 'timeout' ? 'timeout' : 'fetch_failed')
+            : (r.status >= 500 ? '5xx' : (r.status >= 400 ? '4xx' : 'other')),
+          refs: (urlMap.get(r.url) || []).map(ref => ({
+            source: ref.source,
+            id: ref.id,
+            title: ref.title,
+          })),
+        })),
+      };
+      await fs.writeFile(jsonPath, JSON.stringify(jsonReport, null, 2));
+      console.log(`→ Rapport JSON écrit     : ${jsonPath}`);
     } catch (err) {
       console.warn(`Impossible d'écrire le rapport : ${err.message}`);
     }

@@ -3,6 +3,7 @@
 // Capture les vrais bugs JS (pageerror), pas les 4xx HTTP attendus.
 
 import { chromium } from 'playwright';
+import { AxeBuilder } from '@axe-core/playwright';
 
 const BASE = process.argv[2] || 'http://localhost:5173';
 const PAGES = [
@@ -239,6 +240,38 @@ async function run() {
     log('error', 'article-crud', `Exception : ${err.message}`);
   }
 
+  // ─── Audit a11y axe-core sur les pages clés ───
+  // Note : le rapport WCAG 2.1 AA est strict. On ne fait échouer le smoke que
+  // sur les violations `critical` (les `serious` sont reportées sans bloquer
+  // pour éviter de mettre la barre trop haut sur l'existant — ça reste un
+  // point de vigilance à corriger, mais pas un bloquant CI).
+  currentTab = 'a11y';
+  console.log('→ Audit a11y (axe-core, WCAG 2.1 AA)');
+  const a11yResults = { dashboard: null, articles: null, settings: null };
+  for (const target of ['dashboard', 'articles', 'settings']) {
+    try {
+      await page.evaluate((t) => {
+        const items = [...document.querySelectorAll('.nav-item .nav-label')];
+        const labels = { dashboard: 'Dashboard', articles: 'Publications', settings: 'Config' };
+        const want = labels[t];
+        const lab = items.find(l => l.textContent?.trim() === want);
+        if (lab?.parentElement) lab.parentElement.click();
+      }, target);
+      await page.waitForTimeout(800);
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa'])
+        .disableRules(['region']) // app-shell sans <main> dans certaines pages legacy
+        .analyze();
+      a11yResults[target] = {
+        critical: results.violations.filter(v => v.impact === 'critical'),
+        serious: results.violations.filter(v => v.impact === 'serious'),
+        moderate: results.violations.filter(v => v.impact === 'moderate'),
+      };
+    } catch (err) {
+      log('error', 'a11y-' + target, `axe a échoué : ${err.message}`);
+    }
+  }
+
   // ─── Rapport ───
   console.log('\n══ RÉSULTAT ══');
   console.log(`Erreurs JS (pageerror) : ${jsErrors.length}`);
@@ -248,6 +281,22 @@ async function run() {
   console.log(`Article créé via UI : ${articleResults.create ? '✓' : '✗'}`);
   console.log(`XSS payload échappé : ${articleResults.xssEscaped ? '✓' : '✗ (img[src=x] présent dans le DOM !)'}`);
   console.log(`Auto-save brouillon : ${articleResults.draftSaved ? '✓' : '✗ (localStorage ir-dash-draft-article-new absent)'}`);
+
+  // ─── Rapport a11y ───
+  let a11yCriticalCount = 0;
+  console.log('A11y axe-core (WCAG 2.1 AA) :');
+  for (const [target, r] of Object.entries(a11yResults)) {
+    if (!r) { console.log(`  ${target} : ✗ axe a échoué`); continue; }
+    a11yCriticalCount += r.critical.length;
+    const tag = r.critical.length === 0 ? '✓' : `✗ ${r.critical.length} critical`;
+    const detail = r.serious.length || r.moderate.length
+      ? ` (+ ${r.serious.length} serious, ${r.moderate.length} moderate)`
+      : '';
+    console.log(`  ${target} : ${tag}${detail}`);
+    for (const v of r.critical) {
+      console.log(`    × ${v.id} → ${v.help}`);
+    }
+  }
 
   if (jsErrors.length) {
     console.log('\n─── ERREURS JS (BLOQUANTES) ───');
@@ -266,7 +315,8 @@ async function run() {
 
   await browser.close();
   const allOk = !jsErrors.length && !consoleErrors.length && persistOk.ok
-    && articleResults.create && articleResults.xssEscaped && articleResults.draftSaved;
+    && articleResults.create && articleResults.xssEscaped && articleResults.draftSaved
+    && a11yCriticalCount === 0;
   process.exit(allOk ? 0 : 1);
 }
 

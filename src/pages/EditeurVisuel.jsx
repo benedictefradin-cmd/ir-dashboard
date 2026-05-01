@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { fetchI18n, saveSiteData } from '../services/siteData';
 import { hasGitHub } from '../services/github';
+import { DEFAULT_WORKER_URL } from '../utils/constants';
+import { loadLocal } from '../utils/localStorage';
+import { LS_KEYS } from '../utils/constants';
 import ServiceBadge from '../components/shared/ServiceBadge';
 
 // Liste des pages éditables (correspond aux fichiers .html du site).
@@ -38,7 +41,9 @@ const LANGS = [
   { code: 'it', label: 'Italiano' },
 ];
 
-const SITE_PREVIEW_BASE = '/site-preview';
+function getWorkerUrl() {
+  return loadLocal(LS_KEYS.workerUrl, null) || DEFAULT_WORKER_URL || '';
+}
 
 export default function EditeurVisuel({ toast }) {
   const [pageSlug, setPageSlug] = useState(PAGES[0].slug);
@@ -53,10 +58,12 @@ export default function EditeurVisuel({ toast }) {
   const iframeRef = useRef(null);
   const pendingEditsRef = useRef(pendingEdits);
   pendingEditsRef.current = pendingEdits;
-  const isDev = useMemo(() => import.meta.env.DEV, []);
+  const workerUrl = useMemo(() => getWorkerUrl().replace(/\/+$/, ''), []);
 
   const page = PAGES.find(p => p.slug === pageSlug) || PAGES[0];
-  const iframeSrc = `${SITE_PREVIEW_BASE}/${page.url}?edit=1&v=${iframeBust}`;
+  const iframeSrc = workerUrl
+    ? `${workerUrl}/site-proxy/${page.url}?edit=1&v=${iframeBust}`
+    : '';
 
   // Chargement initial du dictionnaire i18n
   useEffect(() => {
@@ -218,7 +225,7 @@ export default function EditeurVisuel({ toast }) {
   // ────────────────────────────────────────────
   // Rendu
   // ────────────────────────────────────────────
-  if (!isDev) {
+  if (!workerUrl) {
     return (
       <>
         <div className="page-header">
@@ -229,12 +236,12 @@ export default function EditeurVisuel({ toast }) {
         </div>
         <div className="page-body">
           <div className="card" style={{ padding: 24 }}>
-            <h3 style={{ marginBottom: 8 }}>Disponible en local uniquement</h3>
+            <h3 style={{ marginBottom: 8 }}>Worker non configuré</h3>
             <p style={{ color: 'var(--text-light)', fontSize: 14, lineHeight: 1.6 }}>
-              L'éditeur visuel iframe le site depuis votre clone local du repo
-              <code> institut-rousseau/</code> via le serveur de dev Vite.
-              Lance <code>npm run dev</code> pour l'utiliser. En production le site
-              déployé refuse l'iframe (X-Frame-Options).
+              L'éditeur visuel passe par le Cloudflare Worker pour iframe-er le
+              site (qui sinon refuse l'iframe via <code>X-Frame-Options</code>).
+              Allez dans <strong>Config</strong> pour renseigner l'URL du Worker,
+              ou définissez <code>VITE_WORKER_URL</code>.
             </p>
           </div>
         </div>
@@ -298,12 +305,12 @@ export default function EditeurVisuel({ toast }) {
               ↻ Recharger
             </button>
             <a
-              href={`${SITE_PREVIEW_BASE}/${page.url}`}
+              href={`https://institut-rousseau.fr/${page.url.replace(/\.html$/, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-outline btn-sm"
             >
-              Voir sans édition ↗
+              Voir sur le site ↗
             </a>
           </div>
 

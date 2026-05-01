@@ -100,7 +100,10 @@ export default function RichEditor({ value, onChange, title, author, date, place
   // collé depuis le presse-papiers (paste handler) ou tapé en mode HTML.
   // Sanitiser un contenu déjà validé strippe inutilement des `name`/`id`
   // et finit par le mutiler à chaque round-trip.
-  const safeInitial = trusted ? (value || '') : sanitizeHtml(value || '');
+  // En mode trusted, le mode visuel est masqué (cf. MODES) — on initialise
+  // donc l'éditeur TipTap vide pour éviter qu'il parse des balises qu'il
+  // ne connaît pas (iframe, svg…) et logge des warnings dans la console.
+  const safeInitial = trusted ? '' : sanitizeHtml(value || '');
 
   const editor = useEditor({
     extensions: [
@@ -160,13 +163,19 @@ export default function RichEditor({ value, onChange, title, author, date, place
     },
   });
 
-  // Sync external value changes into editor. Pour une source de confiance
-  // (HTML qui vient du repo site), on évite le passage par DOMPurify : il
-  // nous mangerait les `name`/`id` des ancres de notes de bas de page.
+  // Sync external value changes into editor. En mode trusted, l'éditeur
+  // visuel est caché — on évite donc de pousser le contenu dans TipTap
+  // (parse coûteux + warnings sur les balises iframe/svg/table inconnues).
+  // On garde uniquement htmlCode à jour pour les modes HTML/Aperçu.
   useEffect(() => {
+    if (trusted) {
+      // setHtmlCode est référentiellement stable et React bail-out si
+      // la valeur ne change pas — pas besoin de vérifier l'égalité ici.
+      setHtmlCode(value || '');
+      return;
+    }
     if (editor && value !== undefined && value !== editor.getHTML()) {
-      const next = trusted ? (value || '') : sanitizeHtml(value || '');
-      editor.commands.setContent(next, false);
+      editor.commands.setContent(sanitizeHtml(value || ''), false);
       setHtmlCode(value || '');
     }
   }, [value, trusted]);

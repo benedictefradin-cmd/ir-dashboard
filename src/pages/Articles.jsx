@@ -264,6 +264,7 @@ export default function Articles({
       authors: formData.author,
       authorBio: art.authorBio || '',
       date: art.displayDate || dateFr,
+      isoDate: toIsoDate(art.date),
       pole,
       type: formData.type,
       summary: formData.summary || '',
@@ -314,6 +315,12 @@ export default function Articles({
 
     // Article venant du site (slug + déjà publié) → republier sur GitHub.
     if (editingArt && editingArt.slug && editingArt.status === 'published') {
+      // Garde-fou : refuser une republication avec 0 catégorie. Sans tag,
+      // publications-data.js perd l'entrée du carrousel et les filtres
+      // de la page /publications.html ne retrouvent plus l'article.
+      if (!form.tags || form.tags.length === 0) {
+        return toast('Au moins un pôle thématique est requis', 'error');
+      }
       setSavingEdit(true);
       try {
         await pushArticleToSite(editingArt, form);
@@ -350,6 +357,7 @@ export default function Articles({
   };
 
   const startEdit = async (art) => {
+    const gen = ++editGenRef.current;
     setEditingArt(art);
     setForm({
       title: art.title, author: art.author, tags: [...(art.tags || [])],
@@ -365,6 +373,9 @@ export default function Articles({
       setContentLoading(true);
       try {
         const fetched = await fetchPublicationContent(art.slug);
+        // Si l'utilisateur a relancé un autre Éditer pendant le fetch, on
+        // ignore le résultat — `gen` ne correspond plus à l'édition en cours.
+        if (gen !== editGenRef.current) return;
         setForm(f => ({ ...f, content: fetched.content, pdfUrl: f.pdfUrl || fetched.pdfUrl || '' }));
         // On garde tout ce qui n'est pas dans le formulaire (hero, bio, date
         // d'origine, section curée "À lire aussi", couleur avatar) sur
@@ -382,14 +393,16 @@ export default function Articles({
         setEditingArt(enriched);
         setArticles(prev => prev.map(a => a.id === art.id ? enriched : a));
       } catch (err) {
+        if (gen !== editGenRef.current) return;
         toast(`Impossible de charger le contenu : ${err.message}`, 'error');
       } finally {
-        setContentLoading(false);
+        if (gen === editGenRef.current) setContentLoading(false);
       }
     }
   };
 
   const closeForm = () => {
+    editGenRef.current++;
     setShowForm(false);
     setShowPublishTranslation(false);
     setEditingArt(null);
@@ -515,7 +528,12 @@ export default function Articles({
             onChange={setThemeFilter}
             options={THEMATIQUES.map(t => ({ value: t, label: t }))}
           />
-          <select className="filter-select" value={typeFilter[0] || ''} onChange={e => setTypeFilter(e.target.value ? [e.target.value] : [])}>
+          <select
+            className="filter-select"
+            aria-label="Filtrer par type de publication"
+            value={typeFilter[0] || ''}
+            onChange={e => setTypeFilter(e.target.value ? [e.target.value] : [])}
+          >
             <option value="">Tous les types</option>
             {PUB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -1036,6 +1054,16 @@ export default function Articles({
 }
 
 // ─── HTML Template builder ──────────────────────────
+// Convertit une date stockée (YYYY-MM ou YYYY-MM-DD) au format ISO attendu
+// par schema.org (YYYY-MM-DD). Retombe sur la date du jour si vide ou invalide.
+function toIsoDate(raw) {
+  const s = String(raw || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if (/^\d{4}-\d{2}$/.test(s)) return `${s}-01`;
+  if (/^\d{4}$/.test(s)) return `${s}-01-01`;
+  return new Date().toISOString().split('T')[0];
+}
+
 // Slugifie une étiquette pour générer une classe CSS (ex: "Économie" → "economie").
 function slugifyTag(s) {
   return (s || '')
@@ -1070,7 +1098,7 @@ function escAttr(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function buildPublicationHtml({ title, authors, authorBio, date, pole, type, summary, content, slug, heroImage, pdfUrl, relatedSection, avatarColor }) {
+function buildPublicationHtml({ title, authors, authorBio, date, isoDate, pole, type, summary, content, slug, heroImage, pdfUrl, relatedSection, avatarColor }) {
   const tagsArr = Array.isArray(pole) ? pole : (pole ? [pole] : []);
   const typeSuffix = typeBadgeSuffix(type);
   const initials = authorInitials(authors);
@@ -1131,7 +1159,7 @@ function buildPublicationHtml({ title, authors, authorBio, date, pole, type, sum
   "@type": "Article",
   "headline": ${JSON.stringify(title)},
   "description": ${JSON.stringify(summary || '')},
-  "datePublished": ${JSON.stringify(date)},
+  "datePublished": ${JSON.stringify(isoDate || toIsoDate(date))},
   "author": { "@type": "Person", "name": ${JSON.stringify(authors || 'Institut Rousseau')} },
   "publisher": { "@type": "Organization", "name": "Institut Rousseau", "url": "https://institut-rousseau.fr" },
   "mainEntityOfPage": ${JSON.stringify(canonical)}
