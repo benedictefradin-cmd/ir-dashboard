@@ -66,6 +66,18 @@ export default function App() {
     return () => { cancelled = true; };
   }, []);
 
+  // Si le worker répond 401 sur un appel authentifié (token invalidé par admin reset,
+  // suppression de compte, expiration), on bascule sur l'écran de login.
+  useEffect(() => {
+    const handler = () => {
+      setLoggedIn(false);
+      setCurrentUser(null);
+      setLoginError('Session expirée — reconnectez-vous');
+    };
+    window.addEventListener('auth:invalidated', handler);
+    return () => window.removeEventListener('auth:invalidated', handler);
+  }, []);
+
   // Tab & toast
   const [tab, setTab] = useState(() => loadLocal(LS_KEYS.activeTab, 'dashboard'));
   const [toasts, setToasts] = useState([]);

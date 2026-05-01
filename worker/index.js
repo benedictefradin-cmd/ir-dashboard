@@ -73,8 +73,11 @@ export default {
           const userId = await kv.get(`auth:user_login:${login.toLowerCase()}`);
           const userRaw = userId ? await kv.get(`auth:user:${userId}`) : null;
           const user = userRaw ? JSON.parse(userRaw) : null;
-          const ok = user ? await verifyPassword(password, user.passwordHash) : false;
-          if (!ok) {
+          // Toujours exécuter PBKDF2 (contre un hash factice si user inexistant)
+          // pour éviter le timing attack qui révèle l'existence d'un login.
+          const hashToVerify = user ? user.passwordHash : DUMMY_HASH;
+          const passwordOk = await verifyPassword(password, hashToVerify);
+          if (!user || !passwordOk) {
             await kv.put(rlKey, String(rlCount + 1), { expirationTtl: 15 * 60 });
             return json({ error: 'Identifiants invalides' }, 401);
           }
@@ -1143,6 +1146,11 @@ function json(data, status = 200) {
 
 const PBKDF2_ITERS = 100000;
 const SESSION_TTL_SECONDS = 12 * 3600;
+// Hash factice utilisé contre un login inexistant pour égaliser le temps de réponse.
+// Format pbkdf2$100000$<salt 16o>$<hash 32o>. Le mot de passe d'origine est inconnu et
+// ne sera jamais trouvé — c'est juste là pour faire tourner PBKDF2 le même temps.
+const DUMMY_HASH = 'pbkdf2$100000$00112233445566778899aabbccddeeff$' +
+  '0000000000000000000000000000000000000000000000000000000000000000';
 
 function bytesToHex(bytes) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');

@@ -36,6 +36,12 @@ async function authFetch(endpoint, { method = 'GET', body, withAuth = true } = {
   let data = null;
   try { data = await resp.json(); } catch { /* ignore */ }
   if (!resp.ok) {
+    // Token invalidé côté serveur (admin reset, suppression de compte, expiration) :
+    // on purge le token local et on prévient l'app pour repasser sur l'écran de login.
+    if (resp.status === 401 && withAuth && getToken()) {
+      setToken(null);
+      try { window.dispatchEvent(new CustomEvent('auth:invalidated')); } catch { /* SSR */ }
+    }
     const err = new Error((data && data.error) || `Erreur ${resp.status}`);
     err.status = resp.status;
     throw err;
