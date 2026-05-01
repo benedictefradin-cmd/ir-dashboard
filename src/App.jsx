@@ -131,13 +131,7 @@ export default function App() {
   const [services, setServices] = useState({ brevo: false, telegram: false, github: hasGitHub() });
   const [loading, setLoading] = useState(true);
 
-  // Notion retiré — stubs vides pour ne pas casser les pages qui reçoivent
-  // encore ces props. Le code mort sera nettoyé en P1 (cf. AUDIT §7 Q5).
-  const notionArticles = [];
-  const notionCounts = {};
-  const notionLoading = false;
-  const notionConfigured = false;
-  const syncNotion = null;
+  // (Notion retiré — cf. AUDIT §7 Q5. Les pages ont été nettoyées.)
 
   const toast = useCallback((message, type = 'success') => {
     const id = Date.now() + Math.random();
@@ -327,7 +321,7 @@ export default function App() {
   }, [persistCalendar]);
 
   // Computed badges
-  const readyCount = (notionCounts.ready || 0) + articles.filter(a => a.status === 'ready').length;
+  const readyCount = articles.filter(a => a.status === 'ready').length;
   const badges = {
     dashboard: 0,
     articles: readyCount || articles.filter(a => a.status === 'review').length,
@@ -415,15 +409,12 @@ export default function App() {
           events={events} presse={presse} sollicitations={sollicitations}
           campaigns={campaigns} activity={activity} loading={loading}
           onTabChange={changeTab} toast={toast}
-          notionArticles={notionArticles} notionCounts={notionCounts}
           socialPosts={socialPosts} rapports={rapports} extEvents={extEvents}
         />;
       case 'articles':
         return <Articles
           articles={articles} setArticles={setArticles} loading={loading} toast={toast}
-          notionArticles={notionArticles} notionCounts={notionCounts}
-          notionLoading={notionLoading} syncNotion={syncNotion}
-          notionConfigured={notionConfigured} auteurs={auteurs}
+          auteurs={auteurs}
           saveToSite={saveToSite}
         />;
       case 'evenements':
@@ -469,7 +460,6 @@ export default function App() {
           events={events} presse={presse} sollicitations={sollicitations}
           campaigns={campaigns} activity={activity} loading={loading}
           onTabChange={changeTab} toast={toast}
-          notionArticles={notionArticles} notionCounts={notionCounts}
           socialPosts={socialPosts} rapports={rapports} extEvents={extEvents}
         />;
     }

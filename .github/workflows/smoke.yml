@@ -1,0 +1,53 @@
+name: Smoke E2E
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Build (sanity check)
+        run: npm run build
+
+      - name: Start Vite dev server
+        run: npm run dev > /tmp/vite.log 2>&1 &
+
+      - name: Wait for Vite ready
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:5173/ > /dev/null; then
+              echo "Vite up"; exit 0
+            fi
+            sleep 1
+          done
+          echo "Vite did not start within 30s"; cat /tmp/vite.log; exit 1
+
+      - name: Run smoke test
+        env:
+          # Le smoke test attaque le worker en prod (lecture seule via /api/calendar/*).
+          # Si on voulait isoler en CI, il faudrait monter un Worker miroir + KV de test.
+          CI: true
+        run: node tests/smoke.mjs http://localhost:5173
+
+      - name: Upload Vite log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-log
+          path: /tmp/vite.log

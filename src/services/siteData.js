@@ -98,6 +98,46 @@ export async function fetchAllSiteData() {
 }
 
 /**
+ * Charge le HTML d'une publication et en extrait le corps éditable
+ * (entre l'auteur et le bloc de partage). Permet à l'éditeur du back-office
+ * de pré-remplir le contenu d'un article existant publié sur le site.
+ *
+ * @param {string} slug
+ * @returns {Promise<{ content: string, sha: string|null, fullHtml: string }>}
+ */
+export async function fetchPublicationContent(slug) {
+  if (!slug) return { content: '', sha: null, fullHtml: '' };
+  if (!hasGitHub()) throw new Error('GitHub non configuré');
+  const filePath = `publications/${slug}.html`;
+  const { content: fullHtml, sha } = await githubGetFile(filePath);
+  return { content: extractArticleBody(fullHtml), sha, fullHtml };
+}
+
+// Sélecteurs des éléments structurels insérés par buildPublicationHtml
+// qu'on retire avant de présenter le HTML à l'éditeur (l'auteur, le bloc
+// "À lire aussi" et le CTA don/adhésion sont ré-injectés à la republication).
+const STRUCTURAL_SELECTORS = [
+  '.article-hero-img',
+  '.article-author-block',
+  '.article-share',
+  '.related-publications',
+  '.article-cta',
+  '#relatedPubs',
+  '.article-back',
+];
+
+function extractArticleBody(html) {
+  if (typeof DOMParser === 'undefined') return '';
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const root = doc.querySelector('.article-content');
+  if (!root) return '';
+  STRUCTURAL_SELECTORS.forEach(sel => {
+    root.querySelectorAll(sel).forEach(el => el.remove());
+  });
+  return root.innerHTML.trim();
+}
+
+/**
  * Normalise les publications du site vers le format attendu par le dashboard.
  */
 export function normalizePublications(pubs) {

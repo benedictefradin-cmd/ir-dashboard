@@ -17,8 +17,6 @@ export default function Dashboard({
   loading,
   onTabChange,
   toast,
-  notionArticles = [],
-  notionCounts = {},
   socialPosts = [],
   rapports = [],
   extEvents = [],
@@ -104,7 +102,7 @@ export default function Dashboard({
           <p className="page-header-sub">Vue d&rsquo;ensemble de l&rsquo;Institut Rousseau</p>
         </div>
         <div className="flex-wrap" style={{ gap: 6 }}>
-          <ServiceBadge service="notion" />
+          
           <ServiceBadge service="github" />
         </div>
       </div>
@@ -192,25 +190,20 @@ export default function Dashboard({
         </div>
 
         {/* ── Alerte publications prêtes ─────────── */}
-        {(notionCounts.ready > 0 || articles.filter(a => a.status === 'ready').length > 0) && (() => {
-          const readyNotionArticles = notionArticles.filter(a => {
-            const s = (a.status || '').toLowerCase();
-            return s === 'prêt à publier' || s === 'pret a publier';
-          });
-          const readyLocal = articles.filter(a => a.status === 'ready');
-          const readyAll = [...readyNotionArticles, ...readyLocal];
-          return (
-            <div className="alert-banner alert-banner-amber mb-16 slide-up">
-              <span className="alert-banner-icon"></span>
-              <div style={{ flex: 1 }}>
-                <strong>{readyAll.length} article{readyAll.length > 1 ? 's' : ''} en attente de publication</strong>
-              </div>
-              <button className="btn btn-sm btn-primary" onClick={() => onTabChange('articles')}>
-                Voir &rarr;
-              </button>
+        {articles.filter(a => a.status === 'ready').length > 0 && (
+          <div className="alert-banner alert-banner-amber mb-16 slide-up">
+            <span className="alert-banner-icon"></span>
+            <div style={{ flex: 1 }}>
+              <strong>
+                {articles.filter(a => a.status === 'ready').length} article
+                {articles.filter(a => a.status === 'ready').length > 1 ? 's' : ''} en attente de publication
+              </strong>
             </div>
-          );
-        })()}
+            <button className="btn btn-sm btn-primary" onClick={() => onTabChange('articles')}>
+              Voir &rarr;
+            </button>
+          </div>
+        )}
 
         {/* ── Prochaines échéances + Semaine en cours ── */}
         {(() => {

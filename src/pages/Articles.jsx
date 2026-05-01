@@ -9,7 +9,7 @@ import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
 import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL, TARGET_LANGUAGES, LS_KEYS } from '../utils/constants';
 import { hasGitHub, insertHtmlInPage, formatDateSite, updatePublicationsI18n, updatePublicationsData, categoryColor } from '../services/github';
-import { fetchArticleContent, updateArticleStatus, hasNotion } from '../services/notion';
+import { fetchPublicationContent } from '../services/siteData';
 import { loadLocal } from '../utils/localStorage';
 import useDebounce from '../hooks/useDebounce';
 import ARTICLE_TEMPLATES from '../data/articleTemplates';
@@ -18,28 +18,8 @@ import RichEditor from '../components/editor/RichEditor';
 import useDraftAutosave from '../hooks/useDraftAutosave';
 import useUnsavedGuard from '../hooks/useUnsavedGuard';
 
-// ─── Notion status mapping ─────────────────────────
-const NOTION_STATUS_MAP = {
-  'idée': 'draft', 'idee': 'draft',
-  'en rédaction': 'draft', 'en redaction': 'draft',
-  'prêt à relire': 'review', 'pret a relire': 'review',
-  'prêt à publier': 'ready', 'pret a publier': 'ready',
-  'publié': 'published', 'publie': 'published',
-  'archivé': 'archived', 'archive': 'archived',
-};
-
-function mapNotionStatus(notionStatus) {
-  return NOTION_STATUS_MAP[(notionStatus || '').toLowerCase()] || 'draft';
-}
-
-function isReadyToPublish(article) {
-  const s = (article.status || '').toLowerCase();
-  return s === 'prêt à publier' || s === 'pret a publier' || s === 'ready';
-}
-
 export default function Articles({
   articles, setArticles, loading, toast,
-  notionArticles = [], notionCounts = {}, notionLoading, syncNotion, notionConfigured,
   auteurs = [],
 }) {
   const [search, setSearch] = useState('');
@@ -56,6 +36,8 @@ export default function Articles({
     useDraftAutosave(draftKey, form, { enabled: showForm });
   const { markSaved } = useUnsavedGuard(showForm ? form : null);
   const [publishingId, setPublishingId] = useState(null);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
   const debouncedSearch = useDebounce(search);
 
   // ─── Publish flow state ───────────────────────
@@ -67,34 +49,9 @@ export default function Articles({
   const [publishResult, setPublishResult] = useState(null);
   const [publishError, setPublishError] = useState(null);
 
-  // Merge local + Notion articles
-  const allArticles = useMemo(() => {
-    if (!notionConfigured || notionArticles.length === 0) return articles;
-
-    const notionMapped = notionArticles.map(na => ({
-      id: na.id,
-      title: na.title,
-      author: na.authors,
-      tags: na.pole ? [na.pole] : [],
-      type: na.type || 'Note d\'analyse',
-      date: na.publishDate || na.lastEdited?.split('T')[0] || '',
-      summary: na.summary,
-      slug: na.slug,
-      status: mapNotionStatus(na.status),
-      notionStatus: na.status,
-      featured: na.featured,
-      mediaSource: na.mediaSource,
-      externalUrl: na.externalUrl,
-      lastEdited: na.lastEdited,
-      isNotion: true,
-      synced: na.status?.toLowerCase().includes('publié'),
-    }));
-
-    // Prefer Notion articles, keep local-only articles
-    const notionIds = new Set(notionMapped.map(a => a.id));
-    const localOnly = articles.filter(a => !notionIds.has(a.id));
-    return [...notionMapped, ...localOnly];
-  }, [articles, notionArticles, notionConfigured]);
+  // Source unique : les publications du repo site (data/publications.json),
+  // chargées par App.jsx via siteData.fetchAllSiteData() et passées en props.
+  const allArticles = articles;
 
   // Filtrage
   const filtered = useMemo(() => {
@@ -131,19 +88,9 @@ export default function Articles({
     toast(`Publication passée en ${ARTICLE_STATUSES[newStatus]?.label || newStatus}`);
   };
 
-  // Send back to draft in Notion
-  const sendBackToDraft = async (article) => {
-    if (article.isNotion) {
-      try {
-        await updateArticleStatus(article.id, 'En rédaction');
-        toast('Article renvoyé en rédaction');
-        syncNotion?.();
-      } catch (e) {
-        toast(e.message || 'Erreur', 'error');
-      }
-    } else {
-      updateStatus(article.id, 'draft');
-    }
+  // Repasse un article publié en brouillon (statut local seulement).
+  const sendBackToDraft = (article) => {
+    updateStatus(article.id, 'draft');
   };
 
   // ─── Publish flow ─────────────────────────────
@@ -155,21 +102,11 @@ export default function Articles({
     setPublishError(null);
   };
 
-  const goToStep2 = async () => {
+  const goToStep2 = () => {
     setPublishFlow(prev => ({ ...prev, step: 2 }));
     setPreviewLoading(true);
-    try {
-      if (publishFlow.article.isNotion) {
-        const { html } = await fetchArticleContent(publishFlow.article.id);
-        setPreviewHtml(html);
-      } else {
-        setPreviewHtml(publishFlow.article.content || '<p>Aucun contenu disponible.</p>');
-      }
-    } catch (e) {
-      setPreviewHtml(`<p style="color: red;">Erreur : ${e.message}</p>`);
-    } finally {
-      setPreviewLoading(false);
-    }
+    setPreviewHtml(publishFlow.article.content || '<p>Aucun contenu disponible.</p>');
+    setPreviewLoading(false);
   };
 
   const executePublish = async () => {
@@ -179,11 +116,7 @@ export default function Articles({
 
     try {
       // 1. Get content
-      let html = previewHtml;
-      if (!html && article.isNotion) {
-        const resp = await fetchArticleContent(article.id);
-        html = resp.html;
-      }
+      const html = previewHtml || article.content || '';
 
       // 2. Build author names
       const authorNames = selectedAuthors
@@ -246,12 +179,8 @@ export default function Articles({
         await insertHtmlInPage('publications.html', cardHtml, `Ajout publication : ${article.title}`);
       }
 
-      // 5. Update Notion status
-      if (article.isNotion) {
-        await updateArticleStatus(article.id, 'Publié', today, authorNames);
-      }
-
-      // 6. Update local state
+      // 5. Update local state (la source de vérité reste data/publications.json
+      //    du repo site ; le rechargement est piloté par App.jsx).
       setArticles(prev => prev.map(a =>
         a.id === article.id ? { ...a, status: 'published', synced: true, date: today, author: authorNames } : a
       ));
@@ -264,8 +193,6 @@ export default function Articles({
         sha: commitSha,
         siteUrl: `${SITE_URL}/publications/${slug}.html`,
       });
-
-      syncNotion?.();
     } catch (e) {
       setPublishError(e.message || 'Erreur lors de la publication');
     }
@@ -313,8 +240,79 @@ export default function Articles({
     toast('Publication supprimée');
   };
 
-  const saveArticle = () => {
+  // Republie un article existant du site : reconstruit le HTML complet via
+  // buildPublicationHtml et le pousse sur publications/{slug}.html.
+  const pushArticleToSite = async (art, formData) => {
+    const slug = art.slug;
+    if (!slug) throw new Error('Slug manquant');
+    const dateFr = art.date ? formatDateSite(art.date) : new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const pole = (formData.tags || [])[0] || '';
+    const fullHtml = buildPublicationHtml({
+      title: formData.title,
+      authors: formData.author,
+      date: dateFr,
+      pole,
+      type: formData.type,
+      summary: formData.summary || '',
+      content: formData.content,
+      slug,
+    });
+    const workerUrl = loadLocal(LS_KEYS.workerUrl, '') || import.meta.env.VITE_WORKER_URL || '';
+    if (!workerUrl) throw new Error('URL du Worker non configurée');
+    const resp = await fetch(`${workerUrl}/api/github/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug,
+        html: fullHtml,
+        metadata: { title: formData.title, authors: formData.author, pole, type: formData.type },
+        commitMessage: `Update: ${formData.title}`,
+      }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || `GitHub : ${resp.status}`);
+    }
+    // Met aussi à jour publications-data.js pour refléter les nouvelles
+    // métadonnées dans la liste publique du site (titre, auteur, résumé…).
+    try {
+      const categories = (formData.tags || []).map(t => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+      await updatePublicationsData({
+        id: slug,
+        title: formData.title,
+        author: formData.author,
+        type: formData.type,
+        categories,
+        color: categoryColor(categories[0]),
+        description: formData.summary || '',
+      });
+    } catch (dataErr) {
+      // L'article HTML est à jour, mais publications-data.js n'a pas pu être patché.
+      console.warn('[Articles] publications-data.js non mis à jour :', dataErr.message);
+    }
+  };
+
+  const saveArticle = async () => {
     if (!form.title) return toast('Le titre est requis', 'error');
+
+    // Article venant du site (slug + déjà publié) → republier sur GitHub.
+    if (editingArt && editingArt.slug && editingArt.status === 'published') {
+      setSavingEdit(true);
+      try {
+        await pushArticleToSite(editingArt, form);
+        setArticles(prev => prev.map(a => a.id === editingArt.id ? { ...a, ...form } : a));
+        toast('Publication mise à jour sur le site');
+        markSaved();
+        clearDraft();
+        closeForm();
+      } catch (e) {
+        toast(`Erreur publication : ${e.message}`, 'error');
+      } finally {
+        setSavingEdit(false);
+      }
+      return;
+    }
+
     if (editingArt) {
       setArticles(prev => prev.map(a => a.id === editingArt.id ? { ...a, ...form } : a));
       toast('Publication mise à jour');
@@ -334,7 +332,7 @@ export default function Articles({
     closeForm();
   };
 
-  const startEdit = (art) => {
+  const startEdit = async (art) => {
     setEditingArt(art);
     setForm({
       title: art.title, author: art.author, tags: [...(art.tags || [])],
@@ -343,6 +341,22 @@ export default function Articles({
       scheduledDate: art.scheduledDate || '',
     });
     setShowForm(true);
+
+    // Article du site sans contenu en mémoire → on récupère le HTML
+    // depuis publications/{slug}.html et on le charge dans l'éditeur.
+    if (art.slug && !art.content && hasGitHub()) {
+      setContentLoading(true);
+      try {
+        const { content } = await fetchPublicationContent(art.slug);
+        setForm(f => ({ ...f, content }));
+        // Cache dans la liste pour éviter un nouveau fetch si on rouvre l'article.
+        setArticles(prev => prev.map(a => a.id === art.id ? { ...a, content } : a));
+      } catch (err) {
+        toast(`Impossible de charger le contenu : ${err.message}`, 'error');
+      } finally {
+        setContentLoading(false);
+      }
+    }
   };
 
   const closeForm = () => {
@@ -355,13 +369,9 @@ export default function Articles({
   // ─── Colonnes tableau ─────────────────────────
   const columns = [
     {
-      key: 'status', label: 'Statut', render: (v, row) => {
+      key: 'status', label: 'Statut', render: (v) => {
         const cfg = ARTICLE_STATUSES[v] || ARTICLE_STATUSES.draft;
-        return (
-          <span className={`badge ${cfg.badgeClass}`}>
-            {row.isNotion ? (row.notionStatus || cfg.label) : cfg.label}
-          </span>
-        );
+        return <span className={`badge ${cfg.badgeClass}`}>{cfg.label}</span>;
       }
     },
     { key: 'title', label: 'Titre', render: (v) => <span style={{ fontWeight: 500, maxWidth: 280, display: 'inline-block' }}>{v}</span> },
@@ -372,9 +382,7 @@ export default function Articles({
     {
       key: 'actions', label: 'Actions', render: (_, row) => (
         <div className="flex-center gap-8" style={{ flexWrap: 'nowrap' }}>
-          {!row.isNotion && (
-            <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); startEdit(row); }}>Éditer</button>
-          )}
+          <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); startEdit(row); }}>Éditer</button>
           {row.status === 'ready' && (
             <>
               <button className="btn btn-green btn-sm" onClick={(e) => { e.stopPropagation(); startPublishFlow(row); }}>
@@ -385,10 +393,10 @@ export default function Articles({
               </button>
             </>
           )}
-          {row.status === 'draft' && !row.isNotion && (
+          {row.status === 'draft' && (
             <button className="btn btn-ochre btn-sm" onClick={(e) => { e.stopPropagation(); updateStatus(row.id, 'review'); }}>Relecture</button>
           )}
-          {row.status === 'review' && !row.isNotion && (
+          {row.status === 'review' && (
             <button className="btn btn-sky btn-sm" onClick={(e) => { e.stopPropagation(); updateStatus(row.id, 'ready'); }}>Valider</button>
           )}
           {row.status === 'published' && row.slug && (
@@ -402,12 +410,10 @@ export default function Articles({
               Voir ↗
             </a>
           )}
-          {row.status === 'published' && !row.isNotion && (
+          {row.status === 'published' && (
             <button className="btn btn-outline btn-sm" onClick={(e) => { e.stopPropagation(); updateStatus(row.id, 'draft'); }}>Dépublier</button>
           )}
-          {!row.isNotion && (
-            <button className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); deleteArticle(row.id); }}>Suppr.</button>
-          )}
+          <button className="btn btn-outline btn-sm" style={{ color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); deleteArticle(row.id); }}>Suppr.</button>
         </div>
       )
     },
@@ -420,7 +426,7 @@ export default function Articles({
     return '';
   };
 
-  if (loading && !notionConfigured) {
+  if (loading) {
     return (
       <>
         <div className="page-header"><h1>Publications</h1></div>
@@ -439,13 +445,7 @@ export default function Articles({
           </p>
         </div>
         <div className="flex-center gap-8">
-          <ServiceBadge service="notion" />
           <ServiceBadge service="github" />
-          {notionConfigured && (
-            <button className="btn btn-outline" onClick={syncNotion} disabled={notionLoading}>
-              {notionLoading ? 'Sync…' : '↻ Sync Notion'}
-            </button>
-          )}
           <button className="btn btn-primary" onClick={() => { closeForm(); setShowForm(true); }}>+ Nouvelle publication</button>
         </div>
       </div>
@@ -669,20 +669,27 @@ export default function Articles({
 
             <div style={{ marginBottom: 16 }}>
               <label>Contenu</label>
+              {contentLoading && (
+                <div style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 6 }}>
+                  Chargement de l'article depuis le site…
+                </div>
+              )}
               <RichEditor
                 value={form.content}
                 onChange={(html) => setForm(f => ({ ...f, content: html }))}
                 title={form.title}
                 author={form.author}
-                placeholder="Écrivez votre article ici…"
+                placeholder={contentLoading ? 'Chargement…' : 'Écrivez votre article ici…'}
                 slug={editingArt?.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}
                 toast={toast}
               />
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-outline" onClick={closeForm}>Annuler</button>
-              <button className="btn btn-sky" onClick={saveArticle}>{editingArt ? 'Sauvegarder' : 'Brouillon'}</button>
+              <button className="btn btn-outline" onClick={closeForm} disabled={savingEdit}>Annuler</button>
+              <button className="btn btn-sky" onClick={saveArticle} disabled={savingEdit || contentLoading}>
+                {savingEdit ? 'Enregistrement…' : editingArt ? 'Sauvegarder' : 'Brouillon'}
+              </button>
               <button
                 className="btn btn-primary"
                 onClick={() => {
@@ -797,12 +804,7 @@ export default function Articles({
                       }
                     }
 
-                    // 2. Mettre à jour Notion si applicable
-                    if (editingArt?.isNotion) {
-                      await updateArticleStatus(editingArt.id, 'Publié', today, authorNames);
-                    }
-
-                    // 3. Mettre à jour l'état local
+                    // 2. Mettre à jour l'état local
                     if (editingArt) {
                       setArticles(prev => prev.map(a => a.id === editingArt.id ? {
                         ...a,
@@ -826,7 +828,6 @@ export default function Articles({
                       }, ...prev]);
                     }
                     toast('Article publié sur le site');
-                    syncNotion?.();
                     closeForm();
                   } catch (err) {
                     toast(`Erreur publication : ${err.message}`, 'error');
@@ -925,7 +926,7 @@ export default function Articles({
 
                 {/* Service badges */}
                 <div className="flex-wrap gap-8 mt-16 mb-8">
-                  <ServiceBadge service="notion" />
+                  
                   <ServiceBadge service="github" />
                   <ServiceBadge service="vercel" />
                 </div>

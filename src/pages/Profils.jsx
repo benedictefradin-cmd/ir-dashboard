@@ -352,7 +352,7 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
           <p className="page-header-sub">{auteurs.length} profil{auteurs.length !== 1 ? 's' : ''} enregistré{auteurs.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex-center gap-8">
-          <ServiceBadge service="notion" />
+          
           {saveToSite && hasGitHub() && (
             <button className="btn btn-green" onClick={() => saveToSite('auteurs', auteurs.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({ id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0 })))}>
               Publier tout sur le site
