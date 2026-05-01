@@ -2184,6 +2184,47 @@ label {
 .publish-lang-status.done { color: var(--green); }
 .publish-lang-status.error { color: var(--danger); display: flex; align-items: center; }
 
+.publish-lang-manual {
+  border-radius: var(--radius-sm);
+  background: var(--sand);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.publish-lang-manual.is-open { background: #fff; }
+.publish-lang-manual-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.publish-lang-manual-header:hover { background: rgba(0,0,0,0.03); }
+.publish-lang-manual.is-open .publish-lang-manual-header {
+  border-bottom: 1px solid var(--border);
+}
+.publish-lang-chevron {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.publish-lang-manual-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.publish-lang-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
 .spinner-sm {
   width: 14px; height: 14px;
   border: 2px solid var(--sky-light);
