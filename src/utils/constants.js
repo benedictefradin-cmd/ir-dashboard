@@ -209,7 +209,7 @@ export const DEFAULT_PAGE_SIZE = 50;
 // ─── Site URL ────────────────────────────────────────
 // Tant que le DNS `institut-rousseau.fr` pointe encore sur l'ancien WordPress,
 // les liens "Voir ↗" renvoient 404. On pointe donc temporairement sur le
-// déploiement Vercel du nouveau site, qui sert bien data/publications.json.
+// déploiement Vercel du nouveau site.
 // À rebasculer sur https://institut-rousseau.fr une fois la bascule DNS faite.
 export const SITE_URL = 'https://institut-rousseau-kb9p.vercel.app';
 
