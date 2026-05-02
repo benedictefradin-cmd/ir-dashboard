@@ -297,12 +297,22 @@ export function normalizeAuteurs(auteurs) {
     name: `${a.firstName || ''} ${a.lastName || ''}`.trim(),
     role: a.role || '',
     titre: a.role || '',
-    bio: a.bio || '',
+    bio: a.bio || '',                                    // legacy
+    bioCourte: a.bioCourte || a.bio || '',
+    bioLongue: a.bioLongue || '',
+    reseaux: {
+      linkedin: a.reseaux?.linkedin || a.linkedin || '',
+      x: a.reseaux?.x || a.x || a.twitter || '',
+      site: a.reseaux?.site || a.site || a.website || '',
+      email: a.reseaux?.email || a.email || '',
+    },
+    email: a.reseaux?.email || a.email || '',            // legacy mirror
+    dateArrivee: a.dateArrivee || '',
+    actif: a.actif === false ? false : true,
     // photo & photoPath : chemin interne au repo site (ex: 'assets/images/equipe/x.png').
     // Le chargement réel se fait via usePhoto/RepoPhoto qui passe par l'API auth
     // (le repo est privé, raw.githubusercontent.com ne fonctionne pas sans token).
     photo: resolvePhotoUrl(a.photo),
     photoPath: a.photo || '',
-    publications: a.publications || 0,
   }));
 }

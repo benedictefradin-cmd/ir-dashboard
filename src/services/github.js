@@ -63,7 +63,7 @@ async function workerFetch(endpoint, opts = {}) {
 
 /**
  * Lit un fichier texte du repo site.
- * @param {string} path - Chemin relatif (ex: 'data/publications.json')
+ * @param {string} path - Chemin relatif (ex: 'data/auteurs.json')
  * @returns {Promise<{ content: string, sha: string }>}
  */
 export async function githubGetFile(path) {
@@ -182,20 +182,39 @@ export async function insertHtmlInPage(path, cardHtml, commitMessage) {
 
 /**
  * Sauvegarde le tableau d'auteurs dans `data/auteurs.json` du repo site.
- * (Ancienne version écrivait `src/data/authors.json` du repo dashboard,
- * ce qui mélangeait code et données — corrigé dans ce refactor.)
+ *
+ * Schéma persisté (Chantier A — 2026-05-02) :
+ *   { id, firstName, lastName, role, bio, bioCourte, bioLongue, photo,
+ *     reseaux: { linkedin, x, site, email }, dateArrivee, actif }
+ *
+ * `bio` est conservé en miroir de `bioCourte` pour la rétrocompat avec
+ * `assets/js/auteurs.js` du site qui le lit encore directement.
+ * `publications` (compteur obsolète) est volontairement omis : le calcul
+ * se fait à la volée via `findPublicationsForAuthor()`.
  */
 export async function saveAuthorsToGitHub(authors) {
-  const cleanAuthors = authors.map(({ id, firstName, lastName, role, photo, bio, email, publications }) => ({
-    id,
-    firstName,
-    lastName,
-    role,
-    photo: photo || '',
-    bio: bio || '',
-    email: email || '',
-    publications: publications || 0,
-  }));
+  const cleanAuthors = authors.map(a => {
+    const photoVal = a.photoPath || a.photo || '';
+    const photo = photoVal.startsWith('http') || photoVal.startsWith('data:') ? '' : photoVal;
+    return {
+      id: a.id,
+      firstName: a.firstName || '',
+      lastName: a.lastName || '',
+      role: a.role || '',
+      bio: a.bioCourte || a.bio || '',
+      bioCourte: a.bioCourte || a.bio || '',
+      bioLongue: a.bioLongue || '',
+      photo,
+      reseaux: {
+        linkedin: a.reseaux?.linkedin || a.linkedin || '',
+        x: a.reseaux?.x || a.x || a.twitter || '',
+        site: a.reseaux?.site || a.site || a.website || '',
+        email: a.reseaux?.email || a.email || '',
+      },
+      dateArrivee: a.dateArrivee || '',
+      actif: a.actif === false ? false : true,
+    };
+  });
   const filePath = 'data/auteurs.json';
   let sha = null;
   try {

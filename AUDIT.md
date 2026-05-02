@@ -1,353 +1,310 @@
-# AUDIT — Dashboard Institut Rousseau
+# AUDIT — Refonte profils, relations & UX du dashboard Institut Rousseau
 
-> État réel du repo `ir-dashboard` au 2026-05-01, avant refonte vers le modèle GitHub-as-CMS + OAuth GitHub.
-> Ce document n'est **pas** un plan d'action validé : il liste ce qui existe, ce qui marche, ce qui ne marche pas, ce qui est dangereux, et propose un découpage P0/P1/P2 à valider avant tout code.
-
-> ## STATUT FINAL — 2026-05-01 (clôture)
+> Date : 2026-05-02 — auteur : revue automatisée
+> Périmètre : `ir-dashboard` (back-office) + `institut-rousseau` (site public).
+> L'audit précédent (sécurité/OAuth, clôturé le 2026-05-01) est archivé dans [AUDIT-2026-05-01.md](AUDIT-2026-05-01.md). Les sujets traités là-bas (PAT, OAuth, CSP, sanitize) ne sont pas repris ici.
 >
-> | Section | Statut | Commits |
-> |---|---|---|
-> | P0 — Sécurité fondations | ✅ Bouclé | `cc3e261`, `b5731ed` |
-> | §4.1 Token PAT exposé | ⏳ **À l'utilisatrice** : révoquer sur https://github.com/settings/tokens. Le bundle prod est nettoyé, le worker utilise un secret server-side. |
-> | §4.2 Auth localStorage → sessionStorage | ✅ `cc3e261` |
-> | §4.4 CORS `*` → allowlist | ✅ `cc3e261` |
-> | §4.5 TipTap sans sanitize | ✅ DOMPurify, `b04c2ce` `3be9af3` |
-> | §4.6 Construction HTML par concat | ⚠ Conservé (build des cards publication via template strings) — risque accepté car les inputs proviennent du formulaire interne, pas du public. À durcir si on accepte un jour des contributions externes. |
-> | §4.7 `new Function` | ✅ Remplacé par JSON5, `3be9af3` |
-> | §4.8 `CONTACT_AUTH_TOKEN` partagé | ⏳ Reporté : conservé en parallèle de l'OAuth GitHub pour ne pas couper les sollicitations existantes. À retirer dès qu'on est sûr que l'OAuth couvre tous les cas. |
-> | §4.9 CSP | ✅ Méta-CSP basique posée, `cc3e261`. `frame-ancestors` exige un header HTTP serveur (GH Pages) — non couvert ici. |
-> | §3.2 SITE_URL `vercel.app` | ✅ `https://institut-rousseau.fr` |
-> | §3.3 `saveAuthorsToGitHub` split-brain | ✅ Réécrit dans le repo site, `data/auteurs.json` |
-> | §3.4 Polling Notion en arrière-plan | ✅ Notion coupé sec (`hasNotion()=false`), `4db682a` |
-> | §3.6 Pas d'auto-save éditeur | ✅ `useDraftAutosave` 3s debounce + restore UI, `b04c2ce` |
-> | §3.7 Toolbar `window.prompt` images | ✅ `ImageInsertModal` avec alt obligatoire + drag&drop + redim 2000px, `b04c2ce` |
-> | §3.8 `escape`/`unescape` dépréciés | ✅ Worker utilise `TextDecoder`/`TextEncoder` |
-> | §3.10 `hasNotion()` ment | ✅ Renvoie `false` (Notion coupé) |
-> | §3.11 Toggle `automations` décoratif | ✅ Onglet masqué, `3be9af3` |
-> | §3.12 Bearer commun KV | ⏳ Reporté (cf. §4.8) |
-> | §3.13 Smoke test pas en CI | ✅ Workflow `.github/workflows/smoke.yml`, ce commit |
-> | §6 P1 #9 Éditeur articles | ✅ DOMPurify, modal image, alt obligatoire, drag&drop, auto-save, beforeunload guard, redim 2000px |
-> | §6 P1 #10 CollectionEditor mutualisé | ❌ **Skip volontaire** : analyse a posteriori — les 3 pages cibles (Evenements, Presse, Equipe) ont chacune des spécificités fortes (tabs Tribune/Entretien/Podcast + bloc demandes contact pour Presse, publish flow + intervenants[] pour Evenements, imbrication PagesSite pour Equipe) qui rendent l'abstraction prématurée. YAGNI. |
-> | §6 P1 #11 Réglages site `data/contenu.json` | ✅ Existe via les écrans Contenu / SEO / Navigation |
-> | §6 P1 #12 Migration Notion | ✅ Coupé (Q5) — DB ne contenait qu'un article test sans titre |
-> | §6 P2 #13 Virtualisation CRM | ❌ **Skip volontaire** : `DataTable` pagine déjà 20/page, `fetchAllContacts` plafonne à 300 contacts en mémoire — pas de bottleneck à 24k contacts Brevo. |
-> | §6 P2 #14 Preview/test send campagnes | ⏳ Reporté |
-> | §6 P2 #15 Automations off | ✅ |
-> | §6 P2 #16 Link checker | ✅ Script CLI `scripts/link-checker.mjs`, `779fcd7`. Premier run a déjà détecté 1 lien cassé (vert.eco) |
-> | §6 P2 #17 Healthcheck par service | ✅ Settings → Connexions API affiche brevo/telegram/github/translate avec boutons Test individuels |
-> | §6 P2 #18 Tokens CSS | ⏳ Reporté |
-> | §6 P2 #19 UI partagée | ⏳ Reporté |
-> | §6 P2 #20 SITE_URL | ✅ |
-> | §6 P2 #21 saveAuthorsToGitHub | ✅ |
-> | §6 P2 #22 automations off + CONTACT_AUTH_TOKEN | ✅ partiel (UI off, token bearer encore en parallèle) |
-> | §6 P2 #23 Smoke test CI | ✅ workflow ajouté |
-> | §7 Q1 — Révoquer le PAT | ⏳ **À l'utilisatrice** |
-> | §7 Q2 — OAuth App | ✅ Déployé `b5731ed` |
-> | §7 Q3 — Whitelist | ✅ `ALLOWED_GITHUB_USERS` |
-> | §7 Q4 — Format contenu | ✅ Choix (A) : on garde le HTML existant |
-> | §7 Q5 — Notion | ✅ Coupé sec |
-> | §7 Q6 — Auth login/mdp | ✅ Conservée en parallèle |
-> | §7 Q7 — Périmètre Worker | ✅ Tout gardé sauf Notion (coupé) |
-> | §7 Q8 — SITE_URL | ✅ |
-> | §7 Q9 — Automations | ✅ Onglet masqué |
-> | §7 Q10 — Calendrier | ✅ Évolution sur place, lot par lot |
->
-> **Items restants à traiter dans une future itération (priorité ≤ moyenne) :**
-> - §4.6 Templates HTML par concat — durcir si contributions externes
-> - §4.8 / §3.12 Retirer `CONTACT_AUTH_TOKEN` partagé une fois OAuth stable
-> - §6 P2 #14 Preview + test send pour campagnes Brevo / Telegram
-> - §6 P2 #18-19 Tokens CSS unifiés + UI partagée (`src/ui/`)
->
-> **Total : ~95 % de l'AUDIT bouclé** (les ❌ sont des choix conscients, pas des oublis).
+> **Aucune ligne de code n'a été modifiée.** Ce document liste l'état réel et propose un plan, à valider avant tout chantier.
 
 ---
 
-## 1. Arborescence commentée
+## 1. Cartographie des deux repos
 
-### `src/`
+| Élément | Dashboard `ir-dashboard` | Site public `institut-rousseau` |
+|---|---|---|
+| Repo GitHub | `benedictefradin-cmd/ir-dashboard` (privé) | `benedictefradin-cmd/institut-rousseau` (privé) |
+| Hébergement | GitHub Pages (`https://benedictefradin-cmd.github.io/ir-dashboard/`) | Vercel (CNAME → `institut-rousseau.fr`, aujourd'hui sur l'URL Vercel temporaire en attendant le DNS — cf. mémoire `project_site_url_temp`) |
+| Stack | React 18 + Vite, ~19 pages lazy-loaded, état React local + KV (Cloudflare Worker) | HTML statique vanilla, aucun build step, traduction maison FR/EN/ES/DE/IT |
+| Backend | Cloudflare Worker `ir-dashboard-worker` (~1410 lignes, KV + secrets BREVO/TELEGRAM/GITHUB/TRANSLATE) | 2 fonctions Vercel : `api/contact.js`, `api/newsletter.js` |
+| Données | RAS — sert de cliente uniquement | **Source de vérité** : `data/{auteurs,publications,events,presse,contenu,i18n}.json` + 261 fichiers HTML dans `publications/` |
+| Communication | Le dashboard édite les fichiers du repo site via API GitHub authentifiée (token côté Worker depuis OAuth, cf. audit précédent §7.2) | Le push `main` du repo site déclenche un build Vercel (Git integration native) |
 
-```
-src/
-├── App.jsx                  Routeur custom (switch tab), auth login/mdp, chargement initial des données
-├── main.jsx                 Bootstrap React
-├── styles.css               ~63 Ko de CSS global (un seul fichier — pas de tokens isolés)
-├── assets/                  logo.svg
-│
-├── components/
-│   ├── articles/
-│   │   └── PublishWithTranslation.jsx   Modal flow publication + traduction (DeepL/Anthropic)
-│   ├── editor/
-│   │   ├── RichEditor.jsx               TipTap + 3 onglets Visuel / HTML / Aperçu
-│   │   ├── EditorToolbar.jsx            Toolbar TipTap (gras, listes, couleurs, image, lien)
-│   │   ├── CodeEditor.jsx               Textarea HTML brut
-│   │   ├── PreviewPane.jsx              Rendu CSS du site
-│   │   └── editor.css
-│   ├── layout/
-│   │   ├── Layout.jsx                   Container + sidebar + toasts
-│   │   └── Sidebar.jsx                  Nav groupée (4 groupes, 18 pages)
-│   └── shared/
-│       ├── AuthorPicker, DataTable, ExportButton, Modal, MultiSelect,
-│       ├── RepoPhoto                    Charge image privée via API GitHub authentifiée
-│       ├── SearchBar, ServiceBadge, SkeletonLoader, StatsCard,
-│       └── StatusBadge, ToastContainer
-│
-├── data/
-│   ├── articleTemplates.js             Templates HTML de mise en forme
-│   └── authors.json                     ⚠ Auteurs DUPLIQUÉS ici alors que le repo site a déjà data/auteurs.json
-│
-├── hooks/
-│   ├── useDebounce, useToast, useUnsavedGuard
-│   ├── usePhoto                         Wrapping de githubGetImageDataUrl
-│   └── useNotionSync                    Polling Notion 5 min
-│
-├── pages/                               18 pages, toutes lazy-loaded
-│   ├── Dashboard, Accueil, Articles, Calendrier, Contenu, Equipe,
-│   ├── Evenements, Medias, Messagerie, Navigation, Newsletter,
-│   ├── PagesSite, Presse, Profils, SEO, Settings, Sollicitations, Technique
-│
-├── services/                            Couche API (front)
-│   ├── api.js                           Wrapper fetch vers Worker
-│   ├── auth.js                          Login/mdp via Worker (PBKDF2 KV)
-│   ├── brevo.js                         Contacts, listes, send, campagnes
-│   ├── calendar.js                      Persistance KV des socialPosts/rapports/extEvents
-│   ├── contact.js                       Sollicitations (KV)
-│   ├── deploy.js                        Hook Vercel (re-déclenche un deploy)
-│   ├── export.js                        XLSX read/write + validation email + dédup
-│   ├── github.js                        ⚠ Appels GitHub directs avec VITE_GITHUB_TOKEN front
-│   ├── notion.js                        Lecture/PATCH base Notion via Worker
-│   ├── siteData.js                      CRUD des fichiers data/*.json du repo site
-│   ├── telegram.js                      Send + getUpdates
-│   └── translate.js                     Wrapper /api/translate
-│
-└── utils/
-    ├── activity.js                      Feed d'activité local
-    ├── constants.js                     COLORS, NAV_GROUPS, LS_KEYS, resolvePhotoUrl
-    ├── formatters.js                    Dates FR, timeAgo
-    └── localStorage.js                  loadLocal/saveLocal/removeLocal (préfixe ir-dash-)
+**CI/CD côté dashboard** : 2 workflows ([.github/workflows/](/.github/workflows/)) — `deploy.yml` (build + push GH Pages) et `smoke.yml` (Playwright sur PR).
+
+**CI/CD côté site** : aucun workflow GitHub. Le déploiement est piloté par Vercel via webhook Git (push main → build), plus un Deploy Hook configurable manuellement (URL stockée dans le `localStorage` de l'utilisatrice, pas dans une config partagée — c'est un problème, voir §6).
+
+---
+
+## 2. Modèles de données — état réel
+
+### 2.1 `data/auteurs.json` — 211 profils
+
+Schéma observé :
+
+```json
+{
+  "id": "nicolas-dufrene",          // slug stable
+  "firstName": "Nicolas",
+  "lastName": "Dufrêne",
+  "role": "Président-directeur, économiste, haut fonctionnaire",
+  "bio": "Directeur général de l'Institut Rousseau, …",
+  "photo": "assets/images/equipe/nicolas-dufrene.png",
+  "publications": 15                 // ⚠ COMPTEUR, pas une liste d'IDs
+}
 ```
 
-### `worker/`
+État qualité :
+- **0 collision d'`id`** ✅
+- **0 doublon par nom+prénom normalisés** (lowercase + sans accents + espaces simplifiés) ✅
+- **62 / 211 profils sans photo** (29 %)
+- **18 / 211 profils sans bio** (9 %)
+- **163 / 211 profils sans `role`** (77 %) — ⚠ champ massivement vide
+- Aucun champ pour réseaux sociaux (LinkedIn / X / site / email), date d'arrivée, statut actif/inactif
+- `email` apparaît dans le formulaire dashboard ([src/pages/Profils.jsx:15](src/pages/Profils.jsx#L15)) mais n'est jamais persisté dans `data/auteurs.json`
 
+**Bonne nouvelle** : la tâche "déduplication" du brief est déjà faite côté nommage. Le travail à venir est sur le **schéma** (champs manquants) et la **relation** (pas sur la fusion de profils en double).
+
+### 2.2 `data/publications.json` — 260 entrées
+
+Schéma observé :
+
+```json
+{
+  "id": "trump-iran-strategie-petroliere-dernier-survivant",
+  "title": "…",
+  "author": "Nicolas Dufrêne",        // ⚠ STRING libre, pas d'ID, pas de tableau
+  "date": "2026-04",
+  "type": "Note",
+  "categories": ["economie","international"],
+  "color": "#2563EB",
+  "description": "…",
+  "slug": "…",
+  "image": "assets/img/publications/…",
+  "excerpt": "…",
+  "url": "publications/….html",
+  "featured": false,
+  "readingTime": 17,
+  "themes": ["economie","international"]
+}
 ```
-worker/
-├── index.js                 ~1410 lignes — TOUTES les routes dans un seul fichier
-│   /api/auth/*              login, logout, me, users CRUD (PBKDF2 + sessions KV)
-│   /api/brevo/*             contacts, listes, send, campagnes
-│   /api/telegram/*          send, send-channel, messages
-│   /api/calendar/*          GET/PUT KV (socialPosts, rapports, extEvents)
-│   /api/contact/*           formulaire public + back-office (sollicitations KV)
-│   /api/notion/*            articles, content, status (proxy + parser blocks→HTML)
-│   /api/github/*            data/:file, publish, check (proxy GitHub avec token client)
-│   /api/translate           DeepL ou Anthropic Claude (Haiku 4.5)
-│   /health                  Status des secrets
-│   /brevo/send              Legacy
-└── wrangler.toml            KV CONTACT_SUBMISSIONS, secrets BREVO, TELEGRAM, etc.
-```
 
-### Autres
+État qualité :
+- **22 valeurs distinctes du champ `author`** sur 260 publications
+- **1 seule valeur ne matche aucun profil** : `"un collectif d'économistes"` (1 publi)
+- **8 publications avec 2+ co-auteurs** (séparateurs `,`, `&`, `et`) :
+  - `Pierre Micheletti, Sophie Beau, Soazic Dupuis`
+  - `Augustin Rogy, Émilie Fabre`
+  - `Guillaume Kerlero de Rosbo, Nicolas Desquinado, Nicolas Dufrêne, Philippe Ramos`
+  - `Marine Yzquierdo, Frantz Gault, Paul Montjotin`
+  - `Valentin Chevallier, Guillaume Heim`
+  - `Nicolas Dufrêne, Gaël Giraud, Benjamin Morel, René Dosière, Matthieu Caron`
+  - `Gaël Giraud, Christian Nicol`
+  - `Nicolas Dufrêne et un collectif d'économistes`
+- **261 fichiers `.html` dans `publications/`** vs **260 entrées dans `publications.json`** — 1 page existe sans entrée JSON (drift à investiguer)
+- **3 paires de traductions FR/EN détectées** (même image + même date) avec **slugs différents et `id` différents** :
+  - `trump-iran-oil-strategy-last-survivor` (EN) ↔ `trump-iran-strategie-petroliere-dernier-survivant` (FR)
+  - `big-oil-renewables` (EN) ↔ `majors-petrolieres-renouvelables-venezuela` (FR)
+  - `critique-liberale-liberalisme` (FR) ↔ `crise-liberalisme-critique` (FR — variante)
 
-- `tests/smoke.mjs` : smoke E2E Playwright (18 pages + CRUD calendrier).
-- `.github/workflows/` : présent (non lu en détail, sans doute deploy GH Pages).
-- `dist/` : build local committé (à supprimer).
-- `index.html` + `vite.config.js` : standard Vite.
+⚠ Ces "doublons" multilingues sont un **modèle à clarifier** (cf. §6 question ouverte 1) : on les garde séparés ou on les regroupe sous une publication-mère avec versions linguistiques ?
 
----
+### 2.3 Cohérence des compteurs `publications` dans les profils
 
-## 2. État réel des features annoncées au README
+Le champ `publications: <number>` du profil est **massivement obsolète** :
+- **34 / 211 profils** ont un compteur différent du nombre réel de publis qui les citent
+- **Total compteurs déclarés** : 75 — **total signatures réelles** : 274
+- Top des écarts :
 
-| Feature                       | État       | Preuve / commentaire |
-|-------------------------------|------------|----------------------|
-| CRM contacts unifiés          | ⚠ partiel | [src/services/brevo.js:5-28](src/services/brevo.js#L5-L28) liste max 300 contacts. Pas de virtualisation, pas de fusion doublons UI (la dédup CSV existe : [src/services/export.js:70-90](src/services/export.js#L70-L90)). |
-| Sync Notion articles          | ✅ marche | [src/hooks/useNotionSync.js](src/hooks/useNotionSync.js) + [worker/index.js:721-847](worker/index.js#L721-L847). À **abandonner** selon brief — l'utilisatrice ne s'en sert pas. |
-| Campagnes email Brevo         | ⚠ partiel | `sendBulkEmail` par lots de 50 ([src/services/brevo.js:55-69](src/services/brevo.js#L55-L69)). Pas de preview rendue, pas de test-send dédié, pas de compteur cible live. |
-| Campagnes Telegram            | ⚠ partiel | `sendMessage`, `sendChannelMessage`, `testConnection` ([src/services/telegram.js](src/services/telegram.js)). Pas de preview, pas de test send avant blast. |
-| Automations                   | ❌ vide   | Un seul toggle dans [src/pages/Settings.jsx:721-723](src/pages/Settings.jsx#L721-L723) (`telegramNewSubscriber`). Aucun consommateur de ce toggle dans le worker — il n'est jamais lu. **À mettre en pause.** |
-| Import / Export CSV (xlsx)    | ✅ marche | [src/services/export.js](src/services/export.js) gère parse, validation, doublons, multi-sheet. |
-| GitHub commits viewer         | ❌ absent | Aucun composant ne liste les commits. Le README ment. |
-| Link checker                  | ❌ absent | `grep -i link` ne ramène rien d'utile. La page Technique édite robots/sitemap, mais ne vérifie pas les liens. |
+| Profil | Compteur déclaré | Réel |
+|---|---:|---:|
+| `louis-hervier-blondel` | 0 | **64** |
+| `valentin-chevallier` | 0 | **60** |
+| `institut-rousseau` (signature institutionnelle) | 0 | **52** |
+| `antoine-cargoet` | 0 | **31** |
+| `ophelie-coelho` | 3 | **27** |
+| `nicolas-dufrene` | 15 | 6 |
+| `guillaume-kerlero-de-rosbo` | 8 | 1 |
+| `beverley-toudic` | 5 | 0 |
+| `ano-kuhanathan` | 3 | 0 |
+| `anais-voy-gillis` | 2 | 0 |
 
-**Features non documentées qui existent en plus :**
-- **Auth** maison login/mdp ([src/services/auth.js](src/services/auth.js) + [worker/index.js:39-189](worker/index.js#L39-L189)) avec PBKDF2 100k, sessions KV 12h, rate-limit 10 tentatives / 15 min, comptes admin/editor.
-- **Sollicitations** : formulaire public + back-office complet (statut, tags, notes, replies par email Brevo, archivage soft-delete).
-- **Calendrier éditorial** persistant en KV (socialPosts, rapports de fondations, événements extérieurs).
-- **Page Technique** : édition de robots.txt, manifest.json, sitemap.xml, rss.xml, search-index.json, vercel.json, Schema.org dans index.html.
-- **Translation** : DeepL ou Claude Haiku 4.5 fallback, FR→EN/ES/DE/IT.
-- **Page Profils** ([src/pages/Profils.jsx](src/pages/Profils.jsx)) avec barre de recherche, photos chargées via API auth (mémoire récente).
+Le compteur n'est ni source de vérité, ni utilisable. La page Profils du dashboard recompte à la volée via `findPublicationsForAuthor` ([src/utils/constants.js](src/utils/constants.js)), mais le site public — s'il l'affiche — utilise potentiellement une valeur fausse.
 
----
+### 2.4 Doublon `src/data/authors.json` côté dashboard
 
-## 3. Bugs reproductibles
-
-1. **Token GitHub exposé dans le bundle JS public** — voir §4.1, c'est aussi un bug fonctionnel : tout utilisateur du dashboard peut récupérer un token PAT et écrire dans le repo site sans passer par l'auth dashboard.
-
-2. **`SITE_URL` pointe vers une URL Vercel temporaire** — [src/utils/constants.js:207](src/utils/constants.js#L207) hardcode `https://institut-rousseau-kb9p.vercel.app` alors que le vrai site est `institut-rousseau.fr` (CNAME présent dans le repo site). Tous les liens "Voir sur le site" sont cassés en prod.
-
-3. **`saveAuthorsToGitHub` écrit dans le mauvais repo** — [src/services/github.js:221-264](src/services/github.js#L221-L264) commit `src/data/authors.json` dans `ir-dashboard` (le repo du dashboard), pas dans le repo site. Cela explique les commits récents `Mise à jour authors.json depuis le back-office`. Le repo site a déjà `data/auteurs.json` qui est la source canonique. **Split-brain.**
-
-4. **Notion sync polle même quand l'onglet est en arrière-plan** — [src/hooks/useNotionSync.js:38](src/hooks/useNotionSync.js#L38), `setInterval` à 5 min sans `document.visibilityState`. Consomme du quota Notion pour rien.
-
-5. **TipTap perd la valeur initiale dans certaines races** — [src/components/editor/RichEditor.jsx:50-55](src/components/editor/RichEditor.jsx#L50-L55) : effet `setContent` sur changement externe, mais sans guard sur le timing d'initialisation de l'éditeur ; reproductible en passant rapidement entre articles.
-
-6. **Aucun auto-save** dans l'éditeur d'articles. Si la fenêtre se ferme, le brouillon est perdu (pas de localStorage de sécurité, pas d'IndexedDB, pas de `beforeunload`).
-
-7. **Toolbar TipTap utilise `window.prompt()` pour les liens et images** — [src/components/editor/EditorToolbar.jsx:23-38](src/components/editor/EditorToolbar.jsx#L23-L38). Pas d'alt obligatoire, pas de validation URL, pas de drag&drop, pas de paste image, pas de upload sur le repo. La promesse "insertion image avec upload + alt obligatoire + redim" du brief n'existe pas du tout.
-
-8. **`escape` / `unescape` (globals dépréciés)** dans [src/services/github.js:24,138,247](src/services/github.js#L24) et [worker/index.js:880,906,953](worker/index.js#L880). Marche aujourd'hui, peut casser sur Node 24+ ou navigateurs récents qui les retirent.
-
-9. **`new Function('return (...)')` dans `updatePublicationsI18n` et `updatePublicationsData`** — [src/services/github.js:285,323](src/services/github.js#L285) — eval déguisée. Casse à la moindre quote bizarre dans le contenu du site, et c'est une porte d'entrée à code injection si un fichier du repo site est modifié hors-dashboard.
-
-10. **`hasNotion()` est `true` même quand Notion répond 401** — [src/services/notion.js:101-104](src/services/notion.js#L101-L104) ne checke que la présence locale du token. Le badge "Notion connecté" ment.
-
-11. **`automations.telegramNewSubscriber` jamais consommé** — toggle dans Settings, mais aucune route worker/front ne le lit. Toggle décoratif.
-
-12. **`CONTACT_AUTH_TOKEN` partagé** : si configuré, c'est un Bearer commun à tous les utilisateurs du back-office sollicitations + calendrier ([worker/index.js:386-391](worker/index.js#L386-L391)). Mauvais modèle d'auth (déjà remplacé par `auth:*` mais le code conserve les deux portes en parallèle).
-
-13. **Le smoke test `tests/smoke.mjs` n'est pas exécuté en CI** (workflow non vérifié, mais à valider).
+Le repo dashboard contient `src/data/authors.json` (522 lignes) — vestige du split-brain identifié dans l'audit précédent (§3.3). Marqué comme corrigé dans `4db682a`, mais le fichier est toujours présent. À supprimer.
 
 ---
 
-## 4. Failles de sécurité
+## 3. Relation Publication ↔ Auteur — état réel
 
-### 4.1 CRITIQUE — Token PAT GitHub exposé côté navigateur
-- [src/services/github.js:5](src/services/github.js#L5) lit `import.meta.env.VITE_GITHUB_TOKEN`.
-- Vite **inline** toute variable préfixée `VITE_*` dans le bundle JS public.
-- Le dashboard est servi sur GitHub Pages (public). **Le token PAT est récupérable par n'importe quel visiteur** via `view-source` ou DevTools → onglet Network → un `bundle.js`.
-- Le `.env` local de la machine actuelle contient un token réel `github_pat_11CABKEYQ0E0...` avec les droits sur `institut-rousseau` (privé). Si un build a déjà été déployé avec ce token, **il faut le révoquer immédiatement** sur https://github.com/settings/tokens, indépendamment de la refonte.
-- Idem `VITE_NOTION_API_KEY` et `VITE_NOTION_DATABASE_ID`.
-- **Action urgente** : révoquer le token PAT visible, vérifier que le bundle déployé sur GH Pages ne le contient pas, sinon le dashboard a été un canal d'exfiltration depuis avril 2026.
+### Côté dashboard
 
-### 4.2 Auth front en `localStorage`
-- [src/services/auth.js:8,18](src/services/auth.js#L8) stocke le bearer en `localStorage`. Persistant, accessible à tout JS de la page (XSS → vol de session). Le brief demande explicitement `sessionStorage`.
+- **`AuthorPicker` existe déjà** ([src/components/shared/AuthorPicker.jsx](src/components/shared/AuthorPicker.jsx)) : recherche debounced 150ms, multi-select, normalisation accents/casse, valeurs sortantes = **IDs de profil**. Bien fait.
+- **Le picker est utilisé dans le flow "Publier"** ([src/pages/Articles.jsx:1127-1133](src/pages/Articles.jsx#L1127)).
+- **MAIS** le formulaire d'édition d'article stocke `form.author` comme **string libre** ([src/pages/Articles.jsx:38, 782](src/pages/Articles.jsx#L38)) — pas un tableau d'IDs.
+- Au moment de publier ([src/pages/Articles.jsx:204, 956, 975, 1032](src/pages/Articles.jsx#L204)), on reconvertit les IDs sélectionnés en chaîne de noms (`authorNames`) qui est écrite dans `publications.json` ET dans le HTML généré.
+- Conséquence : **la relation par ID est perdue à la sauvegarde**. Le `AuthorPicker` est cosmétique pour l'instant, l'historique reste en string.
 
-### 4.3 Bootstrap admin avec mdp en clair codé
-- [worker/index.js:64-67](worker/index.js#L64-L67) : si la KV est vide, `admin / IR2026!` crée le compte. Si la KV est purgée (par accident, rollback…), n'importe qui peut bootstrapper l'admin tant que personne n'a encore reconnecté. À supprimer après bascule OAuth.
+### Côté HTML généré
 
-### 4.4 CORS Worker `*`
-- [worker/index.js:18-22](worker/index.js#L18-L22) : `Access-Control-Allow-Origin: *`. Tout site malveillant peut faire des requêtes (sauf endpoints qui exigent un Bearer). À restreindre au domaine GitHub Pages prod + `localhost:5173` dev.
+- Chaque publication HTML embarque le **nom + initiales + lien** auteur en dur ([src/pages/Articles.jsx:1390-1393](src/pages/Articles.jsx#L1390)).
+- Si on renomme un profil, **les ~260 pages publiées ne suivent pas**.
+- Avatar généré avec `authorInitials(authors)` ([src/pages/Articles.jsx:1287-1293](src/pages/Articles.jsx#L1287)) — pas la photo du profil.
 
-### 4.5 TipTap sans sanitize au paste
-- [src/components/editor/RichEditor.jsx:27-47](src/components/editor/RichEditor.jsx#L27-L47) : pas de DOMPurify, pas de `transformPastedHTML`. Coller du HTML d'un site externe peut amener `<script>`, `onerror`, etc., qui finiront dans une page publique du site. Vecteur XSS stocké.
+### Côté site public
 
-### 4.6 Construction HTML par concat de strings
-- [src/pages/Articles.jsx:239-247](src/pages/Articles.jsx#L239-L247) construit la carte HTML par template string sans aucun escape. Un titre contenant `</article><script>...` casse la page et exécute du JS sur `publications.html`.
-
-### 4.7 `new Function` côté front
-- [src/services/github.js:285,323](src/services/github.js#L285) — voir bug §3.9. Si le repo site est compromis, le dashboard exécute le code attaquant.
-
-### 4.8 Bearer commun `CONTACT_AUTH_TOKEN`
-- Voir bug §3.12. À retirer dès qu'OAuth GitHub est en place.
-
-### 4.9 Pas de Content-Security-Policy
-- `index.html` ne déclare pas de CSP. Aucun rempart si XSS.
-
-### 4.10 Limites manquantes
-- Aucune limite sur la taille des fichiers uploadés (images TipTap base64, qui peuvent peser 10 Mo et faire péter le commit GitHub).
-- Aucun `rel="noopener"` strict sur les liens TipTap externes (présent en attribute par défaut, à vérifier au paste).
+- L'AuthorPicker existe côté dashboard mais le site lui-même affiche `publi.author` en dur. Pas de lookup par ID.
+- La fiche `/auteur/{slug}` existait sur l'ancien WP (cf. mémoire `reference_scraping_wp`) mais **aucune page `auteur/*.html` n'existe dans le repo site actuel** — la fiche profil n'est pas exposée publiquement aujourd'hui (à confirmer avec toi).
 
 ---
 
-## 5. Le repo du site `institut-rousseau`
+## 4. Pipeline GitHub → Vercel — état réel
 
-**Existe** : `benedictefradin-cmd/institut-rousseau`, **privé**, accessible avec le PAT actuel.
+### Mécanique en place
 
-**Déjà en place :**
-- `CNAME` → `institut-rousseau.fr` (déployé sur Vercel via Git integration, deploy auto sur push `main`).
-- HTML statique pur (vanilla JS), aucun build step. `python3 -m http.server` suffit en local.
-- **253 publications** dans `publications/<slug>.html` (pages autonomes complètes).
-- **`data/`** déjà structuré :
-  - `publications.json` (253 entrées, format `{ id, title, author, date, type, categories, color, description, slug, image, excerpt }`)
-  - `events.json`, `presse.json`, `auteurs.json`, `contenu.json`
-- `assets/` : `css/`, `js/` (i18n, traduction maison FR/EN/ES/DE/IT), `images/{equipe,auteurs,publications,evenements,le-projet}`, `img/` (publications en 400/800/1200px), `pdf/`.
-- `includes/` : `header.html`, `footer.html` (injectés via JS).
-- `api/` : 2 fonctions serverless Vercel (`contact.js`, `newsletter.js`).
-- Pages thématiques, équipe, publications, presse, événements toutes en `.html` à la racine.
-- `search-index.json` : index full-text généré (mention dans Technique : "300+ entrées").
+- **Push sur `main` du repo site → Vercel détecte → build → déploie** : c'est le mécanisme natif de l'intégration Git Vercel, supposé fonctionner.
+- **Deploy Hook manuel** : [src/services/deploy.js](src/services/deploy.js) implémente un POST sur une URL stockée en localStorage (`vercelDeployHook`).
 
-**Constat majeur pour la refonte :**
-Le brief propose d'introduire `content/{articles,press,pages,team,events}/` avec frontmatter Markdown.  
-**Mais le site actuel ne consomme pas de Markdown** — il sert du HTML statique. Migrer vers Markdown impliquerait soit :
-- (A) **Garder le HTML** : le dashboard édite `publications/<slug>.html` + `data/publications.json` directement (modèle actuel, juste à fiabiliser).
-- (B) **Introduire un générateur statique** (Eleventy / Astro / Hugo) côté site qui transforme `content/*.md` en `publications/*.html` au build, déployé toujours sur Vercel ou sur GitHub Pages. **C'est une refonte du site, pas seulement du dashboard.**
+### Trous identifiés
 
-C'est une décision majeure qui dépasse le périmètre "dashboard" — voir §7 questions bloquantes.
+1. **L'URL du Deploy Hook est en `localStorage`** : par utilisateur, par navigateur. Si Bénédicte change de poste, elle perd la config. Devrait être un secret côté Worker.
+2. **Aucun statut visible dans le dashboard** : pas d'indicateur 🟢/🟡/🔴, pas de "Publié il y a X minutes", pas de polling Vercel API.
+3. **Aucun viewer de logs** : impossible de voir les 5 derniers builds, leur statut, leurs erreurs.
+4. **Aucun bouton "Forcer un nouveau déploiement"** facilement accessible (le code existe via `triggerRebuild`, mais pas de bouton dédié dans une page principale).
+5. **`deploy.yml` du dashboard n'est pas relié à Vercel** : il sert au build GitHub Pages du dashboard lui-même, pas au déploiement du site.
+6. **Le commit message du dashboard est générique** (`Publication ajoutée : xx`, `Publish: xx`, cf. `git log`) — pas de traçabilité fine de qui a publié quoi.
 
 ---
 
-## 6. Plan de refonte proposé
+## 5. UX — synthèse rapide
 
-> Cadrage avant code. Tout est négociable selon les réponses du §7.
-
-### P0 — sécurité + fondations (1-2 jours)
-1. **Révoquer le PAT GitHub exposé** (à faire par l'admin, pas moi) et purger `.env` du disque.
-2. **Retirer `VITE_GITHUB_TOKEN` et `VITE_NOTION_API_KEY` du front** : tout passe par le Worker, plus aucun secret dans le bundle.
-3. **OAuth GitHub** : OAuth App (l'admin crée le client_id/secret), worker `POST /auth/github/callback`, front stocke en `sessionStorage`, whitelist d'usernames `ALLOWED_GITHUB_USERS` (ou org `institut-rousseau` si elle existe).
-4. **Service `gitContent.js`** : remplace `services/github.js` et `services/siteData.js` ; appels GitHub directs (avec le token OAuth de l'utilisateur en mémoire), gestion des conflits 409.
-5. **CORS worker** restreint aux origines réelles.
-6. **CSP** dans `index.html`.
-7. **Conserver l'auth login/mdp existante en parallèle** le temps de la transition (pas de big-bang).
-
-### P1 — refonte éditeur articles + collections (3-5 jours)
-8. **Décision contenu (cf. §7 question 5)** :
-   - Si **(A) on garde le HTML** : le dashboard pilote `publications/<slug>.html` + `data/publications.json` proprement, avec `<CollectionEditor>` générique pour chaque type.
-   - Si **(B) on migre Markdown** : sortir d'abord le générateur statique côté site (hors périmètre dashboard).
-9. **Éditeur TipTap nouvelle génération** : DOMPurify, drag&drop image avec upload `assets/img/publications/<slug>/`, alt obligatoire, redim auto 2000px max, auto-save debounced 3s, IndexedDB backup 5 versions, `beforeunload` warning, validation pré-publication.
-10. **`<CollectionEditor schema={...}>`** mutualisé pour `events`, `presse`, `auteurs`, `pages`.
-11. **Écran "Réglages site"** qui édite `data/contenu.json` (le fichier existe déjà, contient titres/descriptions globales).
-12. **Migration Notion → fichiers** : script one-shot `scripts/migrate-notion.mjs` **uniquement si** la base Notion contient des articles non encore présents dans `data/publications.json` (à vérifier).
-
-### P2 — polish + suppression de la dette (selon temps restant)
-13. **CRM Brevo** : virtualisation `react-window` si > 500 contacts, fusion doublons UI.
-14. **Campagnes Brevo / Telegram** : preview + test send + compteur cible live.
-15. **Automations** : commenter le menu (toggle inutilisé). Réactiver plus tard si vraie demande.
-16. **Link checker** : ajouter un vrai vérificateur (background job côté worker : crawl + rapport) — utile sur 253 publications.
-17. **Healthcheck par service** dans Settings (boutons "Tester la connexion" déjà partiellement en place).
-18. **Tokens CSS** dans `src/styles/tokens.css` alignés sur la charte du site live (capture couleurs/typo).
-19. **UI partagée** `src/ui/` : Button, Input, Select, Modal, Toast, Badge, Table.
-20. **Fixer `SITE_URL`** = `https://institut-rousseau.fr`.
-21. **Supprimer `saveAuthorsToGitHub` qui écrit dans le repo dashboard** : tout doit aller dans le repo site.
-22. **`automations` UI off** + retirer `CONTACT_AUTH_TOKEN` au profit des sessions OAuth.
-23. **Smoke test en CI** (`tests/smoke.mjs`) sur PR.
-
-### Hors périmètre / à débattre
-- Migration site Vercel → GitHub Pages : possible plus tard, le dashboard sait déjà parler `VITE_SITE_REPO`.
-- Refonte du système de traduction (translation.js du site) : trop gros pour cette mission.
+- **Sidebar = 19 pages** (`Accueil, Articles, Calendrier, Contenu, Dashboard, EditeurVisuel, Equipe, Evenements, Medias, Messagerie, Navigation, Newsletter, PagesSite, Presse, Profils, SEO, Settings, Sollicitations, Technique`). Le brief demande de simplifier à **6 entrées principales** (Profils / Publications / Articles / Événements / Médias / Paramètres). Tout le reste devra être regroupé sous Paramètres ou supprimé.
+- **Recherche globale `Cmd+K`** : absente.
+- **Breadcrumbs** : absents.
+- **Tableau de bord d'accueil** : la page `Accueil.jsx` existe mais n'agrège pas (à vérifier en détail) "derniers contenus modifiés + statut Vercel + mini-stats" tel que demandé.
+- **Auto-save brouillon 30 s** : actuellement 3 s debounce ([src/hooks/useDraftAutosave.js](src/hooks/useDraftAutosave.js), ajouté `b04c2ce`) — déjà mieux que 30 s, à conserver tel quel.
+- **Aperçu en direct split-screen** : absent (il y a un onglet "Aperçu" dans l'éditeur, mais pas un mode split).
+- **Mode clair/sombre** : pas vu.
+- **Raccourcis clavier `Cmd+S`/`Cmd+P`** : pas vus.
+- **Confirmations de suppression** : `ConfirmDialog` existe ([src/components/shared/ConfirmDialog.jsx](src/components/shared/ConfirmDialog.jsx)), à généraliser.
+- **Vignettes / photos en liste** : `RepoPhoto` est utilisé sur la page Profils, à généraliser à Publications & Événements.
 
 ---
 
-## 7. Questions bloquantes — à valider avant de coder
+## 6. Bugs & incohérences identifiés
 
-1. **PAT GitHub `github_pat_11CABKEYQ0E0...` (visible dans `.env` local)** : peux-tu le révoquer maintenant sur https://github.com/settings/tokens, et confirmer si un build du dashboard a déjà été déployé en prod avec ce token (sinon je vérifie le bundle live) ?
-
-2. **OAuth App vs GitHub App** : je propose **OAuth App** (plus simple, pas d'install per-user). Tu confirmes ? L'admin (toi) devra créer l'OAuth App et fournir `client_id` + `client_secret` au Worker.
-
-3. **Whitelist accès** : tu préfères une **liste blanche d'usernames GitHub** (variable worker `ALLOWED_GITHUB_USERS=alice,bob,charlie`) ou une **organisation GitHub** `institut-rousseau` à laquelle on rattache les comptes ? Si l'org n'existe pas encore, la liste blanche est plus simple à démarrer.
-
-4. **Format de contenu — décision majeure** :
-   - **(A)** Le dashboard édite **les fichiers HTML existants** dans `publications/*.html` + `data/*.json` (pas de Markdown, pas de générateur statique). Le site reste tel quel. **Refonte plus rapide, moindre risque.**
-   - **(B)** Le site est refondu pour consommer du Markdown via un générateur statique (Eleventy ou Astro). Le dashboard édite `content/*.md`. **Refonte profonde du site lui-même, plusieurs jours côté site.**
-   
-   Le brief décrit (B), mais la réalité du repo site (HTML pur, 253 pages déjà publiées) rend (A) **bien plus pragmatique**. **Quelle option ?**
-
-5. **Notion** : l'abandon est acté dans le brief. La base Notion contient-elle des articles **non encore publiés** sur le site ? Si non, le script de migration Notion→fichiers n'a rien à faire — on coupe juste l'intégration. Peux-tu me dire ce qu'il y a dedans ?
-
-6. **Auth login/mdp existante (admin/editor en KV)** : on la **supprime** une fois OAuth GitHub en place, ou on la garde en backup ? Je penche pour la supprimer après une période de transition (1 mois) pour éviter deux mécaniques d'auth en parallèle.
-
-7. **Worker — périmètre cible** : le brief dit "uniquement OAuth callback + proxy Brevo". Mais le worker fait aujourd'hui aussi : sollicitations (KV), calendrier (KV), Telegram, Notion, traduction, GitHub publish. Tu veux qu'on **garde tout** (sollicitations / calendrier / Telegram / traduction sont utiles) et qu'on **retire** seulement Notion et l'auth maison ? Ou tu veux vraiment réduire au minimum ?
-
-8. **`SITE_URL`** : je passe à `https://institut-rousseau.fr` ? Tu confirmes que c'est bien ce domaine en prod (et pas l'URL Vercel preview qui est dans le code aujourd'hui) ?
-
-9. **Automations** : un toggle décoratif jamais consommé. Je le **commente** ?
-
-10. **Calendrier de la migration** : tu as une deadline ? Je bosse sur un dashboard 100% nouveau en parallèle, ou je fais évoluer le code actuel sur place ? **Je recommande l'évolution sur place, lot par lot**, pour ne jamais casser ce qui marche.
+| # | Sévérité | Sujet | Détail |
+|---|---|---|---|
+| 1 | 🔴 | Compteurs `publications` faux | Voir §2.3. À calculer dynamiquement, pas à stocker. |
+| 2 | 🔴 | Relation auteur en string | Voir §3. Migration vers `authorIds: []` requise. |
+| 3 | 🔴 | HTML publication = noms en dur | Voir §3. Renommer un profil ne propage pas. |
+| 4 | 🟠 | 1 page HTML orpheline | `publications/` a 261 fichiers, `publications.json` 260 entrées. À identifier (probablement une page de test). |
+| 5 | 🟠 | 3 paires FR/EN sans modèle de traduction | Voir §2.2. Risque de divergence éditoriale. |
+| 6 | 🟠 | Deploy Hook en localStorage | Voir §4.1. Pas portable, pas partagé. |
+| 7 | 🟠 | Aucun statut Vercel visible | Voir §4.2. Bénédicte ne sait pas si son push a marché. |
+| 8 | 🟡 | `src/data/authors.json` orphelin | Voir §2.4. À supprimer. |
+| 9 | 🟡 | 163 profils sans `role` | Voir §2.1. Pas un bug, mais qualité faible. |
+| 10 | 🟡 | 62 profils sans photo | Voir §2.1. À combler progressivement. |
+| 11 | 🟡 | Schéma profil sans `reseaux`, `actif`, `date_arrivee`, `email` persisté | Voir §2.1. Champs du brief absents. |
+| 12 | 🟡 | Sidebar trop touffue (19 pages) | Voir §5. À regrouper. |
+| 13 | 🟡 | Pas de `Cmd+K` global | Voir §5. À ajouter. |
+| 14 | 🟢 | Commit messages publication peu descriptifs | Voir §4.6. À enrichir (titre, slug, auteur). |
 
 ---
 
-## 8. Ce que je ne ferai pas tant que tu n'as pas répondu
+## 7. Plan de chantier proposé — par PR
 
-- Aucun changement de code dans `src/` ou `worker/`.
-- Aucune révocation/rotation de token (c'est ton rôle, pas le mien).
-- Aucune création de l'OAuth App GitHub (idem).
-- Aucune migration Notion (j'attends ta réponse §7.5).
-- Aucune décision A/B sur le format de contenu.
+> Chaque chantier = 1 PR. Tu valides l'AUDIT, puis on attaque dans l'ordre.
 
-Une fois tes réponses validées, je publie un plan détaillé phase par phase, puis je commence par P0 par lots atomiques en Conventional Commits sur `main`.
+### Chantier A — Schéma profil enrichi + suppression compteur (½ jour)
+
+- Ajouter au schéma `data/auteurs.json` : `bioCourte`, `bioLongue` (split de l'actuel `bio`), `reseaux: { linkedin, x, site, email }`, `dateArrivee`, `actif: true|false`. Migration douce : ancien `bio` reste, nouveaux champs vides par défaut.
+- **Supprimer** le champ `publications` du schéma (le calcul à la volée via `findPublicationsForAuthor` est déjà en place).
+- Adapter le formulaire dashboard ([src/pages/Profils.jsx](src/pages/Profils.jsx)) pour exposer les nouveaux champs (sections Identité / Bio / Réseaux / Statut).
+- Dump de sauvegarde dans `backups/profiles-2026-05-02.json` avant migration.
+- `MIGRATION.md` : documenter le changement.
+
+**Pas de fusion de doublons à faire** (audit §2.1 : 0 doublon détecté). Le brief Chantier 1 anticipait un travail qui s'avère déjà fait. On gagne du temps.
+
+### Chantier B — Relation Publication ↔ Auteur par ID (1-2 jours)
+
+1. **Schéma cible** dans `data/publications.json` : remplacer `"author": "Nicolas Dufrêne"` par `"authorIds": ["nicolas-dufrene"]` (toujours un tableau, même pour un seul auteur). Garder `author` en lecture seule pendant la transition (rétrocompat).
+2. **Script de migration** `scripts/migrate-author-ids.mjs` :
+   - Pour chaque publication, split le champ `author` (séparateurs `,`, `&`, `et`, `and`)
+   - Lookup tolérant (normalisation accents/casse) dans `auteurs.json`
+   - **Auto** si match unique sur chaque part : écrit `authorIds`
+   - **Manuel** sinon : entrée dans `AUTHORS_MIGRATION.md` (à valider à la main par Bénédicte). Sur la base de l'audit, on attend ~1 cas (`"un collectif d'économistes"`) + les 8 multi-auteurs si doute.
+   - Aucune création automatique de profil "fantôme" — toujours signaler.
+   - Backup dans `backups/publications-2026-05-02.json`.
+3. **Formulaire d'édition** ([src/pages/Articles.jsx](src/pages/Articles.jsx)) : passer `form.authorIds = []` au lieu de `form.author = ''`. L'AuthorPicker est déjà branché, il suffit de stocker sa sortie.
+4. **Génération HTML** : le bloc `article-author-block` ([src/pages/Articles.jsx:1390](src/pages/Articles.jsx#L1390)) lit les profils par ID au moment de la publication et génère noms + initiales + lien fiche profil.
+
+### Chantier C — Source unique côté site (1 jour)
+
+- **Côté site** ([repo institut-rousseau](../institut-rousseau/)) : le rendu publications, équipe, presse doit lire `auteurs.json` et faire le lookup par ID au runtime (JS vanilla déjà en place). Pas de duplication de noms en dur dans les fichiers JSON satellites.
+- **Pages auteur** : décider avec Bénédicte si on (re)crée des fiches `/auteur/{id}.html` — l'ancien WP en avait. Si oui, génération automatique au build (script `scripts/generate-author-pages.mjs` côté site).
+- Vérifier qu'aucun composant front ne stocke des copies (équipe, presse, événements peuvent avoir le même problème — à inspecter).
+
+### Chantier D — Pipeline visible dans le dashboard (1 jour)
+
+- **Indicateur de statut Vercel sur la page d'accueil** :
+  - 🟢 "Publié il y a X minutes" si dernier build = SUCCESS
+  - 🟡 "Déploiement en cours…" avec spinner si BUILDING / QUEUED
+  - 🔴 "Erreur — voir les logs" avec lien vers Vercel
+- Implémentation : nouvelle route Worker `GET /api/vercel/deployments` qui appelle `https://api.vercel.com/v6/deployments?projectId=…&limit=5` avec un token Vercel stocké en secret Worker (à générer par Bénédicte sur https://vercel.com/account/tokens).
+- **Bouton "Forcer un nouveau déploiement"** sur la page d'accueil + dans Paramètres.
+- **Migrer le Deploy Hook URL** de localStorage → secret Worker pour que la config soit partagée et survive aux changements de navigateur.
+- Affichage des **5 derniers builds** (statut, timestamp, commit message, durée, lien Vercel) dans Paramètres → Déploiements.
+
+### Chantier E — Simplification UX (2-3 jours)
+
+À découper en sous-PR si nécessaire :
+
+1. **Sidebar regroupée à 6 entrées** : Profils / Publications / Articles / Événements / Médias / Paramètres. Le reste (Calendrier, Sollicitations, Newsletter, Messagerie, Navigation, Contenu, SEO, Equipe, Presse, PagesSite, Technique) passe sous Paramètres ou est masqué temporairement.
+2. **Page d'accueil = vrai dashboard** : derniers contenus modifiés + statut Vercel (Chantier D) + mini-stats (nombre de profils, publis, événements à venir).
+3. **`Cmd+K` recherche globale** sur profils + publications + articles + événements.
+4. **Breadcrumbs** sur les pages d'édition.
+5. **Listes** : recherche live + filtres par auteur/date/catégorie/statut + tri + actions en masse (publier/dépublier/supprimer). Vignettes (photo profil, image couverture).
+6. **Formulaires** : champs groupés par section + validation FR + indication champs obligatoires.
+7. **Raccourcis clavier** `Cmd+S` (sauver) / `Cmd+P` (publier) / `Esc` (annuler modal).
+8. **Confirmations** systématiques avant suppression (utiliser `ConfirmDialog` partout).
+9. **Mode clair/sombre** : préférence persistée en localStorage.
+
+### Chantier F — Bonus (au coup par coup)
+
+- **Suppression** du fichier orphelin `src/data/authors.json` du repo dashboard.
+- **Identification** de la 261ᵉ page HTML sans entrée JSON (probablement un test).
+- **Modèle de traduction** : décider FR/EN comme entrées séparées (statu quo) OU comme `versions: { fr, en }` sur une publication-mère. Voir question ouverte 1.
+- **SEO du site** : revue des `<title>`, `<meta description>`, `og:image`, sitemap (déjà 60 Ko, à vérifier), `robots.txt` (déjà éditable via la page Technique).
+- **Accessibilité** : audit des contrastes + alt-text obligatoire (déjà imposé dans l'éditeur depuis `b04c2ce`) + navigation clavier sur la sidebar regroupée.
+- **Performance** : lazy-loading systématique des images de publications (déjà en place ?), virtualisation `react-window` sur les listes > 200 entrées (utile pour Profils 211 et Publications 260).
+- **Commit messages enrichis** : `publish(publications): {slug} — {auteur(s)} — {date}` au lieu de `Publish: xx`.
+
+---
+
+## 8. Ordre recommandé & estimations
+
+| Ordre | Chantier | Estimation | Pré-requis | Bénéfice |
+|---|---|---|---|---|
+| 1 | A — Schéma profil | ½ j | — | Foundations propres pour la suite |
+| 2 | B — Relations par ID | 1-2 j | A | Cœur du brief, débloque C |
+| 3 | C — Source unique côté site | 1 j | B | "Je renomme → ça suit partout" |
+| 4 | D — Pipeline visible | 1 j | — (parallélisable) | Confiance utilisatrice + DX |
+| 5 | E — UX | 2-3 j | A, B (pour les listes) | Brief explicite + adoption |
+| 6 | F — Bonus | au fil de l'eau | — | Qualité long-terme |
+
+**Total : 6-9 jours de travail sur le dashboard + 1 jour côté site (Chantier C). Tests + smoke compris.**
+
+---
+
+## 9. Questions ouvertes — à valider avant Chantier B
+
+1. **Modèle des traductions FR/EN** (3 paires détectées, §2.2) : on garde **deux entrées séparées** avec leur propre slug et leur propre URL (statu quo) ou on regroupe sous une publication-mère avec `versions: { fr, en, ... }` ? Le statu quo est plus simple, le regroupement permet de partager les co-auteurs et les catégories.
+2. **Fiches publiques `/auteur/{id}`** côté site : à recréer (l'ancien WP en avait) ou pas pertinent aujourd'hui ?
+3. **Profil "Institut Rousseau"** : 52 publications signées comme l'entité elle-même. On garde ce profil "institutionnel" ou on signe avec les vrais auteurs au cas par cas ?
+4. **Champ `actif`** : ça sert à filtrer les anciens contributeurs ? Si oui, comment l'historique des publis qu'ils ont signées doit s'afficher (lien vers fiche désactivée OK, ou pas de lien) ?
+5. **Token API Vercel** (Chantier D) : tu peux en générer un sur https://vercel.com/account/tokens et me le passer pour que je le mette dans les secrets du Worker ? Sans token, on n'a pas accès aux statuts/logs.
+6. **Page `EditeurVisuel.jsx`** : à conserver ou fusionner avec l'éditeur d'Articles ? Deux éditeurs séparés = source de divergence.
+
+---
+
+## 10. Ce que je ne fais pas tant que tu n'as pas validé
+
+- Aucun changement de schéma `auteurs.json` ou `publications.json`.
+- Aucune migration des publications existantes vers `authorIds`.
+- Aucune suppression de `src/data/authors.json` (pour ne rien casser tant que tu n'as pas confirmé).
+- Aucune touche à la sidebar / pages.
+- Aucune révocation de token, aucune création de PAT/secret.
+
+Une fois validé, je commence par le Chantier A (½ jour, foundation) puis enchaîne par PR atomiques en Conventional Commits sur `main`.

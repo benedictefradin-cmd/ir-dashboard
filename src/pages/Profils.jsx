@@ -12,7 +12,35 @@ import { useConfirm } from '../components/shared/ConfirmDialog';
 import { humanizeError } from '../utils/errors';
 import ResultsCount from '../components/shared/ResultsCount';
 
-const emptyForm = { firstName: '', lastName: '', role: '', photo: '', bio: '', email: '' };
+const emptyForm = {
+  firstName: '', lastName: '', role: '', photo: '',
+  bioCourte: '', bioLongue: '',
+  email: '', linkedin: '', x: '', site: '',
+  dateArrivee: '', actif: true,
+};
+
+// Sérialise un profil au format attendu côté repo site (data/auteurs.json).
+// Ordre des clés stable pour des diffs git lisibles.
+function serializeAuteur(a) {
+  return {
+    id: a.id,
+    firstName: a.firstName || '',
+    lastName: a.lastName || '',
+    role: a.role || '',
+    bio: a.bioCourte || a.bio || '',          // legacy : conservé pour rétrocompat assets/js/auteurs.js
+    bioCourte: a.bioCourte || a.bio || '',
+    bioLongue: a.bioLongue || '',
+    photo: a.photoPath || a.photo || '',
+    reseaux: {
+      linkedin: a.reseaux?.linkedin || a.linkedin || '',
+      x: a.reseaux?.x || a.x || a.twitter || '',
+      site: a.reseaux?.site || a.site || a.website || '',
+      email: a.reseaux?.email || a.email || '',
+    },
+    dateArrivee: a.dateArrivee || '',
+    actif: a.actif === false ? false : true,
+  };
+}
 
 const avatarColors = [COLORS.navy, COLORS.sky, COLORS.terra, COLORS.ochre, COLORS.green];
 
@@ -209,8 +237,14 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
       lastName: auteur.lastName || (auteur.name || '').split(' ').slice(1).join(' ') || '',
       role: auteur.role || auteur.titre || '',
       photo: auteur.photoPath || auteur.photo || '',
-      bio: auteur.bio || '',
-      email: auteur.email || '',
+      bioCourte: auteur.bioCourte || auteur.bio || '',
+      bioLongue: auteur.bioLongue || '',
+      email: auteur.reseaux?.email || auteur.email || '',
+      linkedin: auteur.reseaux?.linkedin || '',
+      x: auteur.reseaux?.x || '',
+      site: auteur.reseaux?.site || '',
+      dateArrivee: auteur.dateArrivee || '',
+      actif: auteur.actif === false ? false : true,
     });
     // La preview sera gérée par le modal via le hook usePhoto (form.photo).
     setPhotoPreview(null);
@@ -268,9 +302,19 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
       role: form.role,
       titre: form.role,
       photo: photoUrl,
-      bio: form.bio,
-      email: form.email,
-      publications: editId ? (auteurs.find(a => a.id === editId)?.publications || 0) : 0,
+      photoPath: uploadedPath || (photoUrl && !photoUrl.startsWith('http') ? photoUrl : (auteurs.find(a => a.id === editId)?.photoPath || '')),
+      bioCourte: form.bioCourte,
+      bioLongue: form.bioLongue,
+      bio: form.bioCourte,                    // legacy mirror
+      reseaux: {
+        linkedin: form.linkedin || '',
+        x: form.x || '',
+        site: form.site || '',
+        email: form.email || '',
+      },
+      email: form.email,                      // legacy mirror
+      dateArrivee: form.dateArrivee || '',
+      actif: form.actif === false ? false : true,
     };
 
     const oldAuteur = editId ? auteurs.find(a => a.id === editId) : null;
@@ -299,9 +343,8 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
 
       if (saveToSite) {
         try {
-          await saveToSite('auteurs', updatedList.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
-            id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
-          })), `Mise à jour profil : ${form.firstName} ${form.lastName}`);
+          await saveToSite('auteurs', updatedList.map(serializeAuteur),
+            `Mise à jour profil : ${form.firstName} ${form.lastName}`);
         } catch { /* silent */ }
       }
     }
@@ -342,9 +385,8 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
       }
       if (saveToSite) {
         try {
-          await saveToSite('auteurs', updatedList.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({
-            id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0,
-          })), `Suppression profil : ${name}`);
+          await saveToSite('auteurs', updatedList.map(serializeAuteur),
+            `Suppression profil : ${name}`);
         } catch { /* déjà toasté par saveToSite avec retry */ }
       }
     }
@@ -375,7 +417,7 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
         <div className="flex-center gap-8">
           
           {saveToSite && hasGitHub() && (
-            <button className="btn btn-green" onClick={() => saveToSite('auteurs', auteurs.map(({ id, firstName, lastName, role, bio, photo, photoPath, publications }) => ({ id, firstName, lastName, role, bio, photo: photoPath || photo || '', publications: publications || 0 })))}>
+            <button className="btn btn-green" onClick={() => saveToSite('auteurs', auteurs.map(serializeAuteur))}>
               Publier tout sur le site
             </button>
           )}
@@ -596,21 +638,70 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
                 </p>
               )}
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <label>Biographie (max 200 car.)</label>
-              <textarea
-                value={form.bio}
-                onChange={e => setForm({ ...form, bio: e.target.value.slice(0, 200) })}
-                rows={4}
-                placeholder="Courte biographie…"
-                maxLength={200}
-              />
-              <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4 }}>{(form.bio || '').length} / 200</p>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label>Email (optionnel, non affiché)</label>
-              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@exemple.fr" />
-            </div>
+            <fieldset style={{ marginBottom: 16, border: 'none', padding: 0 }}>
+              <legend style={{ fontSize: 13, fontWeight: 600, color: COLORS.navy, marginBottom: 8 }}>Biographie</legend>
+              <div style={{ marginBottom: 12 }}>
+                <label>Bio courte (max 200 car.) — affichée sur les listes et fiches</label>
+                <textarea
+                  value={form.bioCourte}
+                  onChange={e => setForm({ ...form, bioCourte: e.target.value.slice(0, 200) })}
+                  rows={3}
+                  placeholder="Une à deux phrases qui résument le profil…"
+                  maxLength={200}
+                />
+                <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4 }}>{(form.bioCourte || '').length} / 200</p>
+              </div>
+              <div>
+                <label>Bio longue (optionnelle) — affichée sur la fiche profil détaillée</label>
+                <textarea
+                  value={form.bioLongue}
+                  onChange={e => setForm({ ...form, bioLongue: e.target.value })}
+                  rows={6}
+                  placeholder="Parcours, publications de référence, engagements…"
+                />
+              </div>
+            </fieldset>
+
+            <fieldset style={{ marginBottom: 16, border: 'none', padding: 0 }}>
+              <legend style={{ fontSize: 13, fontWeight: 600, color: COLORS.navy, marginBottom: 8 }}>Réseaux & contact</legend>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                <div>
+                  <label>Email (interne, non affiché)</label>
+                  <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@exemple.fr" />
+                </div>
+                <div>
+                  <label>LinkedIn</label>
+                  <input type="url" value={form.linkedin} onChange={e => setForm({ ...form, linkedin: e.target.value })} placeholder="https://linkedin.com/in/…" />
+                </div>
+                <div>
+                  <label>X / Twitter</label>
+                  <input type="url" value={form.x} onChange={e => setForm({ ...form, x: e.target.value })} placeholder="https://x.com/…" />
+                </div>
+                <div>
+                  <label>Site personnel</label>
+                  <input type="url" value={form.site} onChange={e => setForm({ ...form, site: e.target.value })} placeholder="https://…" />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset style={{ marginBottom: 16, border: 'none', padding: 0 }}>
+              <legend style={{ fontSize: 13, fontWeight: 600, color: COLORS.navy, marginBottom: 8 }}>Statut</legend>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'end' }}>
+                <div>
+                  <label>Date d'arrivée (optionnelle)</label>
+                  <input type="month" value={form.dateArrivee} onChange={e => setForm({ ...form, dateArrivee: e.target.value })} />
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', paddingBottom: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={form.actif !== false}
+                    onChange={e => setForm({ ...form, actif: e.target.checked })}
+                    style={{ width: 'auto' }}
+                  />
+                  <span>Profil actif (décocher pour archiver)</span>
+                </label>
+              </div>
+            </fieldset>
 
             {/* Team membership info */}
             {editingAuteur && getTeamRole(editingAuteur) && (
