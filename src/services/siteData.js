@@ -231,7 +231,8 @@ export function normalizePublications(pubs) {
   return pubs.map((p, i) => ({
     id: p.id || `pub-${i}`,
     title: p.title || '',
-    author: p.author || '',
+    author: p.author || '',                     // legacy string, conservée pour rétrocompat
+    authorIds: Array.isArray(p.authorIds) ? p.authorIds : [],   // Chantier B : relation par ID
     date: p.date || '',
     tags: (p.categories || p.themes || []).map(c =>
       c.charAt(0).toUpperCase() + c.slice(1).replace('ecologie', 'Écologie').replace('economie', 'Économie')

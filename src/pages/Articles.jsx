@@ -35,7 +35,40 @@ export default function Articles({
   const emptyTranslations = () => Object.fromEntries(
     TARGET_LANGUAGES.map(l => [l.code, { title: '', summary: '', content: '' }])
   );
-  const [form, setForm] = useState({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '', translations: emptyTranslations() });
+  const [form, setForm] = useState({ title: '', author: '', authorIds: [], tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '', translations: emptyTranslations() });
+
+  // Calcule la chaîne lisible "Prénom Nom, Prénom Nom" à partir d'une liste
+  // d'IDs profil. Source unique : auteurs (prop). Fallback sur form.author si
+  // aucun ID (article legacy non encore migré vers authorIds).
+  const namesFromIds = useCallback((ids) => {
+    if (!ids || !ids.length) return '';
+    return ids.map(id => {
+      const a = auteurs.find(au => au.id === id);
+      if (!a) return null;
+      const full = `${a.firstName || ''} ${a.lastName || ''}`.trim();
+      return full || a.name || null;
+    }).filter(Boolean).join(', ');
+  }, [auteurs]);
+
+  // Renvoie la liste d'IDs effective : form.authorIds si renseignée, sinon
+  // tente un match tolérant sur form.author (string libre legacy).
+  const resolveAuthorIds = useCallback(() => {
+    if (form.authorIds && form.authorIds.length) return form.authorIds;
+    const raw = (form.author || '').trim();
+    if (!raw) return [];
+    const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+    return raw.split(/ *(?:,|&| et | and ) */).map(part => {
+      const k = norm(part);
+      const m = auteurs.find(a => norm(`${a.firstName || ''} ${a.lastName || ''}`) === k);
+      return m?.id || null;
+    }).filter(Boolean);
+  }, [form.authorIds, form.author, auteurs]);
+
+  // Synchronise form.author depuis form.authorIds dès qu'authorIds change.
+  // Ainsi le rendu HTML construit côté pushArticleToSite reste cohérent.
+  const setAuthorIds = useCallback((ids) => {
+    setForm(f => ({ ...f, authorIds: ids, author: ids.length ? namesFromIds(ids) : f.author }));
+  }, [namesFromIds]);
   // Langue actuellement éditée dans le formulaire ('fr' = source, sinon code de TARGET_LANGUAGES).
   const [langTab, setLangTab] = useState('fr');
 
@@ -112,7 +145,18 @@ export default function Articles({
   // ─── Publish flow ─────────────────────────────
   const startPublishFlow = (article) => {
     setPublishFlow({ article, step: 1 });
-    setSelectedAuthors([]);
+    // Pré-remplit la sélection avec les authorIds de l'article (ou un match
+    // tolérant sur la string `author` legacy si aucun ID n'est encore posé).
+    const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+    let preset = Array.isArray(article.authorIds) ? [...article.authorIds] : [];
+    if (!preset.length && article.author) {
+      preset = (article.author || '').split(/ *(?:,|&| et | and ) */).map(part => {
+        const k = norm(part);
+        const m = auteurs.find(a => norm(`${a.firstName || ''} ${a.lastName || ''}`) === k);
+        return m?.id || null;
+      }).filter(Boolean);
+    }
+    setSelectedAuthors(preset);
     setPreviewHtml('');
     setPublishResult(null);
     setPublishError(null);
@@ -201,7 +245,9 @@ export default function Articles({
       // 5. Update local state (la source de vérité reste publications-data.js
       //    du repo site ; le rechargement est piloté par App.jsx).
       setArticles(prev => prev.map(a =>
-        a.id === article.id ? { ...a, status: 'published', synced: true, date: today, author: authorNames } : a
+        a.id === article.id
+          ? { ...a, status: 'published', synced: true, date: today, author: authorNames, authorIds: [...selectedAuthors] }
+          : a
       ));
 
       setPublishResult({
@@ -319,10 +365,16 @@ export default function Articles({
     // métadonnées dans la liste publique du site (titre, auteur, résumé…).
     try {
       const categories = (formData.tags || []).map(t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+      // Chantier B : authorIds est la nouvelle relation par ID. author (string)
+      // reste \u00e9crit en miroir pour la r\u00e9trocompat avec les vues du site qui ne
+      // lisent pas encore les IDs (cf. Chantier C).
+      const idsToWrite = (formData.authorIds && formData.authorIds.length) ? formData.authorIds : resolveAuthorIds();
+      const authorString = idsToWrite.length ? namesFromIds(idsToWrite) : (formData.author || '');
       await updatePublicationsData({
         id: slug,
         title: formData.title,
-        author: formData.author,
+        author: authorString,
+        authorIds: idsToWrite,
         type: formData.type,
         categories,
         color: categoryColor(categories[0]),
@@ -416,7 +468,9 @@ export default function Articles({
       if (t) initialTranslations[lang.code] = { title: t.title || '', summary: t.summary || '', content: t.content || '' };
     }
     setForm({
-      title: art.title, author: art.author, tags: [...(art.tags || [])],
+      title: art.title, author: art.author || '',
+      authorIds: Array.isArray(art.authorIds) ? [...art.authorIds] : [],
+      tags: [...(art.tags || [])],
       summary: art.summary || '', content: art.content || '',
       type: art.type || 'Note d\'analyse', pdfUrl: art.pdfUrl || '',
       scheduledDate: art.scheduledDate || '',
@@ -489,7 +543,7 @@ export default function Articles({
     setShowForm(false);
     setShowPublishTranslation(false);
     setEditingArt(null);
-    setForm({ title: '', author: '', tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '', translations: emptyTranslations() });
+    setForm({ title: '', author: '', authorIds: [], tags: [], summary: '', content: '', type: 'Note d\'analyse', pdfUrl: '', scheduledDate: '', translations: emptyTranslations() });
     setLangTab('fr');
   };
 
@@ -772,16 +826,39 @@ export default function Articles({
               })}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <div>
-                <label>Titre {!isSourceLang && <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 400 }}>— version {SITE_LANGUAGES.find(l => l.code === langTab)?.label}</span>}</label>
-                <input value={currentTitle} onChange={e => updateLangField('title', e.target.value)} />
-              </div>
-              <div>
-                <label>Auteur</label>
-                <input value={form.author} onChange={e => setForm({ ...form, author: e.target.value })} disabled={!isSourceLang} title={!isSourceLang ? 'Le nom d\'auteur est commun à toutes les langues' : undefined} />
-              </div>
+            <div style={{ marginBottom: 16 }}>
+              <label>Titre {!isSourceLang && <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 400 }}>— version {SITE_LANGUAGES.find(l => l.code === langTab)?.label}</span>}</label>
+              <input value={currentTitle} onChange={e => updateLangField('title', e.target.value)} />
             </div>
+
+            {isSourceLang && (
+              <div style={{ marginBottom: 16 }}>
+                <label>Auteur(s) — sélection par profil <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 400 }}>(commun à toutes les langues)</span></label>
+                <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 10, background: '#fafafa', maxHeight: 280, overflowY: 'auto' }}>
+                  <AuthorPicker
+                    authors={auteurs}
+                    selected={form.authorIds || []}
+                    onChange={setAuthorIds}
+                    multiple={true}
+                  />
+                </div>
+                {form.author && !(form.authorIds && form.authorIds.length) && (
+                  <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 6 }}>
+                    Auteur saisi en texte libre (legacy) : <code>{form.author}</code>. Sélectionnez le ou les profils correspondants ci-dessus.
+                  </p>
+                )}
+                {(form.authorIds || []).length > 0 && (
+                  <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 6 }}>
+                    Affichage public : <strong>{namesFromIds(form.authorIds)}</strong>
+                  </p>
+                )}
+              </div>
+            )}
+            {!isSourceLang && form.author && (
+              <div style={{ marginBottom: 16, padding: 8, background: '#f3f4f6', borderRadius: 6, fontSize: 12, color: 'var(--text-light)' }}>
+                Auteur(s) (commun à toutes les langues) : <strong>{namesFromIds(form.authorIds) || form.author}</strong>
+              </div>
+            )}
 
             <div style={{ marginBottom: 16 }}>
               <label>Pôles thématiques</label>
@@ -1030,6 +1107,7 @@ export default function Articles({
                           id: slug,
                           title: finalArticle.fr.title,
                           author: authorNames,
+                          authorIds: selectedAuthors,           // Chantier B : relation par ID
                           date: dateYm,
                           type: pubType,
                           categories,
