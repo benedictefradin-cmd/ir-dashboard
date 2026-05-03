@@ -22,7 +22,10 @@ export const COLORS = {
   grayText: '#6B6560',
 };
 
-// ─── Navigation (groupée) ─────────────────────────────
+// ─── Navigation (Chantier E1 — 6 entrées principales + groupe "Plus") ───
+// Top-level visible par défaut : Dashboard, Profils, Publications, Événements,
+// Médias, Paramètres. Le reste (Communication + outils Site) est replié sous
+// "Plus" pour limiter le bruit visuel sur la page principale.
 export const NAV_GROUPS = [
   {
     key: 'main',
@@ -31,38 +34,35 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    key: 'editorial',
-    label: 'Éditorial',
-    defaultOpen: true,
+    // Sans label : items affichés directement, pas de pliage.
+    key: 'principal',
     items: [
+      { key: 'profils', label: 'Profils', icon: '\u{1F465}' },
       { key: 'articles', label: 'Publications', icon: '\u{1F4C4}' },
       { key: 'evenements', label: 'Événements', icon: '\u{1F4C5}' },
-      { key: 'presse', label: 'Presse', icon: '\u{1F4F0}' },
-      { key: 'profils', label: 'Profils', icon: '\u{1F465}' },
+      { key: 'medias', label: 'Médias', icon: '\u{1F5BC}' },
     ],
   },
   {
-    key: 'communication',
-    label: 'Communication',
+    key: 'plus',
+    label: 'Plus',
     defaultOpen: false,
     items: [
+      { key: 'presse', label: 'Mentions presse', icon: '\u{1F4F0}' },
       { key: 'newsletter', label: 'Newsletter', icon: '✉' },
       { key: 'messagerie', label: 'Messagerie', icon: '\u{1F4AC}' },
-      { key: 'calendrier', label: 'Calendrier', icon: '\u{1F5D3}' },
+      { key: 'calendrier', label: 'Calendrier éditorial', icon: '\u{1F5D3}' },
       { key: 'sollicitations', label: 'Sollicitations', icon: '\u{1F4EC}' },
-    ],
-  },
-  {
-    key: 'site',
-    label: 'Site & Config',
-    defaultOpen: false,
-    items: [
       { key: 'editeur', label: 'Éditeur visuel', icon: '\u{270F}\u{FE0F}' },
       { key: 'pagessite', label: 'Pages du site', icon: '\u{1F3E0}' },
       { key: 'seo', label: 'SEO', icon: '\u{1F50D}' },
-      { key: 'medias', label: 'Médias', icon: '\u{1F5BC}' },
       { key: 'technique', label: 'Technique', icon: '\u{2699}' },
-      { key: 'settings', label: 'Config', icon: '⚙' },
+    ],
+  },
+  {
+    key: 'config',
+    items: [
+      { key: 'settings', label: 'Paramètres', icon: '⚙' },
     ],
   },
 ];

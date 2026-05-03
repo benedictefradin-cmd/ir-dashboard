@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import './styles.css';
 import Layout from './components/layout/Layout';
 import { ConfirmProvider } from './components/shared/ConfirmDialog';
+import CommandPalette from './components/shared/CommandPalette';
 
 // ─── Lazy-loaded pages ─────────────────────────────
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -161,6 +162,20 @@ export default function App() {
   const changeTab = useCallback((key) => {
     setTab(key);
     saveLocal(LS_KEYS.activeTab, key);
+  }, []);
+
+  // ─── Cmd+K — recherche globale (Chantier E2) ───────
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e) => {
+      const isMac = navigator.platform.toUpperCase().includes('MAC');
+      if ((isMac ? e.metaKey : e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setPaletteOpen(o => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   // Auth handlers
@@ -507,6 +522,15 @@ export default function App() {
           {renderPage()}
         </Suspense>
       </Layout>
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onTabChange={changeTab}
+        auteurs={auteurs}
+        articles={articles}
+        events={events}
+        presse={presse}
+      />
     </ConfirmProvider>
   );
 }
