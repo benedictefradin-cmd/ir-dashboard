@@ -66,10 +66,10 @@ async function run() {
   // ─── Visite via clic sur sidebar ───
   const labels = {
     dashboard: 'Dashboard', articles: 'Publications', evenements: 'Événements',
-    calendrier: 'Calendrier', presse: 'Presse', profils: 'Profils', newsletter: 'Newsletter',
+    calendrier: 'Calendrier éditorial', presse: 'Mentions presse', profils: 'Profils', newsletter: 'Newsletter',
     messagerie: 'Messagerie', editeur: 'Éditeur visuel', pagessite: 'Pages du site', contenu: 'Contenu', accueil: 'Accueil',
     seo: 'SEO', medias: 'Médias', navigation: 'Navigation', equipe: 'Équipe',
-    technique: 'Technique', sollicitations: 'Sollicitations', settings: 'Config',
+    technique: 'Technique', sollicitations: 'Sollicitations', settings: 'Paramètres',
   };
 
   // Pages accessibles depuis la sidebar
