@@ -1515,6 +1515,7 @@ function buildPublicationHtml({ title, authors, authorBio, date, isoDate, pole, 
 <script src="../assets/js/publications-data.js?v=3"></script>
 <script src="../assets/js/article-i18n.js?v=2"></script>
 <script src="../assets/js/related.js?v=3"></script>
+<script defer src="../assets/js/article-author.js?v=1"></script>
 </body>
 </html>`;
 }
