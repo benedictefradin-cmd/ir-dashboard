@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import ServiceBadge from '../components/shared/ServiceBadge';
+import { DeployHistoryList } from '../components/shared/DeployStatusBadge';
 import { loadLocal, saveLocal } from '../utils/localStorage';
 import { LS_KEYS, DEFAULT_WORKER_URL } from '../utils/constants';
 import { parseFile, isValidEmail, findDuplicates } from '../services/export';
@@ -434,6 +435,7 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
                   { key: 'telegram', label: 'Telegram', connected: services?.telegram },
                   { key: 'github', label: 'GitHub', connected: services?.github },
                   { key: 'translate', label: 'Translate', connected: services?.translate },
+                  { key: 'vercel', label: 'Vercel', connected: services?.vercel },
                 ].map(({ key, label, connected }) => (
                   <div key={key} style={{ textAlign: 'center', padding: 12, background: 'var(--cream)', borderRadius: 8 }}>
                     <p style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 4 }}>{label} {statusIcon(testing[key] || (connected ? 'ok' : ''))}</p>
@@ -475,8 +477,19 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
             </div>
             <div className="card">
               <h3 style={{ fontSize: 16, marginBottom: 16 }}>Vercel Deploy Hook {statusIcon(deployHook ? 'ok' : '')}</h3>
-              <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 16 }}>Configurez l'URL du deploy hook Vercel pour permettre le rebuild du site depuis le dashboard.</p>
-              <div style={{ marginBottom: 12 }}><label>URL du deploy hook</label><input value={deployHook} onChange={e => setDeployHook(e.target.value)} placeholder="https://api.vercel.com/v1/integrations/deploy/prj_..." /></div>
+              <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 16 }}>
+                URL pour déclencher un rebuild Vercel. <strong>Préférez le configurer côté Worker</strong> (
+                <code style={{ fontSize: 11, background: '#f0f0f0', padding: '1px 4px', borderRadius: 3 }}>wrangler secret put VERCEL_DEPLOY_HOOK</code>
+                ) pour que la config soit partagée entre tous les utilisateurs et navigateurs. Le champ ci-dessous reste accepté en fallback (legacy localStorage).
+              </p>
+              <div style={{ marginBottom: 12 }}><label>URL du deploy hook (fallback local)</label><input value={deployHook} onChange={e => setDeployHook(e.target.value)} placeholder="https://api.vercel.com/v1/integrations/deploy/prj_..." /></div>
+              <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 12, lineHeight: 1.6 }}>
+                Pour afficher le statut et les logs des derniers déploiements (ci-dessous), configurez aussi
+                <code style={{ fontSize: 11, background: '#f0f0f0', padding: '1px 4px', borderRadius: 3, margin: '0 4px' }}>VERCEL_TOKEN</code>
+                (et optionnellement
+                <code style={{ fontSize: 11, background: '#f0f0f0', padding: '1px 4px', borderRadius: 3, margin: '0 4px' }}>VERCEL_PROJECT_ID</code>)
+                comme secrets du Worker. Token à générer sur https://vercel.com/account/tokens.
+              </p>
             </div>
             <div className="card">
               <h3 style={{ fontSize: 16, marginBottom: 16 }}>Sollicitations — Token d'accès {statusIcon(contactAuthToken ? 'ok' : '')}</h3>
@@ -486,6 +499,11 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
               </p>
               <div style={{ marginBottom: 12 }}><label>Bearer token</label><input type="password" value={contactAuthToken} onChange={e => setContactAuthToken(e.target.value)} placeholder="Votre token (optionnel si pas de token côté Worker)" /></div>
             </div>
+          </div>
+
+          <div className="card" style={{ marginTop: 20 }}>
+            <h3 style={{ fontSize: 16, marginBottom: 16 }}>5 derniers déploiements Vercel</h3>
+            <DeployHistoryList />
           </div>
 
           <div style={{ marginTop: 20 }}>

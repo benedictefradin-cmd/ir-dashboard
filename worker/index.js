@@ -1377,8 +1377,80 @@ async function handle(request, env) {
             github: !!env.GITHUB_PAT,
             translate: !!(env.DEEPL_API_KEY || env.ANTHROPIC_API_KEY),
             githubOAuth: !!(env.GITHUB_OAUTH_CLIENT_ID && env.GITHUB_OAUTH_CLIENT_SECRET),
+            vercel: !!env.VERCEL_TOKEN,
           },
         });
+      }
+
+      // ═══════════════════════════════════════════
+      // VERCEL — statut des déploiements (Chantier D)
+      // ═══════════════════════════════════════════
+      // GET /api/vercel/deployments?limit=5
+      // Retourne les N derniers déploiements du projet (status, createdAt,
+      // commit, durée, URL Vercel). Sans VERCEL_TOKEN configuré, renvoie
+      // { configured: false } pour que le front dégrade proprement.
+      if (path === '/api/vercel/deployments' && request.method === 'GET') {
+        if (!env.VERCEL_TOKEN) {
+          return json({ configured: false, deployments: [] });
+        }
+        const limit = Math.min(parseInt(url.searchParams.get('limit') || '5', 10) || 5, 20);
+        const projectId = env.VERCEL_PROJECT_ID || '';
+        const teamId = env.VERCEL_TEAM_ID || '';
+        const params = new URLSearchParams({ limit: String(limit) });
+        if (projectId) params.set('projectId', projectId);
+        if (teamId) params.set('teamId', teamId);
+        try {
+          const resp = await fetch(`https://api.vercel.com/v6/deployments?${params}`, {
+            headers: { Authorization: `Bearer ${env.VERCEL_TOKEN}` },
+          });
+          if (!resp.ok) {
+            const txt = await resp.text();
+            return json({ configured: true, error: `Vercel ${resp.status}: ${txt.slice(0, 200)}` }, 502);
+          }
+          const data = await resp.json();
+          const deployments = (data.deployments || []).map(d => ({
+            id: d.uid,
+            url: d.url ? `https://${d.url}` : null,
+            inspectorUrl: d.inspectorUrl || null,
+            state: d.state || d.readyState || 'UNKNOWN', // READY, BUILDING, ERROR, QUEUED, CANCELED
+            target: d.target || 'production',
+            createdAt: d.createdAt || d.created || null,
+            buildingAt: d.buildingAt || null,
+            ready: d.ready || null,
+            duration: (d.ready && (d.buildingAt || d.createdAt))
+              ? d.ready - (d.buildingAt || d.createdAt) : null,
+            commitMessage: d.meta?.githubCommitMessage || d.name || '',
+            commitSha: d.meta?.githubCommitSha || null,
+            commitAuthor: d.meta?.githubCommitAuthorName || null,
+            branch: d.meta?.githubCommitRef || null,
+            creator: d.creator?.username || null,
+          }));
+          return json({ configured: true, deployments });
+        } catch (e) {
+          return json({ configured: true, error: e.message }, 502);
+        }
+      }
+
+      // POST /api/vercel/redeploy — re-déclenche un build via Deploy Hook.
+      // Le hook URL peut être stocké côté Worker (env.VERCEL_DEPLOY_HOOK)
+      // OU envoyé dans le body { hookUrl } (legacy : front l'avait en localStorage).
+      if (path === '/api/vercel/redeploy' && request.method === 'POST') {
+        let hookUrl = env.VERCEL_DEPLOY_HOOK || '';
+        try {
+          const body = await request.json().catch(() => ({}));
+          if (!hookUrl && body.hookUrl) hookUrl = body.hookUrl;
+        } catch { /* ignore */ }
+        if (!hookUrl) {
+          return json({ error: 'Aucun Deploy Hook configuré (env.VERCEL_DEPLOY_HOOK ou body.hookUrl).' }, 400);
+        }
+        try {
+          const resp = await fetch(hookUrl, { method: 'POST' });
+          if (!resp.ok) return json({ error: `Vercel hook ${resp.status}` }, 502);
+          const data = await resp.json().catch(() => ({}));
+          return json({ success: true, job: data.job || null, triggeredAt: new Date().toISOString() });
+        } catch (e) {
+          return json({ error: e.message }, 502);
+        }
       }
 
       // ═══════════════════════════════════════════

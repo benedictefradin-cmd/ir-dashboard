@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import StatsCard from '../components/shared/StatsCard';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
+import DeployStatusBadge from '../components/shared/DeployStatusBadge';
 import { formatDateFr, timeAgo } from '../utils/formatters';
 import { COLORS } from '../utils/constants';
 import { triggerRebuild, hasDeployHook, getLastDeploy } from '../services/deploy';
@@ -108,6 +109,11 @@ export default function Dashboard({
       </div>
 
       <div className="page-body">
+        {/* ── Statut Vercel — Chantier D ─────────── */}
+        <div style={{ marginBottom: 16 }}>
+          <DeployStatusBadge onTabChange={onTabChange} />
+        </div>
+
         {/* ── KPI cards ──────────────────────────── */}
         <div className="grid grid-4 mb-16">
           <StatsCard
