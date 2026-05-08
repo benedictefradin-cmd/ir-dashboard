@@ -15,6 +15,12 @@ const isFuture = (dateStr) => {
   return d >= today;
 };
 
+// Chantier 3 : intervenants migrés vers IDs profil avec fallback nameExterne.
+// Chaque intervenant = { profileId | nameExterne, titreEvent }.
+// Pendant la transition, le miroir `name` (string) est conservé pour
+// rétrocompat de assets/js/events.js côté site.
+const emptyIntervenant = { profileId: '', nameExterne: '', titreEvent: '' };
+
 const emptyForm = {
   date: '',
   type: 'Conférence',
@@ -22,7 +28,7 @@ const emptyForm = {
   sousTitre: '',
   description: '',
   lieu: '',
-  intervenants: [{ name: '', titre: '' }],
+  intervenants: [{ ...emptyIntervenant }],
   partenaire: '',
   lienInscription: '',
   lienConcours: '',
@@ -32,6 +38,15 @@ const emptyForm = {
   periode: '',
 };
 
+// Résout un intervenant en libellé d'affichage (Nom + titre)
+function intervenantLabel(it, auteurs) {
+  if (it.profileId) {
+    const a = auteurs.find(x => x.id === it.profileId);
+    return a ? `${a.firstName} ${a.lastName}` : '';
+  }
+  return it.nameExterne || it.name || '';
+}
+
 const statusDot = (status, isPast) => {
   if (isPast && status !== 'annule') return COLORS.textLight;
   if (status === 'confirme') return COLORS.green;
@@ -40,7 +55,7 @@ const statusDot = (status, isPast) => {
   return COLORS.textLight;
 };
 
-export default function Evenements({ events, setEvents, loading, toast, saveToSite }) {
+export default function Evenements({ events, setEvents, auteurs = [], loading, toast, saveToSite }) {
   const [showForm, setShowForm] = useState(false);
   const [editingEvt, setEditingEvt] = useState(null);
   const [form, setForm] = useState({ ...emptyForm });
@@ -72,24 +87,45 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
 
   // Form helpers
   const setField = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
-  const addIntervenant = () => setForm(prev => ({ ...prev, intervenants: [...prev.intervenants, { name: '', titre: '' }] }));
+  const addIntervenant = () => setForm(prev => ({ ...prev, intervenants: [...prev.intervenants, { ...emptyIntervenant }] }));
   const removeIntervenant = (idx) => setForm(prev => ({ ...prev, intervenants: prev.intervenants.filter((_, i) => i !== idx) }));
   const updateIntervenant = (idx, key, val) => setForm(prev => ({
     ...prev, intervenants: prev.intervenants.map((item, i) => (i === idx ? { ...item, [key]: val } : item)),
   }));
 
+  // Quand on choisit un profil dans le select, on remet le nameExterne à vide.
+  // Quand on saisit un nom externe, on libère le profileId.
+  const setIntervenantProfile = (idx, profileId) => setForm(prev => ({
+    ...prev,
+    intervenants: prev.intervenants.map((item, i) => i === idx
+      ? { ...item, profileId, nameExterne: profileId ? '' : item.nameExterne }
+      : item),
+  }));
+  const setIntervenantExterne = (idx, nameExterne) => setForm(prev => ({
+    ...prev,
+    intervenants: prev.intervenants.map((item, i) => i === idx
+      ? { ...item, nameExterne, profileId: nameExterne ? '' : item.profileId }
+      : item),
+  }));
+
   const openNew = () => {
     setEditingEvt(null);
-    setForm({ ...emptyForm, intervenants: [{ name: '', titre: '' }] });
+    setForm({ ...emptyForm, intervenants: [{ ...emptyIntervenant }] });
     setShowForm(true);
   };
 
   const openEdit = (evt) => {
     setEditingEvt(evt);
+    // Normalise les intervenants legacy {name, titre} → {profileId|nameExterne, titreEvent}
+    const intervenants = (evt.intervenants?.length ? evt.intervenants : [{}]).map(i => ({
+      profileId: i.profileId || '',
+      nameExterne: i.nameExterne || (i.profileId ? '' : (i.name || '')),
+      titreEvent: i.titreEvent || i.titre || '',
+    }));
     setForm({
       date: evt.date || '', type: evt.type || 'Conférence', title: evt.title || '',
       sousTitre: evt.sousTitre || '', description: evt.description || '', lieu: evt.lieu || '',
-      intervenants: evt.intervenants?.length ? evt.intervenants.map(i => ({ ...i })) : [{ name: '', titre: '' }],
+      intervenants,
       partenaire: evt.partenaire || '', lienInscription: evt.lienInscription || '',
       lienConcours: evt.lienConcours || '', inscriptions: evt.inscriptions || 0,
       status: evt.status || 'confirme',
@@ -103,7 +139,20 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
     if (!form.title) return toast('Le titre est requis', 'error');
     if (!form.date && form.status !== 'en_preparation') return toast('La date est requise', 'error');
     if (!form.date && !form.periode) return toast('Indiquez au moins une période (ex: Septembre 2026)', 'error');
-    const cleanIntervenants = form.intervenants.filter(i => i.name.trim());
+    // Filtre les lignes vides + reconstruit le miroir `name` pour rétrocompat site.
+    const cleanIntervenants = form.intervenants
+      .filter(i => i.profileId || (i.nameExterne || '').trim())
+      .map(i => {
+        const a = i.profileId ? auteurs.find(x => x.id === i.profileId) : null;
+        const name = a ? `${a.firstName} ${a.lastName}` : (i.nameExterne || '').trim();
+        return {
+          profileId: i.profileId || '',
+          nameExterne: i.profileId ? '' : (i.nameExterne || '').trim(),
+          titreEvent: i.titreEvent || '',
+          name,                              // miroir lecture seule
+          titre: i.titreEvent || '',         // miroir lecture seule
+        };
+      });
     if (editingEvt) {
       setEvents(prev => prev.map(e => e.id === editingEvt.id ? { ...e, ...form, intervenants: cleanIntervenants } : e));
       toast('Événement mis à jour');
@@ -136,7 +185,9 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
     try {
       if (hasGitHub() && saveToSite) {
         const cleanEvents = events.map(({ id, date, type, title, sousTitre, lieu, intervenants, partenaire, description, lienInscription, status, externe, periode }) => ({
-          id, date, type, title, sousTitre, lieu, intervenants: (intervenants || []).filter(i => i.name), partenaire, description, lienInscription, status, externe: externe || false, ...(periode ? { periode } : {}),
+          id, date, type, title, sousTitre, lieu,
+          intervenants: (intervenants || []).filter(i => i.profileId || i.nameExterne || i.name),
+          partenaire, description, lienInscription, status, externe: externe || false, ...(periode ? { periode } : {}),
         }));
         await saveToSite('events', cleanEvents, 'Mise à jour événements depuis le back-office');
         toast('Événements publiés sur le site');
@@ -282,14 +333,28 @@ export default function Evenements({ events, setEvents, loading, toast, saveToSi
                 <p>
                   {'Intervenant(s) : '}
                   {form.intervenants.map((inter, idx) => (
-                    <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
                       {idx > 0 && ', '}
-                      <input value={inter.name} onChange={e => updateIntervenant(idx, 'name', e.target.value)}
-                        placeholder="Nom"
+                      <select
+                        value={inter.profileId || ''}
+                        onChange={e => setIntervenantProfile(idx, e.target.value)}
+                        style={{ display: 'inline-block', maxWidth: 180, padding: '4px 8px', fontSize: 14 }}
+                        title="Choisir un profil interne"
+                      >
+                        <option value="">— Profil interne —</option>
+                        {auteurs.filter(a => a.actif !== false).map(a => (
+                          <option key={a.id} value={a.id}>{a.firstName} {a.lastName}</option>
+                        ))}
+                      </select>
+                      <input
+                        value={inter.nameExterne || ''}
+                        onChange={e => setIntervenantExterne(idx, e.target.value)}
+                        placeholder="ou nom externe"
+                        disabled={!!inter.profileId}
                         style={{ display: 'inline-block', width: 140, padding: '4px 8px', fontSize: 14 }} />
                       {' ('}
-                      <input value={inter.titre} onChange={e => updateIntervenant(idx, 'titre', e.target.value)}
-                        placeholder="fonction"
+                      <input value={inter.titreEvent || ''} onChange={e => updateIntervenant(idx, 'titreEvent', e.target.value)}
+                        placeholder="rôle dans l'event"
                         style={{ display: 'inline-block', width: 140, padding: '4px 8px', fontSize: 14 }} />
                       {')'}
                       {form.intervenants.length > 1 && (
