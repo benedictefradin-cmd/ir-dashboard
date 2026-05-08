@@ -12,11 +12,24 @@ import { useConfirm } from '../components/shared/ConfirmDialog';
 import { humanizeError } from '../utils/errors';
 import ResultsCount from '../components/shared/ResultsCount';
 
+// Schéma profil — Chantier 1 (2026-05-08)
+// Réduit au strict minimum brief : description, roles[], roleLibelle,
+// email + emailPublic (opt-in RGPD), linkedin, actif.
+const ROLES_AVAILABLE = [
+  { value: 'equipe', label: 'Équipe permanente' },
+  { value: 'direction', label: 'Direction' },
+  { value: 'ca', label: "Conseil d'administration" },
+  { value: 'conseil_scientifique', label: 'Conseil scientifique' },
+  { value: 'auteur_externe', label: 'Auteur externe' },
+  { value: 'autre', label: 'Autre' },
+];
+
 const emptyForm = {
-  firstName: '', lastName: '', role: '', photo: '',
-  bioCourte: '', bioLongue: '',
-  email: '', linkedin: '', x: '', site: '',
-  dateArrivee: '', actif: true,
+  firstName: '', lastName: '', photo: '',
+  description: '',
+  roles: [], roleLibelle: '',
+  email: '', emailPublic: false, linkedin: '',
+  actif: true,
 };
 
 // Sérialise un profil au format attendu côté repo site (data/auteurs.json).
@@ -26,18 +39,13 @@ function serializeAuteur(a) {
     id: a.id,
     firstName: a.firstName || '',
     lastName: a.lastName || '',
-    role: a.role || '',
-    bio: a.bioCourte || a.bio || '',          // legacy : conservé pour rétrocompat assets/js/auteurs.js
-    bioCourte: a.bioCourte || a.bio || '',
-    bioLongue: a.bioLongue || '',
     photo: a.photoPath || a.photo || '',
-    reseaux: {
-      linkedin: a.reseaux?.linkedin || a.linkedin || '',
-      x: a.reseaux?.x || a.x || a.twitter || '',
-      site: a.reseaux?.site || a.site || a.website || '',
-      email: a.reseaux?.email || a.email || '',
-    },
-    dateArrivee: a.dateArrivee || '',
+    description: a.description || a.bio || a.bioCourte || '',
+    roles: Array.isArray(a.roles) ? a.roles : [],
+    roleLibelle: a.roleLibelle || a.role || '',
+    email: a.email || a.reseaux?.email || '',
+    emailPublic: a.emailPublic === true,
+    linkedin: a.linkedin || a.reseaux?.linkedin || '',
     actif: a.actif === false ? false : true,
   };
 }
@@ -56,6 +64,7 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
   const confirm = useConfirm();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('alpha');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ ...emptyForm });
@@ -78,11 +87,23 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
       if (tokens.length) {
         list = list.filter(a => {
           const haystack = normalizeName(
-            [a.firstName, a.lastName, a.name, a.role, a.titre, a.email].filter(Boolean).join(' ')
+            [a.firstName, a.lastName, a.name, a.roleLibelle, a.role, a.titre, a.email].filter(Boolean).join(' ')
           );
           return tokens.every(t => haystack.includes(t));
         });
       }
+    }
+
+    // Filter par rôle (Chantier 1)
+    if (roleFilter !== 'all') {
+      if (roleFilter === 'archives') {
+        list = list.filter(a => a.actif === false);
+      } else {
+        list = list.filter(a => Array.isArray(a.roles) && a.roles.includes(roleFilter));
+      }
+    } else {
+      // Par défaut, on cache les archivés sauf si l'utilisateur les demande
+      list = list.filter(a => a.actif !== false);
     }
 
     // Sort
@@ -235,15 +256,13 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
     setForm({
       firstName: auteur.firstName || (auteur.name || '').split(' ')[0] || '',
       lastName: auteur.lastName || (auteur.name || '').split(' ').slice(1).join(' ') || '',
-      role: auteur.role || auteur.titre || '',
       photo: auteur.photoPath || auteur.photo || '',
-      bioCourte: auteur.bioCourte || auteur.bio || '',
-      bioLongue: auteur.bioLongue || '',
-      email: auteur.reseaux?.email || auteur.email || '',
-      linkedin: auteur.reseaux?.linkedin || '',
-      x: auteur.reseaux?.x || '',
-      site: auteur.reseaux?.site || '',
-      dateArrivee: auteur.dateArrivee || '',
+      description: auteur.description || auteur.bioCourte || auteur.bio || '',
+      roles: Array.isArray(auteur.roles) ? [...auteur.roles] : [],
+      roleLibelle: auteur.roleLibelle || auteur.role || auteur.titre || '',
+      email: auteur.email || auteur.reseaux?.email || '',
+      emailPublic: auteur.emailPublic === true,
+      linkedin: auteur.linkedin || auteur.reseaux?.linkedin || '',
       actif: auteur.actif === false ? false : true,
     });
     // La preview sera gérée par le modal via le hook usePhoto (form.photo).
@@ -299,21 +318,14 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
       firstName: form.firstName,
       lastName: form.lastName,
       name: `${form.firstName} ${form.lastName}`,
-      role: form.role,
-      titre: form.role,
       photo: photoUrl,
       photoPath: uploadedPath || (photoUrl && !photoUrl.startsWith('http') ? photoUrl : (auteurs.find(a => a.id === editId)?.photoPath || '')),
-      bioCourte: form.bioCourte,
-      bioLongue: form.bioLongue,
-      bio: form.bioCourte,                    // legacy mirror
-      reseaux: {
-        linkedin: form.linkedin || '',
-        x: form.x || '',
-        site: form.site || '',
-        email: form.email || '',
-      },
-      email: form.email,                      // legacy mirror
-      dateArrivee: form.dateArrivee || '',
+      description: form.description,
+      roles: Array.isArray(form.roles) ? [...form.roles] : [],
+      roleLibelle: form.roleLibelle,
+      email: form.email,
+      emailPublic: form.emailPublic === true,
+      linkedin: form.linkedin || '',
       actif: form.actif === false ? false : true,
     };
 
@@ -474,6 +486,18 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
           </div>
           <select
             className="auteur-sort-select"
+            value={roleFilter}
+            onChange={e => setRoleFilter(e.target.value)}
+            title="Filtrer par rattachement"
+          >
+            <option value="all">Tous les rattachements</option>
+            {ROLES_AVAILABLE.map(r => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
+            <option value="archives">— Archives (inactifs) —</option>
+          </select>
+          <select
+            className="auteur-sort-select"
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
           >
@@ -578,7 +602,7 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
                 <div style={{ fontSize: 18, fontWeight: 600, fontFamily: "'Cormorant Garamond', serif", color: COLORS.navy }}>
                   {form.firstName || form.lastName ? `${form.firstName} ${form.lastName}`.trim() : 'Nouveau profil'}
                 </div>
-                {form.role && <div style={{ fontSize: 13, color: COLORS.textLight, marginTop: 2 }}>{form.role}</div>}
+                {form.roleLibelle && <div style={{ fontSize: 13, color: COLORS.textLight, marginTop: 2 }}>{form.roleLibelle}</div>}
                 {editingAuteur && getTeamRole(editingAuteur) && (
                   <span className="badge badge-green" style={{ fontSize: 10, marginTop: 6 }}>{getTeamRole(editingAuteur)}</span>
                 )}
@@ -596,8 +620,36 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
               </div>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label>Titre / Fonction *</label>
-              <input value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="Ex: Secrétaire générale de la CNCDH" required />
+              <label>Titre / Fonction (libre, affiché publiquement)</label>
+              <input
+                value={form.roleLibelle}
+                onChange={e => setForm({ ...form, roleLibelle: e.target.value })}
+                placeholder="Ex: Secrétaire générale de la CNCDH"
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label>Rattachement(s)</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                {ROLES_AVAILABLE.map(r => (
+                  <label key={r.value} className={`pill${(form.roles || []).includes(r.value) ? ' active' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                    <input
+                      type="checkbox"
+                      checked={(form.roles || []).includes(r.value)}
+                      onChange={e => {
+                        const next = e.target.checked
+                          ? [...(form.roles || []), r.value]
+                          : (form.roles || []).filter(v => v !== r.value);
+                        setForm({ ...form, roles: next });
+                      }}
+                      style={{ display: 'none' }}
+                    />
+                    {r.label}
+                  </label>
+                ))}
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4 }}>
+                Une personne peut appartenir à plusieurs catégories (ex: CA + Conseil scientifique).
+              </p>
             </div>
             <div style={{ marginBottom: 16 }}>
               <label>Photo</label>
@@ -639,68 +691,54 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
               )}
             </div>
             <fieldset style={{ marginBottom: 16, border: 'none', padding: 0 }}>
-              <legend style={{ fontSize: 13, fontWeight: 600, color: COLORS.navy, marginBottom: 8 }}>Biographie</legend>
-              <div style={{ marginBottom: 12 }}>
-                <label>Bio courte (max 200 car.) — affichée sur les listes et fiches</label>
-                <textarea
-                  value={form.bioCourte}
-                  onChange={e => setForm({ ...form, bioCourte: e.target.value.slice(0, 200) })}
-                  rows={3}
-                  placeholder="Une à deux phrases qui résument le profil…"
-                  maxLength={200}
-                />
-                <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4 }}>{(form.bioCourte || '').length} / 200</p>
-              </div>
+              <legend style={{ fontSize: 13, fontWeight: 600, color: COLORS.navy, marginBottom: 8 }}>Description</legend>
               <div>
-                <label>Bio longue (optionnelle) — affichée sur la fiche profil détaillée</label>
+                <label>Description (max 400 car., affichée sur le site)</label>
                 <textarea
-                  value={form.bioLongue}
-                  onChange={e => setForm({ ...form, bioLongue: e.target.value })}
-                  rows={6}
-                  placeholder="Parcours, publications de référence, engagements…"
+                  value={form.description}
+                  onChange={e => setForm({ ...form, description: e.target.value.slice(0, 400) })}
+                  rows={4}
+                  placeholder="Quelques phrases qui résument le profil…"
+                  maxLength={400}
                 />
+                <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4 }}>{(form.description || '').length} / 400</p>
               </div>
             </fieldset>
 
             <fieldset style={{ marginBottom: 16, border: 'none', padding: 0 }}>
-              <legend style={{ fontSize: 13, fontWeight: 600, color: COLORS.navy, marginBottom: 8 }}>Réseaux & contact</legend>
+              <legend style={{ fontSize: 13, fontWeight: 600, color: COLORS.navy, marginBottom: 8 }}>Contact</legend>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                 <div>
-                  <label>Email (interne, non affiché)</label>
+                  <label>Email</label>
                   <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@exemple.fr" />
                 </div>
                 <div>
                   <label>LinkedIn</label>
                   <input type="url" value={form.linkedin} onChange={e => setForm({ ...form, linkedin: e.target.value })} placeholder="https://linkedin.com/in/…" />
                 </div>
-                <div>
-                  <label>X / Twitter</label>
-                  <input type="url" value={form.x} onChange={e => setForm({ ...form, x: e.target.value })} placeholder="https://x.com/…" />
-                </div>
-                <div>
-                  <label>Site personnel</label>
-                  <input type="url" value={form.site} onChange={e => setForm({ ...form, site: e.target.value })} placeholder="https://…" />
-                </div>
               </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={form.emailPublic === true}
+                  onChange={e => setForm({ ...form, emailPublic: e.target.checked })}
+                  style={{ width: 'auto' }}
+                />
+                <span>Afficher l'email publiquement sur le site (par défaut, désactivé — RGPD)</span>
+              </label>
             </fieldset>
 
             <fieldset style={{ marginBottom: 16, border: 'none', padding: 0 }}>
               <legend style={{ fontSize: 13, fontWeight: 600, color: COLORS.navy, marginBottom: 8 }}>Statut</legend>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'end' }}>
-                <div>
-                  <label>Date d'arrivée (optionnelle)</label>
-                  <input type="month" value={form.dateArrivee} onChange={e => setForm({ ...form, dateArrivee: e.target.value })} />
-                </div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', paddingBottom: 8 }}>
-                  <input
-                    type="checkbox"
-                    checked={form.actif !== false}
-                    onChange={e => setForm({ ...form, actif: e.target.checked })}
-                    style={{ width: 'auto' }}
-                  />
-                  <span>Profil actif (décocher pour archiver)</span>
-                </label>
-              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={form.actif !== false}
+                  onChange={e => setForm({ ...form, actif: e.target.checked })}
+                  style={{ width: 'auto' }}
+                />
+                <span>Profil actif (décocher pour archiver — invisible sur le site, conservé en interne)</span>
+              </label>
             </fieldset>
 
             {/* Team membership info */}
