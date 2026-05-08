@@ -103,6 +103,14 @@ export default function Articles({
   const [publishResult, setPublishResult] = useState(null);
   const [publishError, setPublishError] = useState(null);
 
+  // Création rapide d'un profil depuis le picker (Brief 2026-05-08).
+  // Ces hooks DOIVENT rester avant l'early-return `if (loading)` plus bas —
+  // sinon React #310 (hook count différent entre deux renders).
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickAdd, setQuickAdd] = useState({ firstName: '', lastName: '' });
+  const [quickAddSaving, setQuickAddSaving] = useState(false);
+  const [autoTranslating, setAutoTranslating] = useState(false);
+
   // Source unique : les publications du repo site (assets/js/publications-data.js),
   // chargées par App.jsx via siteData.fetchAllSiteData() et passées en props.
   const allArticles = articles;
@@ -703,10 +711,6 @@ export default function Articles({
     return !!(t?.title?.trim() && t?.content?.trim());
   };
 
-  // Création rapide d'un profil depuis le picker (Brief 2026-05-08)
-  const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [quickAdd, setQuickAdd] = useState({ firstName: '', lastName: '' });
-  const [quickAddSaving, setQuickAddSaving] = useState(false);
   const submitQuickAdd = async () => {
     const fn = quickAdd.firstName.trim();
     const ln = quickAdd.lastName.trim();
@@ -751,7 +755,6 @@ export default function Articles({
   // Chantier 6 : auto-traduction FR → EN/ES (DE/IT restent saisies à la main).
   // Ne touche pas aux langues déjà remplies — l'utilisatrice doit pouvoir
   // forcer une re-traduction via le bouton "Forcer".
-  const [autoTranslating, setAutoTranslating] = useState(false);
   const autoTranslateMissing = async (force = false) => {
     if (!form.title?.trim() || !form.content?.trim()) {
       toast?.('Saisis d\'abord le titre et le contenu en français', 'error');
