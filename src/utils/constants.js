@@ -176,6 +176,11 @@ export const SITE_LANGUAGES = [
 export const TARGET_LANGUAGES = SITE_LANGUAGES.filter(l => !l.isSource);
 export const SOURCE_LANGUAGE = SITE_LANGUAGES.find(l => l.isSource);
 
+// Langues couvertes par l'auto-traduction (Chantier 6).
+// Décision : FR (source) + EN + ES. DE + IT restent saisies à la main —
+// la qualité varie selon les rapports techniques, mieux vaut une révision humaine.
+export const AUTO_TRANSLATE_TARGETS = ['en', 'es'];
+
 // ─── LocalStorage keys ────────────────────────────────
 export const LS_PREFIX = 'ir-dash-';
 export const LS_KEYS = {

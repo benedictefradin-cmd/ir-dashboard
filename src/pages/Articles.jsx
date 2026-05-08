@@ -7,7 +7,8 @@ import AuthorPicker from '../components/shared/AuthorPicker';
 import MultiSelect from '../components/shared/MultiSelect';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
-import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL, TARGET_LANGUAGES, SITE_LANGUAGES, LS_KEYS } from '../utils/constants';
+import { THEMATIQUES, PUB_TYPES, ARTICLE_STATUSES, COLORS, SITE_URL, TARGET_LANGUAGES, SITE_LANGUAGES, LS_KEYS, AUTO_TRANSLATE_TARGETS } from '../utils/constants';
+import { translateArticle } from '../services/translate';
 import { hasGitHub, insertHtmlInPage, formatDateSite, updatePublicationsI18n, updatePublicationsData, categoryColor, fetchPublicationI18n } from '../services/github';
 import { fetchPublicationContent } from '../services/siteData';
 import { loadLocal } from '../utils/localStorage';
@@ -649,6 +650,48 @@ export default function Articles({
     return !!(t?.title?.trim() && t?.content?.trim());
   };
 
+  // Chantier 6 : auto-traduction FR → EN/ES (DE/IT restent saisies à la main).
+  // Ne touche pas aux langues déjà remplies — l'utilisatrice doit pouvoir
+  // forcer une re-traduction via le bouton "Forcer".
+  const [autoTranslating, setAutoTranslating] = useState(false);
+  const autoTranslateMissing = async (force = false) => {
+    if (!form.title?.trim() || !form.content?.trim()) {
+      toast?.('Saisis d\'abord le titre et le contenu en français', 'error');
+      return;
+    }
+    setAutoTranslating(true);
+    const updated = { ...form.translations };
+    const errors = [];
+    let translated = 0;
+    for (const code of AUTO_TRANSLATE_TARGETS) {
+      const existing = updated[code];
+      const filled = !!(existing?.title?.trim() && existing?.content?.trim());
+      if (filled && !force) continue;
+      try {
+        const result = await translateArticle(
+          { title: form.title, summary: form.summary, content: form.content },
+          'fr',
+          code,
+        );
+        updated[code] = {
+          title: result.title || '',
+          summary: result.summary || '',
+          content: result.content || '',
+          autoTranslated: true,
+          translatedAt: new Date().toISOString(),
+        };
+        translated++;
+      } catch (err) {
+        errors.push(`${code.toUpperCase()} : ${err.message}`);
+      }
+    }
+    setForm(f => ({ ...f, translations: updated }));
+    setAutoTranslating(false);
+    if (translated > 0) toast?.(`Auto-traduction OK : ${translated} langue${translated > 1 ? 's' : ''}`);
+    if (errors.length) toast?.(`Échec : ${errors.join(' · ')}`, 'error');
+  };
+  const currentLangAutoTranslated = form.translations[langTab]?.autoTranslated === true;
+
   return (
     <>
       <div className="page-header">
@@ -805,7 +848,7 @@ export default function Articles({
               </div>
             )}
             {/* Onglets de langue : FR (source) + traductions */}
-            <div className="lang-tabs" role="tablist" aria-label="Langue éditée">
+            <div className="lang-tabs" role="tablist" aria-label="Langue éditée" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               {SITE_LANGUAGES.map(l => {
                 const filled = isLangFilled(l.code);
                 return (
@@ -824,7 +867,34 @@ export default function Articles({
                   </button>
                 );
               })}
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  disabled={autoTranslating || !form.title?.trim() || !form.content?.trim()}
+                  onClick={() => autoTranslateMissing(false)}
+                  title="Auto-traduit FR → EN + ES uniquement pour les langues vides"
+                >
+                  {autoTranslating ? '⏳ Traduction…' : '✨ Auto-traduire EN + ES'}
+                </button>
+                {(form.translations.en?.autoTranslated || form.translations.es?.autoTranslated) && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    disabled={autoTranslating}
+                    onClick={() => autoTranslateMissing(true)}
+                    title="Re-traduit FR → EN + ES en écrasant les traductions existantes"
+                  >
+                    Re-traduire (force)
+                  </button>
+                )}
+              </div>
             </div>
+            {currentLangAutoTranslated && (
+              <p style={{ fontSize: 12, color: COLORS.ochre, margin: '4px 0 8px' }}>
+                ⚠ Traduction auto — relisez attentivement et corrigez si besoin avant publication.
+              </p>
+            )}
 
             <div style={{ marginBottom: 16 }}>
               <label>Titre {!isSourceLang && <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 400 }}>— version {SITE_LANGUAGES.find(l => l.code === langTab)?.label}</span>}</label>
