@@ -40,9 +40,14 @@ export async function updateSollicitation(id, updates) {
 
 /**
  * Envoyer une réponse par email via Brevo.
+ * @param {Object} payload - { text, sent_by, cc?: [{email,name}], bcc?: [{email,name}] }
  */
-export async function replySollicitation(id, { text, sent_by }) {
-  return api.post(`/api/contact/${encodeURIComponent(id)}/reply`, { text, sent_by }, { headers: authHeaders() });
+export async function replySollicitation(id, { text, sent_by, cc, bcc }) {
+  return api.post(
+    `/api/contact/${encodeURIComponent(id)}/reply`,
+    { text, sent_by, cc, bcc },
+    { headers: authHeaders() }
+  );
 }
 
 /**
@@ -50,4 +55,15 @@ export async function replySollicitation(id, { text, sent_by }) {
  */
 export async function deleteSollicitation(id) {
   return api.patch(`/api/contact/${encodeURIComponent(id)}`, { status: 'archived' }, { headers: authHeaders() });
+}
+
+/**
+ * Routing CC par type d'objet (Chantier 4) — KV `config:messageRouting`.
+ */
+export async function fetchMessageRouting() {
+  return api.get('/api/messages/routing', { headers: authHeaders() });
+}
+
+export async function saveMessageRouting(routing) {
+  return api.put('/api/messages/routing', { routing }, { headers: authHeaders() });
 }

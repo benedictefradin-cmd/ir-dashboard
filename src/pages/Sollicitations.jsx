@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import StatsCard from '../components/shared/StatsCard';
 import SearchBar from '../components/shared/SearchBar';
 import MultiSelect from '../components/shared/MultiSelect';
@@ -17,8 +17,27 @@ import {
 import {
   updateSollicitation as apiUpdateSollicitation,
   replySollicitation as apiReplySollicitation,
+  fetchMessageRouting,
 } from '../services/contact';
+import MessageRoutingEditor from '../components/shared/MessageRoutingEditor';
 import useDebounce from '../hooks/useDebounce';
+
+/**
+ * Résout les ccProfileIds du routing en addresses email via auteurs.json.
+ * Si l'auteur n'a pas d'email saisi, on l'ignore silencieusement (signalé dans
+ * un toast par l'appelant si la liste résolue est vide alors qu'elle devait
+ * en contenir).
+ */
+function resolveCCFromRouting(routing, subject, auteurs) {
+  if (!routing || !subject) return [];
+  const cfg = routing[subject];
+  if (!cfg || !Array.isArray(cfg.ccProfileIds)) return [];
+  return cfg.ccProfileIds
+    .map(id => auteurs.find(a => a.id === id))
+    .filter(Boolean)
+    .filter(a => a.email)
+    .map(a => ({ email: a.email, name: `${a.firstName} ${a.lastName}` }));
+}
 
 // ─── Helper : status badge ─────────────────────────
 function StatusBadge({ status }) {
@@ -39,7 +58,7 @@ function getSubjectLabel(subject) {
 }
 
 // ─── Main Component ─────────────────────────────────
-export default function Sollicitations({ sollicitations, setSollicitations, loading, toast }) {
+export default function Sollicitations({ sollicitations, setSollicitations, auteurs = [], loading, toast }) {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState([]);
   const [filterSubject, setFilterSubject] = useState([]);
@@ -50,13 +69,33 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
 
   // Detail panel state
   const [replyText, setReplyText] = useState('');
+  const [replyCC, setReplyCC] = useState('');     // Chantier 4 : CC saisi par l'admin (séparé par virgule)
   const [noteText, setNoteText] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [routing, setRouting] = useState(null);
 
   const debouncedSearch = useDebounce(search, 300);
   const PAGE_SIZE = 20;
+
+  // ─── Routing CC (Chantier 4) ──────────────────
+  // Chargé une seule fois au mount (ou si auteurs change). Si le Worker n'a pas
+  // de config, on passe en mode "sans routing" sans bloquer la réponse.
+  useEffect(() => {
+    let cancelled = false;
+    fetchMessageRouting()
+      .then(r => { if (!cancelled) setRouting(r?.routing || {}); })
+      .catch(() => { if (!cancelled) setRouting({}); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Pré-remplit le champ CC quand on sélectionne une sollicitation
+  useEffect(() => {
+    if (!selected || !routing) { setReplyCC(''); return; }
+    const ccList = resolveCCFromRouting(routing, selected.subject, auteurs);
+    setReplyCC(ccList.map(c => c.email).join(', '));
+  }, [selected?.id, selected?.subject, routing, auteurs]);
 
   // ─── Stats ──────────────────────────────────
   const stats = useMemo(() => {
@@ -219,17 +258,27 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
     setSendingReply(true);
 
     try {
+      // Parse les CC saisis (séparés par virgule, espace ou point-virgule)
+      const ccEmails = (replyCC || '')
+        .split(/[,;\s]+/)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
+      const cc = ccEmails.map(email => ({ email }));
+
       // Envoyer la réponse via le Worker (email Brevo + persistance KV)
       const updated = await apiReplySollicitation(selected.id, {
         text: replyText.trim(),
         sent_by: 'Admin',
+        cc: cc.length ? cc : undefined,
       });
 
       // Mettre à jour le state local avec la réponse du Worker
       setSollicitations(prev => prev.map(s => s.id === selected.id ? updated : s));
       setSelected(updated);
       setReplyText('');
-      toast('Réponse envoyée par email et statut mis à jour');
+      const ccLabel = cc.length ? ` (CC : ${cc.length} dest.)` : '';
+      toast(`Réponse envoyée par email${ccLabel} et statut mis à jour`);
     } catch (err) {
       console.warn('[Sollicitations] Erreur envoi réponse :', err.message);
       toast(`Erreur : ${err.message}`, 'error');
@@ -343,6 +392,9 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
       </div>
 
       <div className="page-body">
+        {/* ── Routing CC (Chantier 4) ─────────────── */}
+        <MessageRoutingEditor auteurs={auteurs} toast={toast} />
+
         {/* ── Stats compactes ────────────────────── */}
         <div className="grid grid-3 mb-16">
           <StatsCard
@@ -622,6 +674,16 @@ export default function Sollicitations({ sollicitations, setSollicitations, load
             <p style={{ fontSize: 12, color: COLORS.textLight, marginBottom: 8 }}>
               Expéditeur : contact@institut-rousseau.fr → {selected.email}
             </p>
+            <label style={{ fontSize: 12, color: COLORS.textLight, marginBottom: 4, display: 'block' }}>
+              CC (séparés par virgule) — pré-rempli depuis Paramètres → Routing messages
+            </label>
+            <input
+              type="text"
+              value={replyCC}
+              onChange={e => setReplyCC(e.target.value)}
+              placeholder="benedicte@institut-rousseau.fr, …"
+              style={{ marginBottom: 8 }}
+            />
             <textarea
               value={replyText}
               onChange={e => setReplyText(e.target.value)}

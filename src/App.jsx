@@ -483,7 +483,7 @@ export default function App() {
       case 'technique':
         return <Technique toast={toast} />;
       case 'sollicitations':
-        return <Sollicitations sollicitations={sollicitations} setSollicitations={setSollicitations} loading={loading} toast={toast} />;
+        return <Sollicitations sollicitations={sollicitations} setSollicitations={setSollicitations} auteurs={auteurs} loading={loading} toast={toast} />;
       case 'settings':
         return <Settings
           subscribers={subscribers} services={services}

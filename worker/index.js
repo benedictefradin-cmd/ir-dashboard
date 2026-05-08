@@ -506,6 +506,48 @@ async function handle(request, env) {
       }
 
       // ═══════════════════════════════════════════
+      // MESSAGES ROUTING — config CC par type d'objet (Chantier 4)
+      // ═══════════════════════════════════════════
+      // GET /api/messages/routing  → renvoie la config { press: { ccProfileIds }, … }
+      // PUT /api/messages/routing  → écrit la config (admin only)
+      // Stockage : KV CONTACT_SUBMISSIONS, clé `config:messageRouting`.
+
+      if (path === '/api/messages/routing') {
+        const kv = env.CONTACT_SUBMISSIONS;
+        if (!kv) return json({ error: 'KV non configuré' }, 503);
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+        const session = token ? await getSession(kv, token) : null;
+        if (!session) return json({ error: 'Non autorisé' }, 401);
+        const meRaw = await kv.get(`auth:user:${session.userId}`);
+        if (!meRaw) return json({ error: 'Utilisateur introuvable' }, 401);
+        const me = JSON.parse(meRaw);
+
+        if (request.method === 'GET') {
+          const raw = await kv.get('config:messageRouting');
+          const config = raw ? JSON.parse(raw) : {};
+          return json({ routing: config });
+        }
+        if (request.method === 'PUT') {
+          if (me.role !== 'admin') return json({ error: 'Accès admin requis' }, 403);
+          const body = await request.json();
+          if (!body || typeof body.routing !== 'object') {
+            return json({ error: 'Body attendu : { routing: { <type>: { ccProfileIds: [...] }, … } }' }, 400);
+          }
+          const safe = {};
+          for (const [k, v] of Object.entries(body.routing)) {
+            if (k === '_meta') continue;
+            if (!v || !Array.isArray(v.ccProfileIds)) continue;
+            safe[k] = { ccProfileIds: v.ccProfileIds.filter(id => typeof id === 'string') };
+          }
+          safe._meta = { updatedAt: new Date().toISOString(), updatedBy: me.login };
+          await kv.put('config:messageRouting', JSON.stringify(safe));
+          return json({ routing: safe });
+        }
+        return json({ error: 'Méthode non supportée' }, 405);
+      }
+
+      // ═══════════════════════════════════════════
       // NEWSLETTER — désinscription publique (Chantier 0 RGPD)
       // ═══════════════════════════════════════════
       // GET /api/newsletter/unsubscribe?token=…
@@ -1058,33 +1100,46 @@ async function handle(request, env) {
           if (!existing) return json({ error: 'Sollicitation non trouvée' }, 404);
 
           const item = JSON.parse(existing);
-          const { text, sent_by } = await request.json();
+          const { text, sent_by, cc, bcc } = await request.json();
 
           if (!text) return json({ error: 'Texte de la réponse manquant' }, 400);
 
-          // Envoyer email via Brevo
+          // Validation cc/bcc : array d'objets {email, name?}
+          const sanitizeAddrs = (arr) => Array.isArray(arr)
+            ? arr.filter(a => a && typeof a.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email))
+                 .map(a => ({ email: a.email, name: a.name || '' }))
+            : [];
+          const ccList = sanitizeAddrs(cc);
+          const bccList = sanitizeAddrs(bcc);
+
+          // Envoyer email via Brevo (Chantier 4 : CC + BCC routing)
           if (env.BREVO_API_KEY && item.email) {
             try {
+              const payload = {
+                sender: { name: 'Institut Rousseau', email: 'contact@institut-rousseau.fr' },
+                to: [{ email: item.email, name: item.name }],
+                subject: `Re: ${item.subject}`,
+                htmlContent: `<p>${text.replace(/\n/g, '<br/>')}</p><hr/><p><em>Institut Rousseau — <a href="https://institut-rousseau.fr">institut-rousseau.fr</a></em></p>`,
+              };
+              if (ccList.length) payload.cc = ccList;
+              if (bccList.length) payload.bcc = bccList;
               await fetch('https://api.brevo.com/v3/smtp/email', {
                 method: 'POST',
                 headers: { 'api-key': env.BREVO_API_KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  sender: { name: 'Institut Rousseau', email: 'contact@institut-rousseau.fr' },
-                  to: [{ email: item.email, name: item.name }],
-                  subject: `Re: ${item.subject}`,
-                  htmlContent: `<p>${text.replace(/\n/g, '<br/>')}</p><hr/><p><em>Institut Rousseau — <a href="https://institut-rousseau.fr">institut-rousseau.fr</a></em></p>`,
-                }),
+                body: JSON.stringify(payload),
               });
             } catch (err) {
               return json({ error: 'Erreur lors de l\'envoi de l\'email' }, 500);
             }
           }
 
-          // Enregistrer la réponse
+          // Enregistrer la réponse (avec trace des CC/BCC pour audit)
           const reply = {
             text,
             sent_by: sent_by || 'Admin',
             sent_at: new Date().toISOString(),
+            cc: ccList.map(a => a.email),
+            bcc: bccList.map(a => a.email),
           };
           item.replies.push(reply);
 
