@@ -453,11 +453,11 @@ export default function App() {
           saveToSite={saveToSite}
         />;
       case 'evenements':
-        return <Evenements events={events} setEvents={setEvents} loading={loading} toast={toast} saveToSite={saveToSite} />;
+        return <Evenements events={events} setEvents={setEvents} auteurs={auteurs} loading={loading} toast={toast} saveToSite={saveToSite} />;
       case 'calendrier':
         return <Calendrier socialPosts={socialPosts} setSocialPosts={setSocialPosts} rapports={rapports} setRapports={setRapports} extEvents={extEvents} setExtEvents={setExtEvents} events={events} toast={toast} onTabChange={changeTab} />;
       case 'presse':
-        return <Presse presse={presse} setPresse={setPresse} sollicitations={sollicitations} loading={loading} toast={toast} saveToSite={saveToSite} />;
+        return <Presse presse={presse} setPresse={setPresse} auteurs={auteurs} sollicitations={sollicitations} loading={loading} toast={toast} saveToSite={saveToSite} />;
       case 'profils':
         return <Profils auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} contenu={contenu} setContenu={setContenu} loading={loading} toast={toast} saveToSite={saveToSite} onTabChange={changeTab} />;
       case 'newsletter':

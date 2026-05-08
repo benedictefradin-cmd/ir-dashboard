@@ -3,6 +3,7 @@ import DataTable from '../components/shared/DataTable';
 import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
+import AuthorPicker from '../components/shared/AuthorPicker';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr } from '../utils/formatters';
 import { PRESSE_TYPES } from '../utils/constants';
@@ -11,6 +12,19 @@ import useDebounce from '../hooks/useDebounce';
 import { useConfirm } from '../components/shared/ConfirmDialog';
 import { humanizeError } from '../utils/errors';
 import ResultsCount from '../components/shared/ResultsCount';
+
+// Résout authorIds + auteurExterne en un libellé d'affichage (Chantier 2)
+function resolveAuteur(item, auteurs = []) {
+  const ids = Array.isArray(item.authorIds) ? item.authorIds : [];
+  const internes = ids
+    .map(id => auteurs.find(a => a.id === id))
+    .filter(Boolean)
+    .map(a => `${a.firstName} ${a.lastName}`.trim());
+  const externe = (item.auteurExterne || '').trim();
+  const all = [...internes, externe].filter(Boolean);
+  if (all.length) return all.join(', ');
+  return item.auteur || '';
+}
 
 const TYPE_BADGE = {
   Tribune: 'badge-sky',
@@ -24,14 +38,15 @@ const TAB_TO_TYPE = { Tribunes: 'Tribune', Entretiens: 'Entretien', Podcast: 'Po
 const emptyForm = {
   type: 'Tribune',
   title: '',
-  auteur: '',
+  authorIds: [],
+  auteurExterne: '',
   date: '',
   media: '',
   urlExterne: '',
   urlInterne: '',
 };
 
-export default function Presse({ presse, setPresse, sollicitations = [], loading, toast, saveToSite }) {
+export default function Presse({ presse, setPresse, auteurs = [], sollicitations = [], loading, toast, saveToSite }) {
   const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState('Tribunes');
   const [search, setSearch] = useState('');
@@ -85,17 +100,29 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
 
   const saveItem = () => {
     if (!form.title) return toast('Le titre est requis', 'error');
-    if (!form.auteur) return toast('L’auteur est requis', 'error');
+    if (!(form.authorIds || []).length && !(form.auteurExterne || '').trim()) {
+      return toast('Sélectionne au moins un profil interne ou renseigne un auteur externe', 'error');
+    }
     if (!form.media) return toast('Le média est requis', 'error');
 
+    // Miroir auteur (string) reconstruit pour rétrocompat (lecture côté site)
+    const internesNames = (form.authorIds || [])
+      .map(id => auteurs.find(a => a.id === id))
+      .filter(Boolean)
+      .map(a => `${a.firstName} ${a.lastName}`.trim());
+    const externe = (form.auteurExterne || '').trim();
+    const auteurMirror = [...internesNames, externe].filter(Boolean).join(', ');
+
+    const formData = { ...form, auteur: auteurMirror };
+
     if (editingItem) {
-      setPresse(prev => prev.map(p => p.id === editingItem.id ? { ...p, ...form } : p));
+      setPresse(prev => prev.map(p => p.id === editingItem.id ? { ...p, ...formData } : p));
       toast('Entrée presse mise à jour');
     } else {
       const newItem = {
         id: Date.now(),
-        ...form,
-        date: form.date || new Date().toISOString().split('T')[0],
+        ...formData,
+        date: formData.date || new Date().toISOString().split('T')[0],
       };
       setPresse(prev => [newItem, ...prev]);
       toast('Entrée presse créée');
@@ -108,7 +135,8 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
     setForm({
       type: item.type,
       title: item.title,
-      auteur: item.auteur,
+      authorIds: Array.isArray(item.authorIds) ? [...item.authorIds] : [],
+      auteurExterne: item.auteurExterne || (Array.isArray(item.authorIds) ? '' : (item.auteur || '')),
       date: item.date || '',
       media: item.media || '',
       urlExterne: item.urlExterne || '',
@@ -135,8 +163,12 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
   // statique de presse.html — d'où une seule action utile : pousser le JSON
   // entier. Le bouton "Publier" sur une ligne déclenche donc la même chose
   // que "Publier tout" : un commit du fichier presse.json à jour.
-  const presseToJson = (list) => list.map(({ id, type, title, auteur, media, date, urlExterne, urlInterne }) => ({
-    id, type, title, auteur, media, date,
+  const presseToJson = (list) => list.map(({ id, type, title, auteur, authorIds, auteurExterne, media, date, urlExterne, urlInterne }) => ({
+    id, type, title,
+    authorIds: Array.isArray(authorIds) ? authorIds : [],
+    auteurExterne: auteurExterne || '',
+    auteur: auteur || '',          // miroir lecture seule (rétrocompat)
+    media, date,
     url: urlExterne || '',
     urlInterne: urlInterne || '',
   }));
@@ -170,7 +202,7 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
       label: 'Titre',
       render: (v) => <span style={{ fontWeight: 500, maxWidth: 280, display: 'inline-block' }}>{v}</span>,
     },
-    { key: 'auteur', label: 'Auteur(s)' },
+    { key: 'auteur', label: 'Auteur(s)', render: (_, row) => resolveAuteur(row, auteurs) },
     {
       key: 'media',
       label: 'Média',
@@ -328,10 +360,23 @@ export default function Presse({ presse, setPresse, sollicitations = [], loading
               <label>Titre</label>
               <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
             </div>
+            <div style={{ marginBottom: 12 }}>
+              <label>Auteur(s) — profils internes</label>
+              <AuthorPicker
+                authors={auteurs.filter(a => a.actif !== false)}
+                selected={form.authorIds || []}
+                onChange={(ids) => setForm({ ...form, authorIds: ids })}
+                multiple={true}
+              />
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
-                <label>Auteur(s)</label>
-                <input value={form.auteur} onChange={e => setForm({ ...form, auteur: e.target.value })} />
+                <label>Auteur externe (si pas dans la base)</label>
+                <input
+                  value={form.auteurExterne}
+                  onChange={e => setForm({ ...form, auteurExterne: e.target.value })}
+                  placeholder="Ex: Cyril Dion, ou « Tribune signée par 167 chercheurs »"
+                />
               </div>
               <div>
                 <label>Média source</label>
