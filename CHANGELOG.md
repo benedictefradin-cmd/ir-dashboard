@@ -103,7 +103,16 @@
 
 ## Chantier 9 — Recette + smoke [2026-05-08]
 
-À venir.
+- Script `scripts/check-references.mjs` côté repo site. Vérifie en < 1s :
+  - 262 publications scannées → 0 authorId cassé
+  - 65 entrées presse → 0 authorId cassé
+  - 9 events → 0 profileId cassé
+  - 1 tombstone détecté (12407 → nicolas-desquinado), 0 ref pointe vers lui
+  - 169 profils actifs jamais référencés (info — vestiges WP)
+- Première recette : ✅ tout vert
+- Smoke Playwright (`tests/smoke.mjs`) : non étendu (les nouvelles features
+  nécessitent un Worker déployé + secrets Brevo, hors portée d'un E2E local).
+  À déclencher manuellement par `npm test` après `wrangler deploy` côté prod.
 
 ---
 
