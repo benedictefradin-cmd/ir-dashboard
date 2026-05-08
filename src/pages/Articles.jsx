@@ -24,7 +24,8 @@ import { humanizeError } from '../utils/errors';
 
 export default function Articles({
   articles, setArticles, loading, toast,
-  auteurs = [],
+  auteurs = [], setAuteurs,
+  saveToSite,
 }) {
   const confirm = useConfirm();
   const [search, setSearch] = useState('');
@@ -701,6 +702,51 @@ export default function Articles({
     return !!(t?.title?.trim() && t?.content?.trim());
   };
 
+  // Création rapide d'un profil depuis le picker (Brief 2026-05-08)
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickAdd, setQuickAdd] = useState({ firstName: '', lastName: '' });
+  const [quickAddSaving, setQuickAddSaving] = useState(false);
+  const submitQuickAdd = async () => {
+    const fn = quickAdd.firstName.trim();
+    const ln = quickAdd.lastName.trim();
+    if (!fn || !ln) { toast?.('Prénom et nom requis', 'error'); return; }
+    const slug = `${fn}-${ln}`.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    if (auteurs.some(a => a.id === slug)) {
+      toast?.('Un profil avec ce nom existe déjà', 'error');
+      return;
+    }
+    const newProfile = {
+      id: slug,
+      firstName: fn,
+      lastName: ln,
+      photo: '',
+      description: '',
+      roles: ['auteur_externe'],
+      roleLibelle: '',
+      email: '',
+      emailPublic: false,
+      linkedin: '',
+      actif: true,
+    };
+    const next = [...auteurs, newProfile];
+    setQuickAddSaving(true);
+    try {
+      if (setAuteurs) setAuteurs(next);
+      if (saveToSite) {
+        await saveToSite('auteurs', next, `Profil ajouté (depuis publication) : ${fn} ${ln}`);
+      }
+      // Auto-sélectionne le nouveau profil dans le picker actif
+      setSelectedAuthors(prev => prev.includes(slug) ? prev : [...prev, slug]);
+      toast?.(`Profil créé : ${fn} ${ln}`);
+      setQuickAddOpen(false);
+      setQuickAdd({ firstName: '', lastName: '' });
+    } catch (err) {
+      toast?.(`Erreur : ${err.message}`, 'error');
+    } finally {
+      setQuickAddSaving(false);
+    }
+  };
+
   // Chantier 6 : auto-traduction FR → EN/ES (DE/IT restent saisies à la main).
   // Ne touche pas aux langues déjà remplies — l'utilisatrice doit pouvoir
   // forcer une re-traduction via le bouton "Forcer".
@@ -1327,6 +1373,37 @@ export default function Articles({
         )}
 
         {/* ══ PUBLISH FLOW MODAL ═══════════════════ */}
+        {/* Modale création rapide profil depuis le picker (brief 2026-05-08) */}
+        {quickAddOpen && (
+          <Modal title="Nouveau profil — création rapide" onClose={() => setQuickAddOpen(false)} size="sm">
+            <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 16 }}>
+              Crée un profil minimal (prénom + nom). Tu pourras compléter description,
+              photo, LinkedIn et email plus tard depuis la page Profils.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label>Prénom *</label>
+                <input value={quickAdd.firstName} onChange={e => setQuickAdd({ ...quickAdd, firstName: e.target.value })} autoFocus />
+              </div>
+              <div>
+                <label>Nom *</label>
+                <input value={quickAdd.lastName} onChange={e => setQuickAdd({ ...quickAdd, lastName: e.target.value })}
+                  onKeyDown={e => e.key === 'Enter' && submitQuickAdd()} />
+              </div>
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 16 }}>
+              Le profil sera créé avec le rôle « Auteur externe » par défaut. Tu pourras
+              changer ça depuis la page Profils.
+            </p>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => setQuickAddOpen(false)}>Annuler</button>
+              <button className="btn btn-primary" disabled={quickAddSaving || !quickAdd.firstName.trim() || !quickAdd.lastName.trim()} onClick={submitQuickAdd}>
+                {quickAddSaving ? 'Création…' : 'Créer et sélectionner'}
+              </button>
+            </div>
+          </Modal>
+        )}
+
         {publishFlow && (
           <Modal
             title={
@@ -1356,11 +1433,11 @@ export default function Articles({
                   Sélectionnez le ou les profil(s) auteur de « <strong>{publishFlow.article.title}</strong> »
                 </p>
                 <AuthorPicker
-                  authors={auteurs}
+                  authors={auteurs.filter(a => a.actif !== false)}
                   selected={selectedAuthors}
                   onChange={setSelectedAuthors}
                   multiple={true}
-                  onAddNew={() => toast('Utilisez la page Profils pour ajouter un profil')}
+                  onAddNew={() => setQuickAddOpen(true)}
                 />
                 <div className="modal-footer">
                   <button className="btn btn-outline" onClick={closePublishFlow}>Annuler</button>

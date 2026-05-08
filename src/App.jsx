@@ -449,7 +449,7 @@ export default function App() {
       case 'articles':
         return <Articles
           articles={articles} setArticles={setArticles} loading={loading} toast={toast}
-          auteurs={auteurs}
+          auteurs={auteurs} setAuteurs={setAuteurs}
           saveToSite={saveToSite}
         />;
       case 'evenements':
