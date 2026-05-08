@@ -548,8 +548,8 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
                   {/* Info */}
                   <div className="auteur-card-body">
                     <h3 className="auteur-card-name">{getDisplayName(auteur)}</h3>
-                    {(auteur.role || auteur.titre) && (
-                      <p className="auteur-card-role">{auteur.role || auteur.titre}</p>
+                    {(auteur.roleLibelle || auteur.role || auteur.titre) && (
+                      <p className="auteur-card-role">{auteur.roleLibelle || auteur.role || auteur.titre}</p>
                     )}
                     <div className="auteur-card-badges">
                       {pubCount > 0 && (
@@ -557,17 +557,31 @@ export default function Profils({ auteurs, setAuteurs, articles, contenu, setCon
                           {pubCount} pub{pubCount !== 1 ? 's' : ''}
                         </span>
                       )}
-                      {teamRole && (
-                        <span
-                          className="badge badge-green"
-                          onClick={(e) => { e.stopPropagation(); if (onTabChange) onTabChange('equipe'); }}
-                          title="Voir dans Équipe"
-                          style={{ cursor: onTabChange ? 'pointer' : 'default' }}
+                      {(auteur.roles || []).map(r => {
+                        const opt = ROLES_AVAILABLE.find(x => x.value === r);
+                        return opt ? (
+                          <span key={r} className="badge badge-green" style={{ fontSize: 10 }}>
+                            {opt.label}
+                          </span>
+                        ) : null;
+                      })}
+                      {auteur.linkedin && (
+                        <a
+                          href={auteur.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="badge"
+                          style={{ background: '#0077b5', color: '#fff', fontSize: 10, textDecoration: 'none' }}
+                          title="Profil LinkedIn"
                         >
-                          {teamRole}
-                        </span>
+                          in
+                        </a>
                       )}
-                      {!auteur.photo && !auteur.photoPath && (
+                      {auteur.actif === false && (
+                        <span className="badge badge-gray" style={{ fontSize: 10 }}>Archivé</span>
+                      )}
+                      {!auteur.photo && !auteur.photoPath && auteur.actif !== false && (
                         <span
                           className="badge badge-ochre"
                           style={{ cursor: 'pointer' }}

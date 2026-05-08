@@ -1013,18 +1013,44 @@ async function handle(request, env) {
           index.unshift({ id, submitted_at: submission.submitted_at, subject: submission.subject, status: 'new' });
           await env.CONTACT_SUBMISSIONS.put('_index', JSON.stringify(index));
 
-          // Notification email via Brevo
+          // Notification email via Brevo — TO contact@ + CC profils routés
+          // (Chantier 4 étendu : on applique aussi le routing CC sur la
+          // notification entrante, pas seulement sur la réponse).
           if (env.BREVO_API_KEY) {
             try {
+              // Résolution des profils CC pour ce type d'objet
+              let cc = [];
+              try {
+                const routingRaw = await env.CONTACT_SUBMISSIONS.get('config:messageRouting');
+                const routing = routingRaw ? JSON.parse(routingRaw) : {};
+                const cfg = routing[submission.subject];
+                const ccIds = (cfg?.ccProfileIds) || [];
+                if (ccIds.length && env.GITHUB_PAT && env.GITHUB_OWNER && env.GITHUB_SITE_REPO) {
+                  const ghResp = await fetch(
+                    `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_SITE_REPO}/contents/data/auteurs.json`,
+                    { headers: { Authorization: `Bearer ${env.GITHUB_PAT}`, 'User-Agent': 'ir-worker', Accept: 'application/vnd.github.raw' } }
+                  );
+                  if (ghResp.ok) {
+                    const auteurs = await ghResp.json();
+                    cc = ccIds
+                      .map(id => auteurs.find(a => a.id === id))
+                      .filter(a => a && a.email && a.actif !== false)
+                      .map(a => ({ email: a.email, name: `${a.firstName} ${a.lastName}` }));
+                  }
+                }
+              } catch { /* fallback sans CC */ }
+
+              const payload = {
+                sender: { name: 'Institut Rousseau', email: 'contact@institut-rousseau.fr' },
+                to: [{ email: 'contact@institut-rousseau.fr' }],
+                subject: `[Nouveau message] ${submission.subject} — ${submission.name}`,
+                htmlContent: `<h3>Nouveau message reçu</h3><p><strong>Nom :</strong> ${submission.name}</p><p><strong>Email :</strong> ${submission.email}</p><p><strong>Organisation :</strong> ${submission.organization || '—'}</p><p><strong>Objet :</strong> ${submission.subject}</p><hr/><p>${submission.message.replace(/\n/g, '<br/>')}</p><p style="margin-top:16px;font-size:12px;color:#6b7280">Ouvrir dans le dashboard pour répondre.</p>`,
+              };
+              if (cc.length) payload.cc = cc;
               await fetch('https://api.brevo.com/v3/smtp/email', {
                 method: 'POST',
                 headers: { 'api-key': env.BREVO_API_KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  sender: { name: 'Institut Rousseau', email: 'contact@institut-rousseau.fr' },
-                  to: [{ email: 'contact@institut-rousseau.fr' }],
-                  subject: `[Nouveau contact] ${submission.subject} — ${submission.name}`,
-                  htmlContent: `<h3>Nouvelle sollicitation</h3><p><strong>Nom :</strong> ${submission.name}</p><p><strong>Email :</strong> ${submission.email}</p><p><strong>Organisation :</strong> ${submission.organization || '—'}</p><p><strong>Objet :</strong> ${submission.subject}</p><hr/><p>${submission.message.replace(/\n/g, '<br/>')}</p>`,
-                }),
+                body: JSON.stringify(payload),
               });
             } catch { /* notification non bloquante */ }
           }

@@ -369,7 +369,7 @@ export default function Sollicitations({ sollicitations, setSollicitations, aute
   if (loading) {
     return (
       <>
-        <div className="page-header"><h1>Sollicitations</h1></div>
+        <div className="page-header"><h1>Messages</h1></div>
         <div className="page-body"><SkeletonCard count={4} /><SkeletonTable /></div>
       </>
     );
@@ -380,9 +380,9 @@ export default function Sollicitations({ sollicitations, setSollicitations, aute
     <>
       <div className="page-header slide-up">
         <div>
-          <h1>Sollicitations</h1>
+          <h1>Messages</h1>
           <p className="page-header-sub">
-            {stats.total} sollicitation(s) — {stats.newCount} nouvelle(s)
+            {stats.total} message(s) — {stats.newCount} nouveau(x)
           </p>
         </div>
         <div className="flex-center gap-8">

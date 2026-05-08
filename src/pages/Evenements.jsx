@@ -62,6 +62,8 @@ export default function Evenements({ events, setEvents, auteurs = [], loading, t
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [publishingId, setPublishingId] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');             // Audit Evenements
+  const [typeFilterEv, setTypeFilterEv] = useState('all'); // Audit Evenements
   const [previewEvt, setPreviewEvt] = useState(null);
   const [formMode, setFormMode] = useState('template'); // 'template' | 'classique'
 
@@ -79,6 +81,16 @@ export default function Evenements({ events, setEvents, auteurs = [], loading, t
     if (statusFilter === 'a_venir') list = list.filter(e => (isFuture(e.date) || (!e.date && e.status === 'en_preparation')) && e.status !== 'annule');
     else if (statusFilter === 'passe') list = list.filter(e => !isFuture(e.date));
     else if (statusFilter !== 'all') list = list.filter(e => e.status === statusFilter);
+    if (typeFilterEv !== 'all') list = list.filter(e => e.type === typeFilterEv);
+    if (search.trim()) {
+      const q = search.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      list = list.filter(e => {
+        const haystack = [e.title, e.sousTitre, e.lieu, e.partenaire, e.description,
+          ...(e.intervenants || []).map(i => i.name || i.nameExterne || '')]
+          .filter(Boolean).join(' ').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        return haystack.includes(q);
+      });
+    }
     const futurs = list.filter(e => isFuture(e.date)).sort((a, b) => new Date(a.date) - new Date(b.date));
     const sansDate = list.filter(e => !e.date && e.status !== 'passe');
     const passes = list.filter(e => !isFuture(e.date) && (e.date || e.status === 'passe')).sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -239,6 +251,31 @@ export default function Evenements({ events, setEvents, auteurs = [], loading, t
           <StatsCard label="À venir" value={stats.aVenir} accentColor={COLORS.green} sub="confirmés ou en préparation" />
           <StatsCard label="Passés" value={stats.passes} accentColor={COLORS.textLight} sub="événements terminés" />
           <StatsCard label="En préparation" value={stats.enPrep} accentColor={COLORS.ochre} sub="à confirmer" />
+        </div>
+
+        {/* Recherche + filtre type (audit Evenements 2026-05-08) */}
+        <div className="filter-bar mb-16" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input
+            type="search"
+            placeholder="Rechercher un événement (titre, lieu, intervenant…)"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ flex: '1 1 280px', minWidth: 240 }}
+          />
+          <select
+            className="filter-select"
+            value={typeFilterEv}
+            onChange={e => setTypeFilterEv(e.target.value)}
+            aria-label="Filtrer par type d'événement"
+          >
+            <option value="all">Tous les types</option>
+            {EVT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          {(search || typeFilterEv !== 'all') && (
+            <button className="btn btn-outline btn-sm" onClick={() => { setSearch(''); setTypeFilterEv('all'); }}>
+              Effacer
+            </button>
+          )}
         </div>
 
         {/* Filtre par statut */}

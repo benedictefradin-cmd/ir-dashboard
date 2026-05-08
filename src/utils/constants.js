@@ -26,6 +26,9 @@ export const COLORS = {
 // Top-level visible par défaut : Dashboard, Profils, Publications, Événements,
 // Médias, Paramètres. Le reste (Communication + outils Site) est replié sous
 // "Plus" pour limiter le bruit visuel sur la page principale.
+// Sidebar simplifiée — 6 entrées principales (cf. brief Bénédicte 2026-05-08).
+// Les items secondaires sont regroupés dans "Avancé" (replié par défaut).
+// Toutes les routes restent accessibles ; seul l'affichage est resserré.
 export const NAV_GROUPS = [
   {
     key: 'main',
@@ -39,23 +42,25 @@ export const NAV_GROUPS = [
     items: [
       { key: 'profils', label: 'Profils', icon: '\u{1F465}' },
       { key: 'articles', label: 'Publications', icon: '\u{1F4C4}' },
+      { key: 'sollicitations', label: 'Messages', icon: '\u{1F4EC}' },
+      { key: 'newsletter', label: 'Newsletter', icon: '✉' },
       { key: 'evenements', label: 'Événements', icon: '\u{1F4C5}' },
       { key: 'medias', label: 'Médias', icon: '\u{1F5BC}' },
     ],
   },
   {
     key: 'plus',
-    label: 'Plus',
+    label: 'Avancé',
     defaultOpen: false,
     items: [
       { key: 'presse', label: 'Mentions presse', icon: '\u{1F4F0}' },
-      { key: 'newsletter', label: 'Newsletter', icon: '✉' },
-      { key: 'messagerie', label: 'Messagerie', icon: '\u{1F4AC}' },
+      { key: 'messagerie', label: 'Compositeur bulk', icon: '\u{1F4AC}' },
       { key: 'calendrier', label: 'Calendrier éditorial', icon: '\u{1F5D3}' },
-      { key: 'sollicitations', label: 'Sollicitations', icon: '\u{1F4EC}' },
-      { key: 'editeur', label: 'Éditeur visuel', icon: '\u{270F}\u{FE0F}' },
-      { key: 'pagessite', label: 'Pages du site', icon: '\u{1F3E0}' },
+      { key: 'accueil', label: 'Page d\'accueil du site', icon: '\u{1F3E0}' },
+      { key: 'equipe', label: 'Sections équipe (site)', icon: '\u{1F465}' },
+      { key: 'pagessite', label: 'Pages du site', icon: '\u{1F4D1}' },
       { key: 'seo', label: 'SEO', icon: '\u{1F50D}' },
+      { key: 'editeur', label: 'Éditeur visuel', icon: '\u{270F}\u{FE0F}' },
       { key: 'technique', label: 'Technique', icon: '\u{2699}' },
     ],
   },

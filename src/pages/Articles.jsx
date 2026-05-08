@@ -194,6 +194,39 @@ export default function Articles({
     const article = publishFlow.article;
 
     try {
+      // 0. Auto-traduction (Chantier 6) — déclenchée automatiquement au
+      //    publish pour combler les langues cibles vides. Best-effort : si
+      //    le service de traduction échoue, on continue avec les langues
+      //    disponibles (l'utilisatrice peut éditer après et republier).
+      const translations = { ...(article.translations || {}) };
+      const translateMissing = AUTO_TRANSLATE_TARGETS.filter(code => {
+        const t = translations[code];
+        return !(t?.title?.trim() && t?.content?.trim());
+      });
+      if (translateMissing.length && article.title?.trim() && article.content?.trim()) {
+        toast?.(`Traduction auto en cours (${translateMissing.join(', ').toUpperCase()})…`);
+        for (const code of translateMissing) {
+          try {
+            const result = await translateArticle(
+              { title: article.title, summary: article.summary || '', content: article.content || '' },
+              'fr',
+              code,
+            );
+            translations[code] = {
+              title: result.title || '',
+              summary: result.summary || '',
+              content: result.content || '',
+              autoTranslated: true,
+              translatedAt: new Date().toISOString(),
+            };
+          } catch (err) {
+            console.warn(`[Articles] Auto-trad ${code} échouée :`, err.message);
+          }
+        }
+        // Persiste localement la traduction obtenue (visible avant retour publish)
+        setArticles(prev => prev.map(a => a.id === article.id ? { ...a, translations } : a));
+      }
+
       // 1. Get content
       const html = previewHtml || article.content || '';
 
