@@ -3,6 +3,7 @@ import StatsCard from '../components/shared/StatsCard';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { SkeletonCard } from '../components/shared/SkeletonLoader';
 import DeployStatusBadge from '../components/shared/DeployStatusBadge';
+import HelloAssoStatsCard from '../components/shared/HelloAssoStatsCard';
 import { formatDateFr, timeAgo } from '../utils/formatters';
 import { COLORS } from '../utils/constants';
 import { triggerRebuild, hasDeployHook, getLastDeploy } from '../services/deploy';
@@ -112,6 +113,11 @@ export default function Dashboard({
         {/* ── Statut Vercel — Chantier D ─────────── */}
         <div style={{ marginBottom: 16 }}>
           <DeployStatusBadge onTabChange={onTabChange} />
+        </div>
+
+        {/* ── HelloAsso — Chantier 5 ─────────────── */}
+        <div style={{ marginBottom: 16 }}>
+          <HelloAssoStatsCard />
         </div>
 
         {/* ── KPI cards ──────────────────────────── */}

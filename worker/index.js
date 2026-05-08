@@ -506,6 +506,74 @@ async function handle(request, env) {
       }
 
       // ═══════════════════════════════════════════
+      // HELLOASSO TRACKING — beacon non bloquant (Chantier 5)
+      // ═══════════════════════════════════════════
+      // POST /api/track/click   → public, pas de Bearer (beacon depuis le site)
+      //   body: { type: "adhesion"|"don", source: "string" }
+      //   Incrémente helloasso:click:{type}:{source}:{YYYY-MM-DD}, renvoie 204.
+      // GET  /api/helloasso/stats?period=day|week|month  → admin (auth Bearer)
+      //   Agrège les compteurs sur la fenêtre temporelle.
+
+      if (path === '/api/track/click' && request.method === 'POST') {
+        const kv = env.CONTACT_SUBMISSIONS;
+        if (!kv) return new Response(null, { status: 204 });
+        let body;
+        try { body = await request.json(); } catch { return new Response(null, { status: 204 }); }
+        const ALLOWED_TYPES = new Set(['adhesion', 'don']);
+        const type = String(body?.type || '').toLowerCase();
+        if (!ALLOWED_TYPES.has(type)) return new Response(null, { status: 204 });
+        // Source : alphanum + tirets/underscore, max 40 chars
+        const source = String(body?.source || 'unknown').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40) || 'unknown';
+        const today = new Date().toISOString().slice(0, 10);
+        const key = `helloasso:click:${type}:${source}:${today}`;
+        const current = parseInt(await kv.get(key) || '0', 10);
+        await kv.put(key, String(current + 1), { expirationTtl: 60 * 60 * 24 * 400 });   // 400j de rétention
+        return new Response(null, { status: 204 });
+      }
+
+      if (path === '/api/helloasso/stats' && request.method === 'GET') {
+        const kv = env.CONTACT_SUBMISSIONS;
+        if (!kv) return json({ error: 'KV non configuré' }, 503);
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+        const session = token ? await getSession(kv, token) : null;
+        if (!session) return json({ error: 'Non autorisé' }, 401);
+
+        const period = url.searchParams.get('period') || 'day';
+        const days = period === 'week' ? 7 : period === 'month' ? 30 : 1;
+        const today = new Date();
+        const dates = [];
+        for (let i = 0; i < days; i++) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          dates.push(d.toISOString().slice(0, 10));
+        }
+
+        // Liste exhaustive : on parcourt par préfixe
+        // Cloudflare KV list cap = 1000 → suffisant à notre échelle.
+        const counts = { adhesion: { total: 0, bySource: {}, byDay: {} }, don: { total: 0, bySource: {}, byDay: {} } };
+        for (const type of ['adhesion', 'don']) {
+          let cursor;
+          do {
+            const list = await kv.list({ prefix: `helloasso:click:${type}:`, cursor });
+            for (const k of list.keys) {
+              // helloasso:click:{type}:{source}:{YYYY-MM-DD}
+              const parts = k.name.split(':');
+              const source = parts[3] || 'unknown';
+              const day = parts[4] || '';
+              if (!dates.includes(day)) continue;
+              const v = parseInt(await kv.get(k.name) || '0', 10);
+              counts[type].total += v;
+              counts[type].bySource[source] = (counts[type].bySource[source] || 0) + v;
+              counts[type].byDay[day] = (counts[type].byDay[day] || 0) + v;
+            }
+            cursor = list.list_complete ? null : list.cursor;
+          } while (cursor);
+        }
+        return json({ period, days, counts, generatedAt: new Date().toISOString() });
+      }
+
+      // ═══════════════════════════════════════════
       // MESSAGES ROUTING — config CC par type d'objet (Chantier 4)
       // ═══════════════════════════════════════════
       // GET /api/messages/routing  → renvoie la config { press: { ccProfileIds }, … }
