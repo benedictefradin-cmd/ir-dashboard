@@ -3,7 +3,7 @@ import DataTable from '../components/shared/DataTable';
 import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
-import AuthorPicker from '../components/shared/AuthorPicker';
+import AuthorSearchBar from '../components/shared/AuthorSearchBar';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr } from '../utils/formatters';
 import { PRESSE_TYPES } from '../utils/constants';
@@ -362,11 +362,11 @@ export default function Presse({ presse, setPresse, auteurs = [], sollicitations
             </div>
             <div style={{ marginBottom: 12 }}>
               <label>Auteur(s) — profils internes</label>
-              <AuthorPicker
-                authors={auteurs.filter(a => a.actif !== false)}
+              <AuthorSearchBar
+                authors={auteurs}
                 selected={form.authorIds || []}
                 onChange={(ids) => setForm({ ...form, authorIds: ids })}
-                multiple={true}
+                placeholder="Tape un nom (Nicolas Dufrêne, Robert Bell…)"
               />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>

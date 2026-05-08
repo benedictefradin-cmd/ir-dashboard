@@ -4,6 +4,7 @@ import SearchBar from '../components/shared/SearchBar';
 import Modal from '../components/shared/Modal';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import AuthorPicker from '../components/shared/AuthorPicker';
+import AuthorSearchBar from '../components/shared/AuthorSearchBar';
 import MultiSelect from '../components/shared/MultiSelect';
 import { SkeletonTable } from '../components/shared/SkeletonLoader';
 import { formatDateFr, timeAgo } from '../utils/formatters';
@@ -1032,23 +1033,21 @@ export default function Articles({
 
             {isSourceLang && (
               <div style={{ marginBottom: 16 }}>
-                <label>Auteur(s) — sélection par profil <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 400 }}>(commun à toutes les langues)</span></label>
-                <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 10, background: '#fafafa', maxHeight: 280, overflowY: 'auto' }}>
-                  <AuthorPicker
-                    authors={auteurs}
-                    selected={form.authorIds || []}
-                    onChange={setAuthorIds}
-                    multiple={true}
-                  />
-                </div>
+                <label>Auteur(s) <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 400 }}>(commun à toutes les langues)</span></label>
+                <AuthorSearchBar
+                  authors={auteurs}
+                  selected={form.authorIds || []}
+                  onChange={setAuthorIds}
+                  onAddNew={(query) => {
+                    const parts = query.trim().split(/\s+/);
+                    setQuickAdd({ firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' });
+                    setQuickAddOpen(true);
+                  }}
+                  placeholder="Tape un nom (ex : Nicolas Dufrêne)…"
+                />
                 {form.author && !(form.authorIds && form.authorIds.length) && (
                   <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 6 }}>
-                    Auteur saisi en texte libre (legacy) : <code>{form.author}</code>. Sélectionnez le ou les profils correspondants ci-dessus.
-                  </p>
-                )}
-                {(form.authorIds || []).length > 0 && (
-                  <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 6 }}>
-                    Affichage public : <strong>{namesFromIds(form.authorIds)}</strong>
+                    Auteur legacy : <code>{form.author}</code>. Tape le nom ci-dessus pour relier au profil.
                   </p>
                 )}
               </div>
@@ -1076,20 +1075,14 @@ export default function Articles({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
                 <label>Type</label>
-                <select value={form.type} onChange={async (e) => {
+                <select value={form.type} onChange={(e) => {
                   const newType = e.target.value;
-                  setForm(f => ({ ...f, type: newType }));
-                  // Si article nouveau et contenu vide, proposer la trame
-                  if (!editingArt && !form.content && ARTICLE_TEMPLATES[newType]) {
-                    const ok = await confirm({
-                      title: 'Charger la trame ?',
-                      message: `Voulez-vous charger la trame « ${newType} » dans l'éditeur ?`,
-                      details: `Cible recommandée : ${ARTICLE_TEMPLATES[newType].estimatedWords}`,
-                      confirmLabel: 'Charger la trame',
-                    });
-                    if (ok) {
-                      setForm(f => ({ ...f, type: newType, content: ARTICLE_TEMPLATES[newType].skeleton }));
-                    }
+                  // Si l'éditeur est vide → charge la trame silencieusement.
+                  // Sinon, on change juste le type sans toucher au contenu.
+                  if (!form.content?.trim() && ARTICLE_TEMPLATES[newType]?.skeleton) {
+                    setForm(f => ({ ...f, type: newType, content: ARTICLE_TEMPLATES[newType].skeleton }));
+                  } else {
+                    setForm(f => ({ ...f, type: newType }));
                   }
                 }}>
                   {PUB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1106,19 +1099,21 @@ export default function Articles({
               </div>
             </div>
 
-            {/* Guide de rédaction + bouton trame */}
+            {/* Guide de rédaction — accordéon replié par défaut (UX 2026-05-08) */}
             {ARTICLE_TEMPLATES[form.type]?.guide && (
-              <div style={{ marginBottom: 16 }}>
-                <label>Guide de rédaction</label>
-                <div className="template-guide">
-                  {ARTICLE_TEMPLATES[form.type].guide.map((g, i) => (
-                    <div key={i} className="template-guide-item">
-                      <div className="template-guide-section">{g.section}</div>
-                      <div className="template-guide-hint">{g.hint}</div>
-                    </div>
-                  ))}
-                </div>
-                {ARTICLE_TEMPLATES[form.type] && (
+              <details style={{ marginBottom: 16 }}>
+                <summary style={{ cursor: 'pointer', fontSize: 13, color: 'var(--text-light)', padding: '6px 0' }}>
+                  Aide à la rédaction pour ce type
+                </summary>
+                <div style={{ marginTop: 8 }}>
+                  <div className="template-guide">
+                    {ARTICLE_TEMPLATES[form.type].guide.map((g, i) => (
+                      <div key={i} className="template-guide-item">
+                        <div className="template-guide-section">{g.section}</div>
+                        <div className="template-guide-hint">{g.hint}</div>
+                      </div>
+                    ))}
+                  </div>
                   <button
                     type="button"
                     className="btn btn-outline btn-sm"
@@ -1136,10 +1131,10 @@ export default function Articles({
                       setForm(f => ({ ...f, content: ARTICLE_TEMPLATES[f.type].skeleton }));
                     }}
                   >
-                    📋 Charger la trame
+                    Recharger la trame
                   </button>
-                )}
-              </div>
+                </div>
+              </details>
             )}
 
             <div style={{ marginBottom: 16 }}>
