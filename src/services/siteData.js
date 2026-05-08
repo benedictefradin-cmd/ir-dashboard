@@ -283,6 +283,7 @@ export function normalizePresse(presse) {
     media: p.media || '',
     date: p.date || '',
     url: p.url || '',
+    urlExterne: p.url || '',
     urlInterne: p.urlInterne || '',
   }));
 }
