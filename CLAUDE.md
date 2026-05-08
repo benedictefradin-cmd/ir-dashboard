@@ -126,7 +126,28 @@ TELEGRAM_CHANNEL_ID
 DEEPL_API_KEY                    # traduction (optionnel)
 ANTHROPIC_API_KEY                # traduction LLM (optionnel)
 CONTACT_AUTH_TOKEN               # déprécié, à retirer
+NEWSLETTER_UNSUBSCRIBE_SECRET    # Chantier 0 RGPD — HMAC pour signer les liens
+                                 # de désinscription. Sans ce secret, l'envoi
+                                 # newsletter (POST /api/brevo/email/send avec
+                                 # newsletter:true) renvoie 503.
+                                 # Générer : `openssl rand -hex 32`
+BREVO_NEWSLETTER_LIST_ID         # Chantier 0 — ID numérique de la liste Brevo
+                                 # "newsletter". Sans ce secret, fallback sur
+                                 # PUT contact attribute STATUS=unsubscribed +
+                                 # emailBlacklisted=true.
 ```
+
+### Endpoint public de désinscription (Chantier 0)
+
+```
+GET /api/newsletter/unsubscribe?token=…
+```
+
+- Token = `b64url(email).b64url(hmac_sha256(NEWSLETTER_UNSUBSCRIBE_SECRET, email))`
+- Pas de Bearer requis (le lien est dans l'email reçu)
+- Idempotent : un clic en double renvoie la même page de succès
+- Headers `List-Unsubscribe` + `List-Unsubscribe-Post: One-Click` ajoutés à chaque mail newsletter pour Gmail/Outlook
+- HTML de confirmation FR rendu côté Worker (pas de redéploiement du site)
 
 ## Variables d'environnement front (`.env.local`)
 

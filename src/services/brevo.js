@@ -48,12 +48,19 @@ export async function updateContact(email, attributes) {
   return api.put(`/api/brevo/contacts/${encodeURIComponent(email)}`, { attributes });
 }
 
-export async function sendEmail({ to, subject, htmlContent, sender }) {
-  return api.post('/api/brevo/email/send', { to, subject, htmlContent, sender });
+export async function sendEmail({ to, subject, htmlContent, sender, newsletter }) {
+  return api.post('/api/brevo/email/send', { to, subject, htmlContent, sender, newsletter });
 }
 
-export async function sendBulkEmail({ recipients, subject, htmlContent, sender }) {
-  // Envoyer par lots de 50
+/**
+ * Envoi de masse (newsletter / messagerie). Par défaut, le flag `newsletter:true`
+ * est passé pour que le Worker injecte le footer désinscription RGPD personnalisé
+ * par destinataire (Chantier 0). Pour un envoi de masse non-newsletter (ex:
+ * notification interne admin), passer explicitement `newsletter: false`.
+ */
+export async function sendBulkEmail({ recipients, subject, htmlContent, sender, newsletter = true }) {
+  // Envoyer par lots de 50 — le Worker en mode newsletter:true boucle ensuite
+  // 1-par-1 pour personnaliser le token. Côté front on garde le batching.
   const results = [];
   for (let i = 0; i < recipients.length; i += 50) {
     const batch = recipients.slice(i, i + 50).map(email => ({ email }));
@@ -62,6 +69,7 @@ export async function sendBulkEmail({ recipients, subject, htmlContent, sender }
       subject,
       htmlContent,
       sender,
+      newsletter,
     });
     results.push(result);
   }

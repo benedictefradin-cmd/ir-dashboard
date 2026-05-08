@@ -12,7 +12,14 @@
  *   CONTACT_SUBMISSIONS  — stockage des sollicitations du formulaire de contact
  *
  * Secrets supplémentaires (optionnels):
- *   CONTACT_AUTH_TOKEN    — Bearer token pour les endpoints back-office
+ *   CONTACT_AUTH_TOKEN              — Bearer token pour les endpoints back-office
+ *   NEWSLETTER_UNSUBSCRIBE_SECRET   — HMAC key pour signer les liens de désinscription
+ *                                     (Chantier 0 RGPD — sans ce secret, l'injection
+ *                                     du footer désinscription est désactivée)
+ *   BREVO_NEWSLETTER_LIST_ID        — ID numérique de la liste Brevo "newsletter"
+ *                                     (Chantier 0 — utilisé pour retirer un email lors
+ *                                     d'une désinscription. Sans ce secret, fallback sur
+ *                                     attribute STATUS=unsubscribed sur le contact)
  */
 
 // ─── CORS — allowlist d'origines (cf. AUDIT §4.4) ───
@@ -66,6 +73,124 @@ function utf8ToBase64(bytes) {
     bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
   }
   return btoa(bin);
+}
+
+// ─── Helpers Chantier 0 — désinscription newsletter (RGPD) ───
+// Token d'unsubscribe = `b64url(email).b64url(hmac(secret, email))`.
+// Pas d'expiration : un abonné de l'an dernier doit toujours pouvoir cliquer.
+
+function b64urlEncode(str) {
+  const bytes = new TextEncoder().encode(str);
+  return utf8ToBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function b64urlDecode(s) {
+  const pad = s.length % 4 === 0 ? '' : '='.repeat(4 - (s.length % 4));
+  const b64 = s.replace(/-/g, '+').replace(/_/g, '/') + pad;
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+async function hmacSha256(secret, message) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign', 'verify']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+  // base64url du digest (32 bytes → 43 chars sans padding)
+  return utf8ToBase64(new Uint8Array(sig)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function buildUnsubscribeToken(secret, email) {
+  const sig = await hmacSha256(secret, email.toLowerCase());
+  return `${b64urlEncode(email)}.${sig}`;
+}
+
+async function verifyUnsubscribeToken(secret, token) {
+  if (!token || typeof token !== 'string' || !token.includes('.')) return null;
+  const [emailPart, sigPart] = token.split('.', 2);
+  let email;
+  try {
+    email = b64urlDecode(emailPart);
+  } catch {
+    return null;
+  }
+  const expected = await hmacSha256(secret, email.toLowerCase());
+  // Comparaison à temps constant
+  if (expected.length !== sigPart.length) return null;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= expected.charCodeAt(i) ^ sigPart.charCodeAt(i);
+  }
+  return diff === 0 ? email : null;
+}
+
+// HTML brut de la page de confirmation FR (pas de redéploiement du site requis).
+function renderUnsubscribePage({ status, email }) {
+  const titleByStatus = {
+    success: 'Désinscription confirmée',
+    invalid: 'Lien de désinscription invalide',
+    'not-configured': 'Service indisponible',
+    error: 'Erreur lors de la désinscription',
+  };
+  const messageByStatus = {
+    success: `L'adresse <strong>${escapeHtml(email || '')}</strong> a été retirée de la liste de diffusion. Vous ne recevrez plus de newsletter de l'Institut Rousseau.`,
+    invalid: "Ce lien n'est pas valide ou a été altéré. Si vous souhaitez vous désabonner, contactez <a href=\"mailto:contact@institut-rousseau.fr\">contact@institut-rousseau.fr</a>.",
+    'not-configured': "Le service de désinscription n'est pas configuré sur ce serveur. Merci d'écrire à <a href=\"mailto:contact@institut-rousseau.fr\">contact@institut-rousseau.fr</a>.",
+    error: "Une erreur est survenue. Merci de réessayer ou d'écrire à <a href=\"mailto:contact@institut-rousseau.fr\">contact@institut-rousseau.fr</a>.",
+  };
+  const accent = status === 'success' ? '#16a34a' : status === 'invalid' || status === 'error' ? '#dc2626' : '#1a2744';
+  return `<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>${titleByStatus[status] || 'Désinscription'} — Institut Rousseau</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; background: #f8fafc; color: #1a2744; margin: 0; padding: 48px 16px; }
+    .card { max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04); }
+    h1 { font-family: "Cormorant Garamond", Georgia, serif; font-size: 28px; margin: 0 0 16px; color: ${accent}; }
+    p { line-height: 1.6; margin: 0 0 16px; }
+    a { color: ${accent}; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>${titleByStatus[status] || 'Désinscription'}</h1>
+    <p>${messageByStatus[status] || ''}</p>
+    <div class="footer">
+      <p>Institut Rousseau — <a href="https://institut-rousseau.fr">institut-rousseau.fr</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Footer désinscription RGPD à injecter en fin d'htmlContent newsletter.
+// Le token est unique par destinataire. La signature est masquée derrière
+// le lien — l'email apparaît clair dans l'URL pour permettre l'audit côté
+// utilisateur ("c'est bien moi qui suis désabonné·e").
+function buildUnsubscribeFooter(unsubscribeUrl) {
+  return `
+<hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0 16px;">
+<p style="font-size:12px;color:#6b7280;line-height:1.5;text-align:center;font-family:Arial,sans-serif;">
+Vous recevez cet email car vous êtes inscrit·e à la newsletter de l'Institut Rousseau.
+<br>
+<a href="${unsubscribeUrl}" style="color:#6b7280;text-decoration:underline;">Se désabonner</a>
+</p>
+`;
 }
 
 export default {
@@ -381,6 +506,61 @@ async function handle(request, env) {
       }
 
       // ═══════════════════════════════════════════
+      // NEWSLETTER — désinscription publique (Chantier 0 RGPD)
+      // ═══════════════════════════════════════════
+      // GET /api/newsletter/unsubscribe?token=…
+      // Endpoint PUBLIC sans Bearer (le lien est dans l'email reçu).
+      // Sécurité = HMAC du couple email/secret. Idempotent : un clic en double
+      // sur un lien déjà utilisé renvoie la même page de succès.
+
+      if (path === '/api/newsletter/unsubscribe' && request.method === 'GET') {
+        const html = (status, email) => new Response(
+          renderUnsubscribePage({ status, email }),
+          { status: status === 'invalid' ? 400 : 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+        );
+        const secret = env.NEWSLETTER_UNSUBSCRIBE_SECRET;
+        if (!secret) return html('not-configured');
+        const token = url.searchParams.get('token');
+        const email = await verifyUnsubscribeToken(secret, token);
+        if (!email) return html('invalid');
+
+        // Brevo : 2 stratégies pour désinscrire
+        //  1) Si BREVO_NEWSLETTER_LIST_ID configuré → retire de la liste
+        //  2) Sinon → fallback : marque l'attribut STATUS=unsubscribed sur le contact
+        const brevoKey = env.BREVO_API_KEY;
+        if (!brevoKey) return html('error', email);
+        const listId = env.BREVO_NEWSLETTER_LIST_ID;
+        try {
+          if (listId) {
+            const r = await fetch(`https://api.brevo.com/v3/contacts/lists/${listId}/contacts/remove`, {
+              method: 'POST',
+              headers: { 'api-key': brevoKey, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({ emails: [email] }),
+            });
+            // 201 ok, 400 "Contact already removed from list" est aussi un succès idempotent
+            if (!r.ok) {
+              const errBody = await r.json().catch(() => ({}));
+              const alreadyRemoved = (errBody.message || '').toLowerCase().includes('not exist') || (errBody.code || '') === 'invalid_parameter';
+              if (!alreadyRemoved) return html('error', email);
+            }
+          } else {
+            // Fallback : update attribute STATUS sur le contact
+            const r = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
+              method: 'PUT',
+              headers: { 'api-key': brevoKey, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({ attributes: { STATUS: 'unsubscribed' }, emailBlacklisted: true }),
+            });
+            if (!r.ok && r.status !== 404) {
+              return html('error', email);
+            }
+          }
+          return html('success', email);
+        } catch {
+          return html('error', email);
+        }
+      }
+
+      // ═══════════════════════════════════════════
       // BREVO
       // ═══════════════════════════════════════════
 
@@ -449,14 +629,67 @@ async function handle(request, env) {
         }
 
         // ─── POST /api/brevo/email/send ───
+        // Modes :
+        //  - default : un seul appel Brevo, htmlContent partagé entre tous les `to`
+        //    (replies sollicitations, test sends, transactionnels).
+        //  - newsletter (`body.newsletter === true`) : envoi 1-par-1 avec un
+        //    footer désinscription personnalisé par destinataire (Chantier 0
+        //    RGPD). Nécessite NEWSLETTER_UNSUBSCRIBE_SECRET côté Worker. Si le
+        //    secret manque, on refuse l'envoi pour ne pas envoyer de newsletter
+        //    sans lien désinscription.
         if (path === '/api/brevo/email/send') {
           const body = await request.json();
+          const sender = body.sender || { name: 'Institut Rousseau', email: 'contact@institut-rousseau.fr' };
+          const recipients = Array.isArray(body.to) ? body.to : [{ email: body.to }];
+
+          if (body.newsletter === true) {
+            const secret = env.NEWSLETTER_UNSUBSCRIBE_SECRET;
+            if (!secret) {
+              return json({
+                error: "NEWSLETTER_UNSUBSCRIBE_SECRET non configuré côté Worker. Impossible d'envoyer une newsletter sans lien de désinscription (RGPD art.21, LCEN art.L34-5). Configurez le secret avec : wrangler secret put NEWSLETTER_UNSUBSCRIBE_SECRET",
+              }, 503);
+            }
+            const baseUrl = new URL(request.url).origin;
+            const results = [];
+            for (const recipient of recipients) {
+              const email = recipient.email;
+              if (!email) { results.push({ email: null, error: 'email manquant' }); continue; }
+              const token = await buildUnsubscribeToken(secret, email);
+              const unsubUrl = `${baseUrl}/api/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;
+              const personalizedHtml = (body.htmlContent || '') + buildUnsubscribeFooter(unsubUrl);
+              const headers = {
+                ...brevoHeaders,
+                'List-Unsubscribe': `<${unsubUrl}>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+              };
+              const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  sender,
+                  to: [recipient],
+                  subject: body.subject,
+                  htmlContent: personalizedHtml,
+                  headers: {
+                    'List-Unsubscribe': `<${unsubUrl}>`,
+                    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+                  },
+                }),
+              });
+              const data = await resp.json().catch(() => ({}));
+              results.push({ email, ok: resp.ok, status: resp.status, messageId: data.messageId, error: resp.ok ? undefined : (data.message || `HTTP ${resp.status}`) });
+            }
+            const ok = results.filter(r => r.ok).length;
+            return json({ newsletter: true, sent: ok, total: results.length, results });
+          }
+
+          // Mode default (replies, test, transactionnels)
           const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: brevoHeaders,
             body: JSON.stringify({
-              sender: body.sender || { name: 'Institut Rousseau', email: 'contact@institut-rousseau.fr' },
-              to: Array.isArray(body.to) ? body.to : [{ email: body.to }],
+              sender,
+              to: recipients,
               subject: body.subject,
               htmlContent: body.htmlContent,
             }),
@@ -1378,6 +1611,8 @@ async function handle(request, env) {
             translate: !!(env.DEEPL_API_KEY || env.ANTHROPIC_API_KEY),
             githubOAuth: !!(env.GITHUB_OAUTH_CLIENT_ID && env.GITHUB_OAUTH_CLIENT_SECRET),
             vercel: !!env.VERCEL_TOKEN,
+            newsletterUnsubscribe: !!env.NEWSLETTER_UNSUBSCRIBE_SECRET,
+            newsletterListId: !!env.BREVO_NEWSLETTER_LIST_ID,
           },
         });
       }

@@ -10,26 +10,30 @@
 
 ## 0. TL;DR
 
-Le brief vise un dashboard « simple, fiable, centré sur le profil » couvrant 6 expériences (Profils, Publications, Messages, Newsletter, HelloAsso, Événements). Les **fondations sont déjà solides** grâce aux Chantiers A→F (mai 2026) :
+> ### 🚨 P0 LÉGAL — À traiter en isolé avant tout autre chantier
+>
+> Les newsletters envoyées aujourd'hui via `Newsletter.jsx` n'incluent **aucun lien de désinscription**. Cela viole le **RGPD art. 21** et la **LCEN art. L34-5**. Risque immédiat : plainte CNIL, amende, atteinte à l'image. **Recommandation : suspendre les envois jusqu'à ce que le footer désinscription soit en prod (Chantier 0, ½ jour).** Détail en §5.5 et §7 Chantier 0.
+
+Le brief vise un dashboard « simple, fiable, centré sur le profil » couvrant 6 expériences (Profils, Publications, Messages, Newsletter, HelloAsso, Événements). Les Chantiers A→F (mai 2026) ont **livré les fondations** mais avec **rétrocompat conservée partout** — ce qui est sain mais ne doit pas être lu comme « fini » :
 
 - Auth OAuth GitHub + sessions KV ✅
-- Schéma profil enrichi (bioCourte/bioLongue/reseaux/actif/dateArrivee) ✅
-- Relations Publication ↔ Auteur par ID (`authorIds: []`) ✅
+- Schéma profil enrichi (bioCourte/bioLongue/reseaux/actif/dateArrivee) ✅ schéma posé, contenu **non saisi** (2/211 LinkedIn, 0/211 bioLongue)
+- Relations Publication ↔ Auteur par ID ⚠ `authorIds: []` écrit côté nouveaux articles, **mais miroir `author: string` toujours présent partout** ([Articles.jsx:38](src/pages/Articles.jsx#L38)). Migration commencée, pas terminée.
 - Pipeline Vercel visible (statut + force deploy + 5 derniers builds) ✅
 - Sidebar regroupée + recherche `Cmd+K` ✅
-- Smoke test 18 pages en CI ✅
+- Smoke test sur 18 pages en CI ⚠ une 19ᵉ route (`EditeurVisuel.jsx`) n'est pas couverte (cf. §1.4)
 
-**Mais** plusieurs blocs du brief restent à faire ou ne sont qu'à moitié couverts. Les points critiques :
+**Points critiques restants** :
 
 1. **Doublons profils** : 1 doublon confirmé (`nicolas-desquinado` ↔ `12407`), pas zéro comme l'audit du 2 mai l'affirmait — l'heuristique n'avait pas tenu compte des IDs numériques d'import WP.
-2. **Schéma profil vs brief** : le brief demande un champ minimal (Prénom/Nom/Photo/LinkedIn/Description/Rôle/Email + checkbox « Afficher sur le site »). Aujourd'hui le formulaire a plus de champs (X, site perso, dateArrivee, actif, bioCourte/bioLongue) — il faut soit **réduire**, soit **garder mais avec une priorité visuelle claire**.
+2. **Schéma profil vs brief** : le brief demande un champ minimal (Prénom/Nom/Photo/LinkedIn/Description/Rôle/Email + checkbox « Afficher sur le site »). Aujourd'hui le formulaire a plus de champs (X, site perso, dateArrivee, bioCourte/bioLongue) — il faut **réduire** au strict brief et stocker un **backup JSON séparé** (pas un sous-objet `_legacy` qui pollue le schéma public).
 3. **Presse et Événements** : encore en `auteur: string libre` / `intervenants: [{name, titre}]`. Pas relié aux IDs profil. Migration de la même nature que Chantier B.
-4. **Messages** : pas de routing CC par type d'objet (presse, publication, adhésion…). Reply existe mais pas la « copie aux profils internes » demandée.
-5. **Newsletter** : compose+send+test fonctionnent, mais **aucun lien de désinscription** dans les envois — non-conformité RGPD bloquante.
-6. **HelloAsso tracking** : 0 % fait. Aujourd'hui ce sont 4 liens HTML statiques sur `adhesion.html` et `don.html`, sans aucun tracking côté dashboard.
-7. **Site = 5 langues, pas 3** : le brief évoque « les 3 langues du site » — la réalité est `fr, en, es, de, it` (cf. `assets/js/translation.js:18`). Décision à prendre : **on réduit à 3 langues** (et lesquelles), **on traduit dans les 5**, ou **on traite seulement FR+EN à la publication** ?
+4. **Messages** : pas de routing CC par type d'objet (presse, publication, adhésion…). Reply existe mais pas la « copie aux profils internes » demandée. La config doit vivre **en KV Worker** (`config:messageRouting`), pas dans `contenu.json` du repo site.
+5. **HelloAsso tracking** : 0 % fait. Solution recommandée : **clic direct vers HelloAsso + `navigator.sendBeacon()` async** (pas de redirect Worker bloquant — sinon le Worker devient un single point of failure pour les revenus).
+6. **Site = 5 langues, pas 3** : le brief évoque « les 3 langues du site » — la réalité est `fr, en, es, de, it` (cf. `assets/js/translation.js:18`). Décision à prendre : **réduire à 3 langues** (et lesquelles), **traduire dans les 5**, ou **traiter seulement FR+EN à la publication** ?
+7. **Bascule DNS prévue le 2026-05-15** (mémoire `project_site_url_temp`) : tous les liens trackés (HelloAsso, désinscription newsletter) qui pointent vers le Worker doivent rester valides. CORS Worker à confirmer pour le nouveau domaine, secrets idem. Cf. §6.4.
 
-**Total estimé pour clore le brief** : 7-10 jours répartis sur 7 chantiers, fait par PR atomiques. Détaillé en §7.
+**Total estimé pour clore le brief** : **8-13 jours** répartis sur 10 chantiers (Chantier 0 RGPD inclus), fait par PR atomiques. Détaillé en §7.
 
 ---
 
@@ -60,7 +64,7 @@ Le brief vise un dashboard « simple, fiable, centré sur le profil » couvrant 
 | `Sollicitations.jsx` | 769 | Reply email ✅ — pas de CC par type | Ajouter routing CC |
 | `Messagerie.jsx` | 485 | Compositeur bulk Brevo+Telegram, séparé de Sollicitations | À fusionner ou clarifier |
 | `Newsletter.jsx` | 273 | Compose+test+send ✅ — **pas de lien désinscription** | Ajouter footer désinscription |
-| `Equipe.jsx` | 871 | Affiche les profils (équipe perma + CA + CS) | À aligner sur le rôle profil unifié |
+| `Equipe.jsx` | 871 | Affiche les profils (équipe perma + CA + CS) | **Décision tranchée** : à supprimer au profit de Profils filtré par `roles[]`. Le brief simplifie à 6 entrées, Équipe doublonne. (cf. §7 Chantier 8) |
 | `Calendrier.jsx` | 979 | Calendrier éditorial KV | Hors brief — à conserver tel quel |
 | `Medias.jsx` | 332 | Upload images repo site | Hors brief — OK |
 | `Settings.jsx` | 774 | Users CRUD admin + Vercel + intégrations | À étendre : config routing CC |
@@ -82,15 +86,15 @@ Le brief vise un dashboard « simple, fiable, centré sur le profil » couvrant 
 ```
 
 **Manquants par rapport au brief** :
-- `GET /api/helloasso/clicks/{adhesion|don}?period={day|week|month}` (compteurs HelloAsso)
-- `POST /api/track/click` (incrémentation au clic, ou redirect tracking)
-- `GET /api/messages/routing` + `PUT /api/messages/routing` (config CC par type d'objet)
-- Hook newsletter : injection lien désinscription au moment du send + endpoint public `/api/newsletter/unsubscribe?token=…`
+- `POST /api/track/click` (beacon) — incrémentation côté Worker quand le navigateur fait un `sendBeacon` au moment du clic. **Le clic vers HelloAsso reste direct**, pas de redirect Worker (cf. §3.7 et §5.6).
+- `GET /api/helloasso/stats?period={day|week|month}&source=…` agrège les compteurs.
+- `GET /api/messages/routing` + `PUT /api/messages/routing` — config CC par type d'objet, **stockée en KV Worker** (`config:messageRouting`), pas dans `contenu.json` du repo site (cf. §3.5).
+- Hook newsletter : injection lien désinscription au moment du send + endpoint public `/api/newsletter/unsubscribe?token=…` (cf. Chantier 0).
 
 ### 1.4 Stack tests
 
 - **Vitest** (unitaires)
-- **Playwright + axe-core** (smoke E2E sur 18 pages, en CI via `.github/workflows/smoke.yml`)
+- **Playwright + axe-core** (smoke E2E en CI via `.github/workflows/smoke.yml`) — **18 routes couvertes sur 19**. La 19ᵉ (`EditeurVisuel.jsx`) **n'est pas testée** ; elle est aussi candidate à la suppression (cf. §7 Chantier 8). À ajouter au smoke seulement si on la conserve.
 - Pas de tests d'intégration backend — chaque chantier devra étendre `tests/smoke.mjs`.
 
 ---
@@ -249,17 +253,12 @@ Schéma cible (avec mapping vers le brief) :
   "lastName": "Dufrêne",                     // brief: Nom
   "photo": "assets/images/equipe/...",       // brief: Photo
   "description": "Directeur général …",      // brief: Description (= ancien `bio` / `bioCourte`)
-  "role": "membre",                          // brief: Rôle — sélecteur fermé, voir §3.1.1
-  "roleLibelle": "Président-directeur",      // libellé libre (l'actuel `role` qui contient la fonction)
+  "roles": ["equipe", "ca"],                 // brief: Rôle — multi-valeurs (cf. §3.1.1)
+  "roleLibelle": "Président-directeur",      // libellé libre, affiché publiquement
   "email": "nicolas.dufrene@…",              // brief: e-mail
   "emailPublic": false,                      // brief: case "Afficher sur le site" (default false)
   "linkedin": "https://www.linkedin.com/…",  // brief: Lien LinkedIn
-  "actif": true,                             // garder du Chantier A
-  "_legacy": {                               // champs Chantier A à supprimer progressivement
-    "bio": "...", "bioCourte": "...", "bioLongue": "...",
-    "reseaux": { "x": "", "site": "", "email": "..." },
-    "dateArrivee": ""
-  }
+  "actif": true                              // garder du Chantier A
 }
 ```
 
@@ -269,23 +268,29 @@ Schéma cible (avec mapping vers le brief) :
 - `dateArrivee` — vide partout, le brief n'en parle pas
 - `bioCourte` — fusionné avec `description`
 
-Migration douce : on **renomme** `bioCourte` (ou `bio`) → `description`, on **fusionne** `reseaux.linkedin` → `linkedin` + `reseaux.email` → `email`, on **supprime** le reste, et on garde un objet `_legacy` pendant 1 mois pour rollback.
+**Migration sans `_legacy.*`** (anti-pattern écarté — un sous-objet legacy pollue le schéma public et tend à ne jamais être nettoyé) :
 
-#### 3.1.1 Champ `role` — sélecteur fermé
+1. Avant la migration, dump complet : `backups/auteurs-pre-2026-05-08.json` commité dans le repo site.
+2. Le script `scripts/migrate-profiles-2026-05-08.mjs` **renomme** `bioCourte`/`bio` → `description`, **fusionne** `reseaux.linkedin` → `linkedin` + `reseaux.email` → `email`, **convertit** `role: string` → `roles: string[]` (split sur `,` + `&`), **supprime** `bioLongue`, `reseaux.x`, `reseaux.site`, `dateArrivee`.
+3. Pas d'objet `_legacy` dans le fichier publié. La rétrocompat passe par le `git history` du repo site (les anciens commits gardent l'ancien schéma).
+4. Pendant 30 jours, le script de rollback (`scripts/rollback-profiles.mjs`) sait lire le backup JSON et restaurer.
 
-Le brief dit : « équipe / conseil scientifique / autre — à compléter selon ce qui existe ». Aujourd'hui `data/contenu.json` a 4 sections (équipe permanente / CA / conseil scientifique / direction) et la page Equipe les affiche distinctement. Proposition de valeurs **fermées** :
+#### 3.1.1 Champ `roles` — tableau fermé
+
+Le brief dit : « équipe / conseil scientifique / autre — à compléter selon ce qui existe ». Aujourd'hui `data/contenu.json` a 4 sections (équipe permanente / CA / conseil scientifique / direction) et la page Equipe les affiche distinctement. **Une personne peut appartenir à plusieurs catégories** (ex: Nicolas Dufrêne est Direction + CA). Donc **tableau** :
 
 ```
-"role": "equipe" | "ca" | "conseil_scientifique" | "auteur_externe" | "autre"
+"roles": Array<"equipe" | "ca" | "conseil_scientifique" | "direction" | "auteur_externe" | "autre">
 ```
 
 - `equipe` : équipe permanente salariée
+- `direction` : direction (président, directeur·rice général·e adjoint·e, etc.)
 - `ca` : conseil d'administration
 - `conseil_scientifique` : conseil scientifique
 - `auteur_externe` : signataire de publications/presse, pas dans l'institut
 - `autre` : tout le reste
 
-`roleLibelle` reste un champ texte libre pour le titre/fonction affiché publiquement (ex: « Présidente », « Économiste, spécialiste du climat »).
+Les filtres listing (`Profils.jsx`) acceptent un OU logique : afficher tous les profils dont `roles` contient une des valeurs cochées. `roleLibelle` reste un champ texte libre pour le titre/fonction affiché publiquement (ex: « Présidente », « Économiste, spécialiste du climat »).
 
 ### 3.2 Publication
 
@@ -331,24 +336,33 @@ Déjà migrée Chantier B. Pas de changement, mais **suppression progressive** d
 
 ### 3.5 Messages (Sollicitations) — config routing
 
-Nouvelle entrée dans `contenu.json` ou en KV partagé :
+**Stockage** : KV Worker, clé `config:messageRouting`. **Pas dans `contenu.json` du repo site**, parce que :
+- C'est de la donnée d'admin (qui CC qui), pas du contenu public.
+- Une édition du routing déclencherait un commit + un rebuild Vercel inutile à chaque changement.
+- L'éditer sur le repo public expose la liste des destinataires internes dans `git history`.
+
+Schéma KV :
 
 ```jsonc
+// Clé KV: "config:messageRouting"
 {
-  "messageRouting": {
-    "press":      { "ccProfileIds": ["benedicte-fradin", "linda-..."] },
-    "publication":{ "ccProfileIds": ["nicolas-dufrene"] },
-    "expert":     { "ccProfileIds": ["nicolas-dufrene", "..."] },
-    "partnership":{ "ccProfileIds": ["benedicte-fradin"] },
-    "membership": { "ccProfileIds": ["benedicte-fradin"] },
-    "bug":        { "ccProfileIds": [] },
-    "general":    { "ccProfileIds": [] },
-    "other":      { "ccProfileIds": [] }
-  }
+  "press":      { "ccProfileIds": ["benedicte-fradin", "linda-..."] },
+  "publication":{ "ccProfileIds": ["nicolas-dufrene"] },
+  "expert":     { "ccProfileIds": ["nicolas-dufrene", "..."] },
+  "partnership":{ "ccProfileIds": ["benedicte-fradin"] },
+  "membership": { "ccProfileIds": ["benedicte-fradin"] },
+  "bug":        { "ccProfileIds": [] },
+  "general":    { "ccProfileIds": [] },
+  "other":      { "ccProfileIds": [] },
+  "_meta":      { "updatedAt": "...", "updatedBy": "benedictefradin-cmd" }
 }
 ```
 
-**Important** : la résolution se fait **au moment du send**, en lisant `email` du profil (pas `emailPublic`). Si `email` est vide → on signale l'erreur, pas de fallback silencieux.
+Endpoints Worker :
+- `GET /api/messages/routing` — admin uniquement. Renvoie la config + résout les `email` actuels via `auteurs.json`.
+- `PUT /api/messages/routing` — admin uniquement. Body = nouveau JSON. Met à jour `_meta`.
+
+**Important** : la résolution `profileId → email` se fait **au moment du send**, en lisant `email` du profil (pas `emailPublic`). Si `email` est vide → on signale l'erreur, pas de fallback silencieux.
 
 ### 3.6 Newsletter
 
@@ -359,16 +373,36 @@ Nouvelle entrée dans `contenu.json` ou en KV partagé :
 
 Endpoint public : `GET /api/newsletter/unsubscribe?token=…&list=…` côté Worker.
 
-### 3.7 HelloAsso clicks (KV)
+### 3.7 HelloAsso clicks (KV) — beacon non bloquant
+
+**Décision d'architecture** : **pas de redirect Worker** entre le bouton et HelloAsso. Si le Worker tombe ou rate-limite, on coupe les revenus. Le tracking doit être **best-effort, asynchrone, non bloquant**.
 
 ```
-KV key: helloasso:click:{type}:{YYYY-MM-DD}
+KV key:   helloasso:click:{type}:{source}:{YYYY-MM-DD}
 KV value: { count: N }
 ```
 
-avec `type ∈ {adhesion, don}`. Agrégation jour/semaine/mois côté Worker au moment du `GET /api/helloasso/stats`.
+Avec :
+- `type ∈ {adhesion, don}`
+- `source ∈ {adhesion-page, don-page, footer, header, accueil-cta, newsletter}` ou page slug si autre. Permet de mesurer **où** sur le site le clic se produit (le brief impose seulement compteur global, mais c'est gratuit à enregistrer et essentiel pour piloter).
 
-Capture du clic : le site appelle `POST /api/helloasso/click` (ou `GET` redirect 302) avant de rediriger vers helloasso.com. Pas d'identification nominative (RGPD OK).
+**Capture du clic — modèle non bloquant** :
+
+```html
+<!-- côté site, sur adhesion.html, don.html, etc. -->
+<a href="https://www.helloasso.com/associations/institut-rousseau/..."
+   target="_blank" rel="noopener"
+   onclick="navigator.sendBeacon('https://ir-dashboard-api.../api/track/click',
+            JSON.stringify({type:'adhesion', source:'adhesion-page'}))">
+  Adhérer
+</a>
+```
+
+`navigator.sendBeacon` est un POST async garanti, qui part même si l'utilisateur navigue. Si l'API est down → le beacon échoue silencieusement, le clic part vers HelloAsso quand même. Aucun cookie, aucune IP loggée → RGPD OK.
+
+Worker : `POST /api/track/click` valide le payload (whitelist type/source), incrémente le compteur KV, renvoie 204. Latence côté KV < 50 ms.
+
+Agrégation : `GET /api/helloasso/stats?period={day|week|month}&source=…` côté Worker fait la somme sur la fenêtre temporelle.
 
 ---
 
@@ -426,7 +460,7 @@ Modifier le `firstName`/`lastName` propage automatiquement sur le site (lookup r
 | Demande brief | État | Gap |
 |---|---|---|
 | Messages reçus dans onglet Messages | ✅ Sollicitations | Renommer "Messages" si tu veux |
-| Copie e-mail à `contact@institut-rousseau.fr` | ⚠ envoyé par Brevo From=contact@... mais pas auto-bcc à l'inbox contact@ | À vérifier : Brevo envoie-t-il une copie à l'inbox du domaine ? Sinon, ajouter `bcc: contact@…` |
+| Copie e-mail à `contact@institut-rousseau.fr` | ⚠ envoyé par Brevo From=contact@... mais pas auto-bcc à l'inbox contact@ | ⚠ **Risque de boucle si la boîte `contact@` est hébergée chez Brevo** (Brevo SMTP qui se BCC à elle-même → potentiel duplicate ou rejet). À tester d'abord en mode dry-run sur 1 message avant d'activer. Selon Q3, choisir entre `bcc: contact@…` (si la boîte est externe Gmail/OVH) ou un système d'archive interne KV (si Brevo) |
 | Routing CC par type d'objet | ❌ | Cf. §3.5 |
 | Réponse depuis dashboard (From/To/CC + historique) | ⚠ From/To OK, **CC absent**, historique conservé en KV | Ajouter CC + UI saisie CC additionnels |
 
@@ -453,26 +487,29 @@ Le site filtre `actif !== false` → invisible. Le dashboard affiche un onglet "
 
 ### 5.5 Newsletter
 
+> ⚠ **GAP RGPD bloquant** — traité en **Chantier 0** (cf. §7), avant tout autre travail. **Suspendre les envois jusqu'à correction.**
+
 | Demande brief | État | Gap |
 |---|---|---|
 | Inscription site → notif dashboard + mail confirmation auto | ✅ partiel — Brevo gère le double opt-in si configuré | À vérifier que c'est activé sur la liste Brevo |
 | Base inscrits avec recherche / export CSV / désinscrip manuelle | ✅ via Settings | OK |
 | Composer + envoyer depuis dashboard | ✅ | OK |
 | Test send avant blast | ✅ | OK |
-| **Lien désinscription obligatoire dans chaque envoi** | ❌ **GAP RGPD bloquant** | Injecter footer auto avec `<a href="https://api.../newsletter/unsubscribe?token=…">Se désabonner</a>` côté Worker au send |
+| **Lien désinscription obligatoire dans chaque envoi** | ❌ **GAP RGPD bloquant** (RGPD art.21 + LCEN art.L34-5) | **Chantier 0**. Injecter footer auto avec `<a href="https://ir-dashboard-api.../api/newsletter/unsubscribe?token=…">Se désabonner</a>` côté Worker au send. Token = HMAC(email, secret). Endpoint public `GET /api/newsletter/unsubscribe?token=…` valide HMAC, désinscrit côté Brevo, affiche page de confirmation FR. Replay attack accepté (un attaquant qui intercepte un token désabonne une 2ᵉ fois → idempotent → no-op). |
 
-### 5.6 Suivi HelloAsso (entièrement à construire)
+### 5.6 Suivi HelloAsso (entièrement à construire) — beacon non bloquant
 
 Aujourd'hui : 4 liens HTML statiques sur `adhesion.html` et `don.html` du site. Pas de tracking.
 
+> **Décision** : tracking par `navigator.sendBeacon` async, pas de redirect Worker. Le clic vers HelloAsso reste **direct** (cf. §3.7 pour le rationale). Si l'API tombe → le tracking échoue silencieusement, le revenu est sauf.
+
 À faire :
-1. Ajouter une route Worker `GET /h/{type}` (où type ∈ adhesion/don) qui :
-   - Incrémente `helloasso:click:{type}:{YYYY-MM-DD}` en KV
-   - Renvoie un 302 vers le bon lien HelloAsso
-2. Côté site : remplacer les `<a href="https://www.helloasso.com/...">` par `<a href="https://ir-dashboard-api.../h/adhesion">`. 6 occurrences au total.
-3. Worker `GET /api/helloasso/stats?period={day|week|month}` agrège les compteurs.
-4. Page Dashboard accueil : 2 cartes (Adhésions / Dons) avec compteurs jour/semaine/mois + courbe Recharts (la dépendance est déjà installée).
+1. Ajouter une route Worker `POST /api/track/click` qui valide `{type, source}` (whitelist), incrémente `helloasso:click:{type}:{source}:{YYYY-MM-DD}` en KV, renvoie 204.
+2. Côté site : sur les 6 boutons HelloAsso (adhesion-page, don-page, footer adhesion, footer don, header, accueil-cta), ajouter le `onclick="navigator.sendBeacon(...)"` (cf. §3.7) sans toucher au `href`.
+3. Worker `GET /api/helloasso/stats?period={day|week|month}&source=…` agrège.
+4. Page Dashboard accueil : 2 cartes (Adhésions / Dons) avec compteurs jour/semaine/mois + courbe Recharts (la dépendance est déjà installée) + breakdown par `source`.
 5. **RGPD** : aucun cookie, aucune IP loggée — juste un compteur agrégé. À mentionner dans `confidentialite.html` du site.
+6. **Test de panne** : volontairement bloquer l'API au DevTools → vérifier que le clic vers HelloAsso part toujours. Critère de recette obligatoire.
 
 ### 5.7 Événements
 
@@ -512,11 +549,9 @@ Aujourd'hui : 4 liens HTML statiques sur `adhesion.html` et `don.html` du site. 
 1. **Snapshot complet** : commit dump `backups/profiles-2026-05-08.json` + `backups/publications-data-2026-05-08.json` + `backups/presse-2026-05-08.json` + `backups/events-2026-05-08.json` dans le repo site.
 2. **Détection** : script `scripts/detect-duplicates.mjs` génère `reports/duplicates-2026-05-08.csv` avec colonnes `id1, name1, id2, name2, score, signaturesCommune`.
 3. **Validation manuelle** : tu coches dans le CSV chaque ligne `confirmed=yes/no/?`.
-4. **Fusion (par paire confirmée)** : script `scripts/merge-profiles.mjs --keep nicolas-desquinado --merge 12407` fait :
-   a. Crée le tombstone (`actif: false`, `mergedInto: "..."`, `mergedAt`, `mergedBy`)
-   b. Réécrit toutes les `authorIds: [..., "12407", ...]` → `[..., "nicolas-desquinado", ...]` dans publications-data.js, presse.json, events.json
-   c. Vérifie qu'aucune référence orpheline n'existe (`scripts/check-references.mjs`)
-   d. Commit unique avec message `merge(profiles): 12407 → nicolas-desquinado`
+4. **Fusion en deux temps — `--dry-run` obligatoire avant l'écriture** :
+   - **a) Dry-run** : `scripts/merge-profiles.mjs --keep nicolas-desquinado --merge 12407 --dry-run`. Sortie : liste exhaustive des fichiers à modifier + diff prévu (combien d'authorIds réécrits, combien d'événements impactés, etc.). Aucune modification, aucun commit.
+   - **b) Apply** : `scripts/merge-profiles.mjs --keep nicolas-desquinado --merge 12407 --apply` (flag explicite, jamais en défaut). Crée le tombstone (`actif: false`, `mergedInto: "..."`, `mergedAt`, `mergedBy`), réécrit toutes les `authorIds: [..., "12407", ...]` → `[..., "nicolas-desquinado", ...]` dans publications-data.js, presse.json, events.json, vérifie qu'aucune référence orpheline n'existe (`scripts/check-references.mjs`), fait un commit unique avec message `merge(profiles): 12407 → nicolas-desquinado`.
 5. **Rollback** : si erreur, `git revert <commit>` côté site rétablit le tombstone et les ID. Les backups JSON sont conservés au moins 30 jours.
 
 ### 6.3 Définition de staging
@@ -529,11 +564,36 @@ Aujourd'hui : pas de staging dédié. Le repo site a un seul environnement (Verc
 
 Coût : ~½ jour à mettre en place. **Question Q4** ci-dessous.
 
+### 6.4 Bascule DNS prévue le 2026-05-15 — implications
+
+Mémoire `project_site_url_temp` indique que le DNS `institut-rousseau.fr` pointe encore vers WordPress au 2026-05-01. Bascule planifiée **le 2026-05-15** (dans 7 jours à la date de cet audit). Conséquences pour les chantiers à venir :
+
+- **Worker CORS** (`worker/index.js`) : aujourd'hui l'allowlist contient `https://institut-rousseau-kb9p.vercel.app` + GH Pages dashboard. Après bascule, ajouter `https://institut-rousseau.fr` et `https://www.institut-rousseau.fr`. À faire **avant** la bascule pour éviter une fenêtre de panne.
+- **Liens trackés HelloAsso** (Chantier 5) : déjà ciblés sur `https://ir-dashboard-api.../api/track/click` (domaine Worker, pas le domaine site). **Pas impactés par la bascule.** OK.
+- **Lien désinscription newsletter** (Chantier 0) : pareil, pointe sur le domaine Worker. Pas impacté.
+- **Service Worker / `sw.js` du site** : si actif, peut servir un cache obsolète post-bascule. À vérifier que `sw.js` ne fait pas de hardcoding sur l'URL Vercel.
+- **`SITE_URL` côté dashboard** : déjà à `https://institut-rousseau.fr` (mémoire `project_oauth_setup`). Vérifier qu'aucune dépendance résiduelle pointe sur l'URL Vercel temporaire.
+- **Recette pré-bascule (2026-05-14 au plus tard)** : faire tourner le smoke test contre `institut-rousseau-kb9p.vercel.app`, puis le 2026-05-15 le faire tourner contre `institut-rousseau.fr` pour vérifier la parité.
+
+**Décision sur le séquencement** :
+- Si Chantier 0 (RGPD) doit envoyer une newsletter avant le 2026-05-15 → **OK**, le lien désinscription est sur le Worker, pas impacté.
+- Chantier 5 (HelloAsso) à finaliser **après** la bascule pour valider le flux beacon en conditions réelles, ou avant en testant aussi sur `institut-rousseau-kb9p.vercel.app`.
+
 ---
 
 ## 7. Plan d'exécution proposé — par chantier
 
 > Chaque chantier = 1 à N PRs atomiques, smoke tests étendus, recette manuelle avec toi.
+
+### Chantier 0 — RGPD newsletter (½ jour) — **bloquant légal, P0**
+
+**Objectif** : remettre les envois newsletter en conformité avant tout autre travail. Tant que ce n'est pas en prod, **les envois sont suspendus**.
+
+1. Worker : route `GET /api/newsletter/unsubscribe?token=…` qui valide HMAC(email, secret) et désabonne via Brevo.
+2. Worker : hook sur `/api/brevo/email/send` qui injecte `<hr><p style="font-size:11px"><a href="https://ir-dashboard-api.../api/newsletter/unsubscribe?token=…">Se désabonner</a></p>` quand `list=newsletter`.
+3. Page de confirmation FR statique servie par le Worker (pas besoin de redéployer le site).
+4. Test : envoi réel à toi + Bénédicte sur Gmail / Outlook / Apple Mail / Yahoo. Cliquer le lien sur les 4. Vérifier la désinscription côté Brevo.
+5. Communication interne : autoriser les envois à reprendre une fois Chantier 0 mergé + recette OK.
 
 ### Chantier 1 — Profils refondus (1-2 jours)
 
@@ -560,22 +620,26 @@ Coût : ~½ jour à mettre en place. **Question Q4** ci-dessous.
 2. Adapter `Evenements.jsx` (formulaire) : AuthorPicker pour intervenants, champ "Titre dans cet événement" (`titreEvent`).
 3. Côté site : `assets/js/events.js` lookup runtime.
 
-### Chantier 4 — Backend e-mail mutualisé Messages + Newsletter (1-2 jours)
+### Chantier 4 — Routing Messages (1 jour)
 
-> **Pré-requis** : réponse Q3 (fournisseur boîte `contact@institut-rousseau.fr`).
+> **Pré-requis** : réponse Q3 (fournisseur boîte `contact@institut-rousseau.fr`) — détermine le mode d'archive (BCC `contact@` vs archive KV interne, cf. §5.3).
 
-1. **Routing CC par type** : `Settings.jsx` → onglet "Routing messages", édite `contenu.json.messageRouting`.
-2. **Reply Sollicitations** : route Worker `/api/contact/:id/reply` ajoute le CC résolu depuis le routing + permet ajout manuel + envoie BCC à `contact@…`.
-3. **Newsletter footer désinscription** : Worker injecte `<hr><p style="font-size:11px"><a href="…/newsletter/unsubscribe?token=…">Se désabonner</a></p>` au moment du `/api/brevo/email/send` si `list=newsletter`. Token = HMAC(email, secret).
-4. **Endpoint public désinscription** : `GET /api/newsletter/unsubscribe?token=…` valide HMAC, désinscrit côté Brevo, affiche page de confirmation.
-5. **Tests d'envoi** : 1 mail réel à toi + Bénédicte sur Gmail/Outlook/Apple Mail.
+1. **Routing CC par type stocké en KV Worker** (`config:messageRouting`, cf. §3.5). Endpoints `GET/PUT /api/messages/routing` admin only.
+2. **`Settings.jsx` → onglet "Routing messages"** : édite la config KV via les endpoints, affiche les emails résolus actuellement.
+3. **Reply Sollicitations** : route Worker `/api/contact/:id/reply` ajoute le CC résolu depuis le routing + permet ajout manuel d'autres CC dans le formulaire de réponse.
+4. **Archive selon Q3** :
+   - Si Brevo SMTP : BCC vers `contact@…` génère probablement une boucle → on archive plutôt côté Worker en KV (`contact:{id}:replies[]`, déjà en place).
+   - Si Gmail Workspace / OVH externe : BCC `contact@…` direct.
+5. **Confirmation visuelle avant send** : modale qui liste tous les destinataires (To + CC) avec possibilité d'enlever manuellement. Évite l'envoi accidentel.
+6. **Tests d'envoi** : dry-run sur 1 message par type d'objet (8 types).
 
-### Chantier 5 — Suivi HelloAsso (½ jour)
+### Chantier 5 — Suivi HelloAsso (½-1 jour)
 
-1. Worker : `GET /h/{type}` (redirect+count), `GET /api/helloasso/stats?period=…`.
-2. Site : remplacer les 6 `<a href="https://helloasso.com/…">` par les liens trackés.
-3. Dashboard `Accueil.jsx` ou `Dashboard.jsx` : 2 cartes + courbe.
-4. Doc privacy : ajouter mention dans `confidentialite.html` du site.
+1. Worker : `POST /api/track/click` (beacon, cf. §3.7) + `GET /api/helloasso/stats?period=…&source=…`.
+2. Site : ajouter `onclick="navigator.sendBeacon(…)"` sur les 6 boutons HelloAsso (cf. §5.6). **Ne pas changer le `href`**, il pointe direct vers helloasso.com.
+3. Dashboard `Accueil.jsx` ou `Dashboard.jsx` : 2 cartes + courbe Recharts + breakdown par `source`.
+4. Doc privacy : ajouter mention dans `confidentialite.html` du site (compteur agrégé sans cookie ni IP).
+5. **Test de panne obligatoire** : bloquer l'API au DevTools, cliquer un bouton, vérifier que la nav vers helloasso.com a lieu quand même.
 
 ### Chantier 6 — Auto-traduction publications (½ jour, optionnel)
 
@@ -592,12 +656,13 @@ Coût : ~½ jour à mettre en place. **Question Q4** ci-dessous.
 4. Audit accessibilité (clavier + contrastes WCAG AA) + corrections.
 5. Aligner design system sur le site public (couleurs, typographie).
 
-### Chantier 8 — Nettoyage / dette (½ jour)
+### Chantier 8 — Nettoyage / dette (1 jour)
 
-1. Supprimer `_legacy.*` de `auteurs.json` après 1 mois en prod stable.
-2. Supprimer le miroir `author: string` des publications.
-3. Supprimer pages dashboard non utilisées (à valider) : `EditeurVisuel`, `Accueil` vs `Dashboard` doublon ?
-4. Documentation `README.md` + `CHANGELOG.md` + `DECISIONS.md`.
+1. Supprimer le miroir `author: string` des publications après vérification que tous les renderers du site lisent par ID.
+2. **Fusionner `Equipe.jsx` dans `Profils.jsx`** filtré par `roles[]`. Suppression de `Equipe.jsx` (871 lignes). Le brief simplifie à 6 entrées, on tient parole.
+3. Décision `Accueil.jsx` vs `Dashboard.jsx` : si doublon avéré, supprimer le moins utilisé.
+4. Décision `EditeurVisuel.jsx` (502 lignes, 19ᵉ route non testée) : suppression si l'éditeur d'Articles couvre tout. Sinon, ajout au smoke test.
+5. Documentation `README.md` + `CHANGELOG.md` + `DECISIONS.md`.
 
 ### Chantier 9 — Recette + déploiement staging (½-1 jour)
 
@@ -609,18 +674,36 @@ Coût : ~½ jour à mettre en place. **Question Q4** ci-dessous.
 ### Ordre & dépendances
 
 ```
-1. Profils ──┬──► 2. Presse
-             ├──► 3. Événements
-             └──► 4. Messages routing  (besoin des emails profils CC)
-4. Messages ─────► 5. Newsletter footer  (mutualise infra mail)
-                                                 6. Auto-trad (peut être en parallèle)
-                                                 5b. HelloAsso (parallèle, indépendant)
-=> 7. UX (consomme tout)
-=> 8. Nettoyage
-=> 9. Staging + recette
+0. RGPD newsletter (P0 légal, ½ j, isolé) ───► tous les autres chantiers peuvent commencer
+
+1. Profils ──┬──► 2. Presse           (½ j)
+             ├──► 3. Événements        (½ j)
+             └──► 4. Messages routing  (1 j, besoin des emails profils CC)
+
+5. HelloAsso (½-1 j)  ──── parallèle, indépendant ─── peut démarrer dès Chantier 0
+6. Auto-trad (½ j)    ──── parallèle, optionnel ──── pré-requis Q1
+7. UX globale (1-2 j) ──── consomme 1, 2, 3
+8. Nettoyage (1 j)    ──── après 1, 7
+9. Staging + recette (½-1 j) ──── final
 ```
 
-**Total : 7-10 jours** selon réponses Q1 (auto-trad) et Q3 (mail).
+**Total estimé** :
+
+| Chantier | Estimation |
+|---|---:|
+| 0 — RGPD newsletter | ½ j |
+| 1 — Profils refondus | 1-2 j |
+| 2 — Presse IDs | ½ j |
+| 3 — Événements IDs | ½ j |
+| 4 — Routing messages | 1 j |
+| 5 — HelloAsso | ½-1 j |
+| 6 — Auto-trad (optionnel) | ½ j |
+| 7 — UX globale | 1-2 j |
+| 8 — Nettoyage | 1 j |
+| 9 — Staging + recette | ½-1 j |
+| **Total** | **8-13 jours** |
+
+Variabilité selon réponses Q1 (auto-trad) et Q3 (mail). Hypothèse haute si on instaure staging et qu'on inclut Chantier 6.
 
 ---
 
