@@ -31,6 +31,8 @@ export default function Articles({
   const [statusFilter, setStatusFilter] = useState([]);
   const [themeFilter, setThemeFilter] = useState([]);
   const [typeFilter, setTypeFilter] = useState([]);
+  const [langFilter, setLangFilter] = useState('all');     // Chantier 7
+  const [authorFilter, setAuthorFilter] = useState('all'); // Chantier 7
   const [showForm, setShowForm] = useState(false);
   const [editingArt, setEditingArt] = useState(null);
   const emptyTranslations = () => Object.fromEntries(
@@ -109,6 +111,22 @@ export default function Articles({
     if (statusFilter.length) list = list.filter(a => statusFilter.includes(a.status));
     if (themeFilter.length) list = list.filter(a => (a.tags || []).some(t => themeFilter.includes(t)));
     if (typeFilter.length) list = list.filter(a => typeFilter.includes(a.type));
+    if (langFilter !== 'all') {
+      // missing-{code} → publis qui n'ont PAS de traduction dans cette langue
+      // has-{code}     → publis qui en ont une
+      const m = langFilter.match(/^(missing|has)-(\w+)$/);
+      if (m) {
+        const [, mode, code] = m;
+        list = list.filter(a => {
+          const t = a.translations?.[code];
+          const filled = !!(t?.title?.trim() && t?.content?.trim());
+          return mode === 'has' ? filled : !filled;
+        });
+      }
+    }
+    if (authorFilter !== 'all') {
+      list = list.filter(a => Array.isArray(a.authorIds) && a.authorIds.includes(authorFilter));
+    }
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
       list = list.filter(a =>
@@ -117,7 +135,7 @@ export default function Articles({
       );
     }
     return list;
-  }, [allArticles, statusFilter, themeFilter, typeFilter, debouncedSearch]);
+  }, [allArticles, statusFilter, themeFilter, typeFilter, langFilter, authorFilter, debouncedSearch]);
 
   const counts = useMemo(() => ({
     total: allArticles.length,
@@ -751,10 +769,42 @@ export default function Articles({
             <option value="">Tous les types</option>
             {PUB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          {(statusFilter.length > 0 || themeFilter.length > 0 || typeFilter.length > 0) && (
+          <select
+            className="filter-select"
+            aria-label="Filtrer par auteur"
+            value={authorFilter}
+            onChange={e => setAuthorFilter(e.target.value)}
+          >
+            <option value="all">Tous les auteurs</option>
+            {auteurs
+              .filter(a => a.actif !== false)
+              .sort((a, b) => (a.lastName || '').localeCompare(b.lastName || '', 'fr'))
+              .map(a => (
+                <option key={a.id} value={a.id}>{a.firstName} {a.lastName}</option>
+              ))}
+          </select>
+          <select
+            className="filter-select"
+            aria-label="Filtrer par langue de traduction"
+            value={langFilter}
+            onChange={e => setLangFilter(e.target.value)}
+          >
+            <option value="all">Toutes les langues</option>
+            <optgroup label="Manque la traduction">
+              {TARGET_LANGUAGES.map(l => (
+                <option key={`m-${l.code}`} value={`missing-${l.code}`}>Sans {l.label}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Traduit en">
+              {TARGET_LANGUAGES.map(l => (
+                <option key={`h-${l.code}`} value={`has-${l.code}`}>Avec {l.label}</option>
+              ))}
+            </optgroup>
+          </select>
+          {(statusFilter.length > 0 || themeFilter.length > 0 || typeFilter.length > 0 || authorFilter !== 'all' || langFilter !== 'all') && (
             <button
               className="btn btn-outline btn-sm"
-              onClick={() => { setStatusFilter([]); setThemeFilter([]); setTypeFilter([]); }}
+              onClick={() => { setStatusFilter([]); setThemeFilter([]); setTypeFilter([]); setAuthorFilter('all'); setLangFilter('all'); }}
             >
               Effacer filtres
             </button>
