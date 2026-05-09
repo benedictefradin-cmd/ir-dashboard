@@ -110,6 +110,28 @@ export async function githubListDir(path) {
 // ─── Cache en mémoire pour les images chargées via le Worker ───
 const imageCache = new Map(); // path → Promise<dataUrl>
 
+// Limiteur de concurrence : sans plafond, ouvrir Profils déclenche 150+
+// fetches en parallèle, le navigateur sature ses 6 sockets/origine et les
+// cartes restent sur leur silhouette plusieurs secondes. 6 en vol max suffit
+// à respecter la limite navigateur tout en saturant le pipeline Worker.
+const MAX_CONCURRENT_IMG = 6;
+let activeImg = 0;
+const imgQueue = [];
+function withImgConcurrency(fn) {
+  return new Promise((resolve, reject) => {
+    const run = () => {
+      activeImg++;
+      fn().then(resolve, reject).finally(() => {
+        activeImg--;
+        const next = imgQueue.shift();
+        if (next) next();
+      });
+    };
+    if (activeImg < MAX_CONCURRENT_IMG) run();
+    else imgQueue.push(run);
+  });
+}
+
 /**
  * Invalide une entrée du cache d'images (à appeler après upload d'une nouvelle
  * photo pour le même chemin).
@@ -131,13 +153,13 @@ export function githubGetImageDataUrl(path) {
   if (path.startsWith('http') || path.startsWith('data:')) return Promise.resolve(path);
   if (imageCache.has(path)) return imageCache.get(path);
 
-  const p = workerFetch(`/api/github/contents/${encodeURI(path)}?binary=1`)
-    .then(data => data.dataUrl)
-    .catch(err => {
-      imageCache.delete(path);
-      console.warn(`[github] Échec chargement image ${path}:`, err.message);
-      throw err;
-    });
+  const p = withImgConcurrency(() =>
+    workerFetch(`/api/github/contents/${encodeURI(path)}?binary=1`).then(data => data.dataUrl)
+  ).catch(err => {
+    imageCache.delete(path);
+    console.warn(`[github] Échec chargement image ${path}:`, err.message);
+    throw err;
+  });
 
   imageCache.set(path, p);
   return p;
