@@ -1,7 +1,7 @@
 # CHANGELOG — ir-dashboard
 
 > Date courante : 2026-05-08
-> Périmètre : Chantiers 0 à 9 du brief « refonte profil-centrée » (cf. AUDIT.md)
+> Périmètre : Chantiers 0 à 9 du brief « refonte profil-centrée » (cf. [docs/AUDIT.md](docs/AUDIT.md))
 
 ## Chantier 0 — RGPD newsletter (P0 légal) [2026-05-08]
 
@@ -88,7 +88,7 @@
 ## Chantier 8 — Nettoyage / dette [2026-05-08]
 
 - CHANGELOG.md créé (ce fichier).
-- DECISIONS.md : trace des arbitrages tranchés sans validation explicite.
+- `docs/DECISIONS.md` : trace des arbitrages tranchés sans validation explicite.
 - Pages `Equipe.jsx`, `Accueil.jsx`, `EditeurVisuel.jsx` **conservées en l'état** :
   - Equipe.jsx édite `data/contenu.json` (sections du site `equipe.html`),
     pas un doublon de Profils.jsx. Suppression nécessite refonte du site

@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
-import { loadLocal } from '../../utils/localStorage';
-import { LS_KEYS } from '../../utils/constants';
 
 /**
  * HelloAssoStatsCard — Chantier 5
@@ -14,9 +12,7 @@ export default function HelloAssoStatsCard() {
 
   useEffect(() => {
     let cancelled = false;
-    const token = loadLocal(LS_KEYS.contactAuthToken, '');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    api.get('/api/helloasso/stats?period=month', { headers })
+    api.get('/api/helloasso/stats?period=month')
       .then(r => { if (!cancelled) setStats(r); })
       .catch(err => { if (!cancelled) setError(err.message); });
     return () => { cancelled = true; };

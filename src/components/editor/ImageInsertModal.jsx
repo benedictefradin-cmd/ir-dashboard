@@ -9,14 +9,10 @@ const MAX_FILE_SIZE_MB = 5;
 /**
  * Modal d'insertion d'image dans le RichEditor.
  *
- * Trois modes :
- *  - URL : l'utilisateur colle une URL publique d'image
- *  - Upload : drag & drop / parcourir → uploadé dans assets/img/publications/<slug>/
- *  - Repo : (TODO) parcourir les images existantes du repo site
- *
- * Dans tous les cas l'`alt` est obligatoire — accessibilité + SEO + AUDIT §3.7.
- * Les uploads sont redimensionnés côté client à MAX_DIM px max (côté long) avant
- * push GitHub, pour ne pas faire péter les commits.
+ * Deux modes : URL publique, ou upload (drag & drop / parcourir) qui pousse
+ * dans assets/img/publications/<slug>/ via le Worker. `alt` obligatoire
+ * (a11y + SEO + AUDIT §3.7). Les uploads sont redimensionnés à MAX_DIM px
+ * côté client avant push GitHub.
  */
 export default function ImageInsertModal({ slug, onInsert, onClose, toast }) {
   const [tab, setTab] = useState('upload');

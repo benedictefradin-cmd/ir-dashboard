@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolvePhotoUrl, normalizeName, namesMatch, findPublicationsForAuthor, canonicalPhotoPath } from '../constants';
+import { resolvePhotoUrl, normalizeName, namesMatch, findPublicationsForAuthor, canonicalPhotoPath, SITE_URL } from '../constants';
 
 describe('resolvePhotoUrl', () => {
   it('renvoie tel quel pour URLs absolues', () => {
@@ -13,7 +13,7 @@ describe('resolvePhotoUrl', () => {
   });
 
   it('préfixe le SITE_URL pour les chemins relatifs simples', () => {
-    expect(resolvePhotoUrl('logo.svg')).toMatch(/institut-rousseau\.fr\/logo\.svg$/);
+    expect(resolvePhotoUrl('logo.svg')).toBe(`${SITE_URL}/logo.svg`);
   });
 
   it('renvoie chaîne vide pour falsy', () => {

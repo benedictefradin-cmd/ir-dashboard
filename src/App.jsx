@@ -13,7 +13,6 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Evenements = lazy(() => import('./pages/Evenements'));
 const Presse = lazy(() => import('./pages/Presse'));
 const Profils = lazy(() => import('./pages/Profils'));
-const Contenu = lazy(() => import('./pages/Contenu'));
 const Accueil = lazy(() => import('./pages/Accueil'));
 const SEO = lazy(() => import('./pages/SEO'));
 const Medias = lazy(() => import('./pages/Medias'));
@@ -22,7 +21,6 @@ const Equipe = lazy(() => import('./pages/Equipe'));
 const Technique = lazy(() => import('./pages/Technique'));
 const Sollicitations = lazy(() => import('./pages/Sollicitations'));
 const Calendrier = lazy(() => import('./pages/Calendrier'));
-const PagesSite = lazy(() => import('./pages/PagesSite'));
 const EditeurVisuel = lazy(() => import('./pages/EditeurVisuel'));
 import { checkHealth } from './services/api';
 import { fetchContacts, fetchCampaigns } from './services/brevo';
@@ -380,7 +378,6 @@ export default function App() {
     equipe: 0,
     technique: 0,
     sollicitations: sollicitations.filter(s => s.status === 'new').length,
-    pagessite: 0,
     settings: 0,
   };
 
@@ -401,35 +398,22 @@ export default function App() {
           <img src={logoSvg} alt="Institut Rousseau" style={{ height: 40, marginBottom: 24 }} />
           <p className="login-sub">Back-office</p>
 
-          {/* Bouton GitHub OAuth — option recommandée. Le clic redirige vers
-              le Worker qui passe la main à GitHub puis revient ici avec le
-              token. Le compte doit être dans ALLOWED_GITHUB_USERS côté Worker. */}
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => { try { startGitHubLogin(); } catch (e) { setLoginError(e.message); } }}
-            style={{ padding: '10px 24px', fontSize: 15, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#24292f', borderColor: '#24292f' }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 0a12 12 0 0 0-3.79 23.4c.6.11.82-.26.82-.58v-2.05c-3.34.73-4.04-1.61-4.04-1.61-.55-1.4-1.34-1.77-1.34-1.77-1.09-.74.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 2-.4 3.03-.4 1.03 0 2.07.13 3.03.4 2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 0z"/>
-            </svg>
-            Se connecter avec GitHub
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0', color: 'var(--text-light)', fontSize: 12 }}>
-            <span style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-            ou identifiants
-            <span style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-          </div>
-
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <input placeholder="Identifiant" value={loginId} onChange={e => setLoginId(e.target.value)} style={{ width: '100%' }} autoComplete="username" />
             <input placeholder="Mot de passe" type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} style={{ width: '100%' }} autoComplete="current-password" />
             {loginError && <p className="login-error">{loginError}</p>}
-            <button type="submit" className="btn btn-outline" style={{ padding: '10px 32px', fontSize: 14 }} disabled={loginBusy}>
+            <button type="submit" className="btn btn-primary" style={{ padding: '10px 32px', fontSize: 14, width: '100%' }} disabled={loginBusy}>
               {loginBusy ? 'Connexion…' : 'Se connecter'}
             </button>
           </form>
+
+          <button
+            type="button"
+            onClick={() => { try { startGitHubLogin(); } catch (e) { setLoginError(e.message); } }}
+            style={{ marginTop: 16, background: 'none', border: 'none', color: 'var(--text-light)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            ou se connecter avec GitHub
+          </button>
         </div>
       </div>
     );
@@ -464,12 +448,8 @@ export default function App() {
         return <Newsletter subscribers={subscribers} setSubscribers={setSubscribers} campaigns={campaigns} loading={loading} connected={services.brevo} onRefresh={loadData} toast={toast} />;
       case 'messagerie':
         return <Messagerie subscribers={subscribers} presse={presse} auteurs={auteurs} events={events} services={services} toast={toast} />;
-      case 'pagessite':
-        return <PagesSite contenu={contenu} setContenu={setContenu} auteurs={auteurs} setAuteurs={setAuteurs} articles={articles} toast={toast} saveToSite={saveToSite} onTabChange={changeTab} />;
       case 'editeur':
         return <EditeurVisuel toast={toast} />;
-      case 'contenu':
-        return <Contenu contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
       case 'accueil':
         return <Accueil contenu={contenu} setContenu={setContenu} toast={toast} saveToSite={saveToSite} />;
       case 'seo':

@@ -28,9 +28,6 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
   // ─── Vercel deploy hook ───────────────────────
   const [deployHook, setDeployHook] = useState(() => loadLocal(LS_KEYS.vercelDeployHook, ''));
 
-  // ─── Contact auth token ──────────────────────
-  const [contactAuthToken, setContactAuthToken] = useState(() => loadLocal(LS_KEYS.contactAuthToken, ''));
-
   // ─── Opérateur ──────────────────────────────
   const [operator, setOperator] = useState(() => loadLocal(LS_KEYS.operator, ''));
 
@@ -198,7 +195,6 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
     saveLocal(LS_KEYS.workerUrl, workerUrl);
     saveLocal(LS_KEYS.operator, operator);
     saveLocal(LS_KEYS.vercelDeployHook, deployHook);
-    saveLocal(LS_KEYS.contactAuthToken, contactAuthToken);
     toast('Configuration sauvegardée');
     if (onRefresh) onRefresh();
   };
@@ -490,14 +486,6 @@ export default function Settings({ subscribers, services, onImportSubscribers, o
                 <code style={{ fontSize: 11, background: '#f0f0f0', padding: '1px 4px', borderRadius: 3, margin: '0 4px' }}>VERCEL_PROJECT_ID</code>)
                 comme secrets du Worker. Token à générer sur https://vercel.com/account/tokens.
               </p>
-            </div>
-            <div className="card">
-              <h3 style={{ fontSize: 16, marginBottom: 16 }}>Sollicitations — Token d'accès {statusIcon(contactAuthToken ? 'ok' : '')}</h3>
-              <p style={{ fontSize: 13, color: 'var(--text-light)', marginBottom: 16 }}>
-                Si vous avez configuré un <code style={{ fontSize: 11, background: '#f0f0f0', padding: '1px 4px', borderRadius: 3 }}>CONTACT_AUTH_TOKEN</code> sur le Worker,
-                renseignez-le ici pour que le dashboard puisse lire et gérer les sollicitations.
-              </p>
-              <div style={{ marginBottom: 12 }}><label>Bearer token</label><input type="password" value={contactAuthToken} onChange={e => setContactAuthToken(e.target.value)} placeholder="Votre token (optionnel si pas de token côté Worker)" /></div>
             </div>
           </div>
 

@@ -1,8 +1,11 @@
 // ─── API Wrapper ──────────────────────────────────────
 // Tous les appels vers les services externes passent par le Cloudflare Worker.
+// Injecte automatiquement le Bearer de session pour authentifier les endpoints
+// back-office. `auth.js` gère son propre fetch pour /api/auth/*.
 
 import { loadLocal } from '../utils/localStorage';
 import { LS_KEYS, DEFAULT_WORKER_URL } from '../utils/constants';
+import { getToken } from './auth';
 
 function getWorkerUrl() {
   return loadLocal(LS_KEYS.workerUrl, null) || DEFAULT_WORKER_URL;
@@ -35,9 +38,14 @@ async function request(endpoint, options = {}) {
 
   const url = `${workerUrl}${endpoint}`;
   const { headers: extraHeaders, ...rest } = options;
+  const sessionToken = getToken();
   const config = {
     ...rest,
-    headers: { 'Content-Type': 'application/json', ...extraHeaders },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+      ...extraHeaders,
+    },
   };
 
   const resp = await fetch(url, config);

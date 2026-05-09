@@ -125,7 +125,6 @@ TELEGRAM_CHAT_ID
 TELEGRAM_CHANNEL_ID
 DEEPL_API_KEY                    # traduction (optionnel)
 ANTHROPIC_API_KEY                # traduction LLM (optionnel)
-CONTACT_AUTH_TOKEN               # déprécié, à retirer
 NEWSLETTER_UNSUBSCRIBE_SECRET    # Chantier 0 RGPD — HMAC pour signer les liens
                                  # de désinscription. Sans ce secret, l'envoi
                                  # newsletter (POST /api/brevo/email/send avec
@@ -193,5 +192,6 @@ Pour tester l'auth localement : voir `worker/test-auth.sh`.
 
 ## Maintenance
 
-Repo maintenu par une personne seule. Documentation historique dans
-`AUDIT.md`, `AUDIT-2026-05-01.md`, `MIGRATION.md`, `AUTHORS_MIGRATION.md`.
+Repo maintenu par une personne seule. Documentation dans `docs/` :
+audit courant `docs/AUDIT.md`, audits antérieurs sous `docs/archive/`,
+historique des migrations dans `docs/MIGRATION.md` et `docs/AUTHORS_MIGRATION.md`.

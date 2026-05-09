@@ -12,7 +12,6 @@
  *   CONTACT_SUBMISSIONS  — stockage des sollicitations du formulaire de contact
  *
  * Secrets supplémentaires (optionnels):
- *   CONTACT_AUTH_TOKEN              — Bearer token pour les endpoints back-office
  *   NEWSLETTER_UNSUBSCRIBE_SECRET   — HMAC key pour signer les liens de désinscription
  *                                     (Chantier 0 RGPD — sans ce secret, l'injection
  *                                     du footer désinscription est désactivée)
@@ -917,14 +916,11 @@ async function handle(request, env) {
           return json({ error: 'KV non configuré' }, 503);
         }
 
-        // Auth — mêmes règles que sollicitations
-        if (env.CONTACT_AUTH_TOKEN) {
-          const auth = request.headers.get('Authorization') || '';
-          const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-          if (token !== env.CONTACT_AUTH_TOKEN) {
-            return json({ error: 'Non autorisé' }, 401);
-          }
-        }
+        // Auth session (PBKDF2 + KV) — même règle que les autres endpoints back-office.
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+        const session = token ? await getSession(env.CONTACT_SUBMISSIONS, token) : null;
+        if (!session) return json({ error: 'Non autorisé' }, 401);
 
         const type = path.split('/api/calendar/')[1];
         const allowedTypes = ['socialPosts', 'rapports', 'extEvents'];
@@ -1073,17 +1069,15 @@ async function handle(request, env) {
           return json({ success: true, id }, 201);
         }
 
-        // ── Auth check pour les endpoints back-office ──
-        const authToken = env.CONTACT_AUTH_TOKEN;
-        if (authToken) {
-          const authHeader = request.headers.get('Authorization') || '';
-          if (authHeader !== `Bearer ${authToken}`) {
-            return json({ error: 'Non autorisé' }, 401);
-          }
-        }
-
+        // ── Auth session (PBKDF2 + KV) pour les endpoints back-office ──
         if (!env.CONTACT_SUBMISSIONS) {
           return json({ error: 'KV CONTACT_SUBMISSIONS non configuré' }, 503);
+        }
+        {
+          const authHeader = request.headers.get('Authorization') || '';
+          const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+          const session = token ? await getSession(env.CONTACT_SUBMISSIONS, token) : null;
+          if (!session) return json({ error: 'Non autorisé' }, 401);
         }
 
         // ─── GET /api/contact/list ─── (back-office)

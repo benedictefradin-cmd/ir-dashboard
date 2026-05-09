@@ -22,13 +22,11 @@ export const COLORS = {
   grayText: '#6B6560',
 };
 
-// ─── Navigation (Chantier E1 — 6 entrées principales + groupe "Plus") ───
-// Top-level visible par défaut : Dashboard, Profils, Publications, Événements,
-// Médias, Paramètres. Le reste (Communication + outils Site) est replié sous
-// "Plus" pour limiter le bruit visuel sur la page principale.
-// Sidebar simplifiée — 6 entrées principales (cf. brief Bénédicte 2026-05-08).
-// Les items secondaires sont regroupés dans "Avancé" (replié par défaut).
-// Toutes les routes restent accessibles ; seul l'affichage est resserré.
+// Sidebar — 3 zones sémantiques :
+//   • principal (sans label) : travail courant quotidien
+//   • Édition du site (replié) : contenu publié sur institut-rousseau.fr
+//   • Système (replié) : outils techniques + bulk
+// Paramètres reste isolé en pied de menu.
 export const NAV_GROUPS = [
   {
     key: 'main',
@@ -37,7 +35,7 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    // Sans label : items affichés directement, pas de pliage.
+    // Sans label : items affichés directement.
     key: 'principal',
     items: [
       { key: 'profils', label: 'Profils', icon: '\u{1F465}' },
@@ -46,21 +44,28 @@ export const NAV_GROUPS = [
       { key: 'newsletter', label: 'Newsletter', icon: '✉' },
       { key: 'evenements', label: 'Événements', icon: '\u{1F4C5}' },
       { key: 'medias', label: 'Médias', icon: '\u{1F5BC}' },
+      { key: 'calendrier', label: 'Calendrier', icon: '\u{1F5D3}' },
     ],
   },
   {
-    key: 'plus',
-    label: 'Avancé',
+    key: 'site',
+    label: 'Édition du site',
     defaultOpen: false,
     items: [
-      { key: 'presse', label: 'Mentions presse', icon: '\u{1F4F0}' },
-      { key: 'messagerie', label: 'Compositeur bulk', icon: '\u{1F4AC}' },
-      { key: 'calendrier', label: 'Calendrier éditorial', icon: '\u{1F5D3}' },
-      { key: 'accueil', label: 'Page d\'accueil du site', icon: '\u{1F3E0}' },
-      { key: 'equipe', label: 'Sections équipe (site)', icon: '\u{1F465}' },
-      { key: 'pagessite', label: 'Pages du site', icon: '\u{1F4D1}' },
+      { key: 'accueil', label: 'Page d\'accueil', icon: '\u{1F3E0}' },
+      { key: 'equipe', label: 'Page Équipe', icon: '\u{1F465}' },
+      { key: 'navigation', label: 'Menu & Footer', icon: '\u{1F517}' },
       { key: 'seo', label: 'SEO', icon: '\u{1F50D}' },
+      { key: 'presse', label: 'Mentions presse', icon: '\u{1F4F0}' },
       { key: 'editeur', label: 'Éditeur visuel', icon: '\u{270F}\u{FE0F}' },
+    ],
+  },
+  {
+    key: 'systeme',
+    label: 'Système',
+    defaultOpen: false,
+    items: [
+      { key: 'messagerie', label: 'Compositeur bulk', icon: '\u{1F4AC}' },
       { key: 'technique', label: 'Technique', icon: '\u{2699}' },
     ],
   },
@@ -71,9 +76,6 @@ export const NAV_GROUPS = [
     ],
   },
 ];
-
-// Flat array pour rétrocompatibilité des badges
-export const NAV_ITEMS = NAV_GROUPS.flatMap(g => g.items);
 
 // ─── Catégories et sources ──────────────────────────
 export const CATEGORIES = [
@@ -140,14 +142,6 @@ export const SOLLICITATION_PRIORITIES = {
 
 export const SOLLICITATION_ADMINS = ['Michel', 'Bénédicte', 'Guillaume'];
 
-// Legacy compat
-export const CONTACT_STATUSES = {
-  nouveau: { label: 'Nouveau', badgeClass: 'badge-sky' },
-  lu: { label: 'Lu', badgeClass: 'badge-ochre' },
-  traite: { label: 'Traité', badgeClass: 'badge-green' },
-  a_suivre: { label: 'À suivre', badgeClass: 'badge-terra' },
-};
-
 // ─── Templates email ──────────────────────────────────
 export const EMAIL_TEMPLATES = {
   publication: {
@@ -179,7 +173,6 @@ export const SITE_LANGUAGES = [
 ];
 
 export const TARGET_LANGUAGES = SITE_LANGUAGES.filter(l => !l.isSource);
-export const SOURCE_LANGUAGE = SITE_LANGUAGES.find(l => l.isSource);
 
 // Langues couvertes par l'auto-traduction (Chantier 6).
 // Décision : FR (source) + EN + ES. DE + IT restent saisies à la main —
@@ -198,7 +191,6 @@ export const LS_KEYS = {
   rapportsFondations: 'rapports-fondations',
   extEvents: 'ext-events',
   vercelDeployHook: 'vercel-deploy-hook',
-  contactAuthToken: 'contact-auth-token',
   messageHistory: 'message-history',
   // Tokens override (surchargent .env via Settings)
   notionToken: 'ir_notion_token',
@@ -212,9 +204,6 @@ export const LS_KEYS = {
 // Le Worker URL est la seule variable VITE_* utilisée. Les secrets GitHub /
 // Notion / Brevo sont uniquement côté Worker (jamais dans le bundle public).
 export const DEFAULT_WORKER_URL = import.meta.env.VITE_WORKER_URL || '';
-export const DEFAULT_GITHUB_OWNER = 'benedictefradin-cmd';
-export const DEFAULT_GITHUB_SITE_REPO = 'institut-rousseau';
-export const DEFAULT_PAGE_SIZE = 50;
 
 // ─── Site URL ────────────────────────────────────────
 // Tant que le DNS `institut-rousseau.fr` pointe encore sur l'ancien WordPress,

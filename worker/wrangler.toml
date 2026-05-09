@@ -15,9 +15,6 @@ id = "539bcd0d0e2c43eda11a6994a3375880"
 # - TELEGRAM_CHAT_ID
 # - TELEGRAM_CHANNEL_ID
 #
-# Sollicitations (Bearer token back-office) :
-# - CONTACT_AUTH_TOKEN  (déprécié — sera remplacé par sessions OAuth)
-#
 # GitHub — proxy serveur (jamais côté navigateur) :
 # - GITHUB_PAT          PAT Fine-grained avec Contents: Read+Write sur le repo site
 # - GITHUB_OWNER        Owner du repo site (ex: institut-rousseau ou benedictefradin-cmd)
@@ -32,6 +29,6 @@ id = "539bcd0d0e2c43eda11a6994a3375880"
 # - DEEPL_API_KEY
 # - ANTHROPIC_API_KEY
 #
-# Auth login/mdp (legacy — à retirer après bascule complète OAuth) :
+# Auth login/mdp :
 # - Aucun secret requis. Comptes stockés dans CONTACT_SUBMISSIONS sous le préfixe
 #   `auth:` (auth:user:*, auth:user_login:*, auth:session:*, auth:_users_index).
