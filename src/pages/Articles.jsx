@@ -22,6 +22,7 @@ import useDraftAutosave from '../hooks/useDraftAutosave';
 import useUnsavedGuard from '../hooks/useUnsavedGuard';
 import { useConfirm } from '../components/shared/ConfirmDialog';
 import ResultsCount from '../components/shared/ResultsCount';
+import RomanNumeral, { toRoman } from '../components/shared/RomanNumeral';
 import { humanizeError } from '../utils/errors';
 import { buildPublicationHtml, escAttr, toIsoDate } from '../utils/publicationHtml';
 
@@ -614,6 +615,10 @@ export default function Articles({
   // ─── Colonnes tableau ─────────────────────────
   const columns = [
     {
+      key: '_n', label: 'Nº', align: 'center',
+      render: (v) => <RomanNumeral value={v} style={{ color: 'var(--text-light)', fontSize: 12, fontVariant: 'small-caps' }} />,
+    },
+    {
       key: 'status', label: 'Statut', render: (v) => {
         const cfg = ARTICLE_STATUSES[v] || ARTICLE_STATUSES.draft;
         return <span className={`badge ${cfg.badgeClass}`}>{cfg.label}</span>;
@@ -621,7 +626,15 @@ export default function Articles({
     },
     { key: 'title', label: 'Titre', render: (v) => <span style={{ fontWeight: 500, maxWidth: 280, display: 'inline-block' }}>{v}</span> },
     { key: 'author', label: 'Auteur(s)' },
-    { key: 'tags', label: 'Pôle', render: (v) => (v || []).map(t => <span key={t} className="badge badge-sky" style={{ marginRight: 4 }}>{t}</span>) },
+    { key: 'tags', label: 'Pôle', render: (v) => (v || []).map(t => {
+      const n = THEMATIQUES.indexOf(t) + 1;
+      return (
+        <span key={t} className="badge badge-sky" style={{ marginRight: 4 }}>
+          {n > 0 && <RomanNumeral value={n} style={{ marginRight: 4, opacity: 0.7 }} />}
+          {t}
+        </span>
+      );
+    }) },
     { key: 'type', label: 'Type', render: (v) => v ? <span className="badge badge-navy">{v}</span> : null },
     { key: 'date', label: 'Date', render: (v, row) => row.lastEdited ? timeAgo(row.lastEdited) : formatDateFr(v) },
     {
@@ -843,7 +856,7 @@ export default function Articles({
             label="Pôle"
             selected={themeFilter}
             onChange={setThemeFilter}
-            options={THEMATIQUES.map(t => ({ value: t, label: t }))}
+            options={THEMATIQUES.map((t, i) => ({ value: t, label: `${toRoman(i + 1)} · ${t}` }))}
           />
           <select
             className="filter-select"
@@ -943,7 +956,7 @@ export default function Articles({
 
         <DataTable
           columns={columns}
-          data={filtered}
+          data={filtered.map((a, i) => ({ ...a, _n: i + 1 }))}
           pageSize={15}
           totalCount={allArticles.length}
           emptyMessage={
@@ -1066,11 +1079,12 @@ export default function Articles({
             <div style={{ marginBottom: 16 }}>
               <label>Pôles thématiques</label>
               <div className="flex-wrap gap-8" style={{ marginTop: 4 }}>
-                {THEMATIQUES.map(t => (
+                {THEMATIQUES.map((t, i) => (
                   <label key={t} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, cursor: 'pointer', padding: '4px 10px', borderRadius: 6, background: form.tags.includes(t) ? 'var(--sky-light)' : '#F9FAFB', border: `1px solid ${form.tags.includes(t) ? 'var(--sky)' : 'var(--border)'}` }}>
                     <input type="checkbox" checked={form.tags.includes(t)} onChange={() => {
                       setForm(f => ({ ...f, tags: f.tags.includes(t) ? f.tags.filter(x => x !== t) : [...f.tags, t] }));
                     }} style={{ width: 'auto', marginRight: 4 }} />
+                    <RomanNumeral value={i + 1} style={{ opacity: 0.6, marginRight: 2 }} />
                     {t}
                   </label>
                 ))}
